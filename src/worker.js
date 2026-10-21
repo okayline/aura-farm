@@ -99,12 +99,17 @@ function newToken() {
   return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function readCookie(req) {
-  const m = (req.headers.get("cookie") || "").match(new RegExp(`(?:^|;\\s*)${COOKIE}=([A-Za-z0-9_-]{20,})`));
+function readCookie(req, name = COOKIE) {
+  const m = (req.headers.get("cookie") || "").match(new RegExp(`(?:^|;\\s*)${name}=([A-Za-z0-9_-]{20,})`));
   return m ? m[1] : null;
 }
 
 const setCookie = (token) => `${COOKIE}=${token}; Path=/; Max-Age=${COOKIE_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`;
+const clearCookie = (name) => `${name}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+// This browser's own player (one with no save code or passkey), kept while the browser is logged in as someone else,
+// so logging out goes back to it instead of making a new player.
+const HOME = COOKIE + "h";
+const setHome = (token) => `${HOME}=${token}; Path=/; Max-Age=${COOKIE_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`;
 
 // The player behind this request's cookie, or null. Never creates one (so crawlers don't make players).
 // The first device's token is players.token_hash; a device loaded later with a save code or passkey has its own
@@ -145,7 +150,7 @@ async function body(req) {
   try { return await req.json(); } catch { throw new Oops("That request didn't make sense."); }
 }
 
-const withCookie = (res, cookie) => { if (cookie) res.headers.append("set-cookie", cookie); return res; };
+const withCookie = (res, cookie) => { for (const c of [cookie].flat()) if (c) res.headers.append("set-cookie", c); return res; };
 
 async function getFarm(env, id) {
   if (!Number.isInteger(id) || id < 1) throw new Oops("Bad farm.");
@@ -447,10 +452,11 @@ async function accountFor(env, player, make = false) {
 // no account yet), else a new one. Returns { player, cookie }.
 async function enter(req, env, accountId) {
   const acc = ACC(env);
+  const cur = await findPlayer(req, env);
+  const curIsGuest = cur && !(await acc.accountOf(GAME, cur.id)).accountId;
   let { playerId } = await acc.playerFor(accountId, GAME);
   if (!playerId) {
-    const cur = await findPlayer(req, env);
-    if (cur && !(await acc.accountOf(GAME, cur.id)).accountId) playerId = cur.id;
+    if (curIsGuest) playerId = cur.id;
     else {
       if (!(await rateLimit(env, req, "new-player", 20, 3600))) throw new Oops("Too many new players from here. Try again later.", 429);
       const t = now();
@@ -461,7 +467,9 @@ async function enter(req, env, accountId) {
   const p = await env.DB.prepare("SELECT id, name FROM players WHERE id = ?").bind(playerId).first();
   if (!p) throw new Oops("That player is gone.", 404);
   const player = await giveName(env, p);
-  return { player, cookie: await newSession(env, player.id) };
+  const cookie = [await newSession(env, player.id)];
+  if (curIsGuest && cur.id !== player.id) cookie.push(setHome(readCookie(req)));   // the browser's own player is left behind: remember it
+  return { player, cookie };
 }
 
 async function account(req, env) {
@@ -522,17 +530,20 @@ async function passkey(req, env) {
   throw new Oops("Unknown action.");
 }
 
-// Log out: this browser forgets its player. Only once the player has a save code or passkey, so nobody locks
+// Log out: this browser forgets its player and goes back to its own (the HOME cookie), if it had one. Only once the player has a save code or passkey, so nobody locks
 // themselves out. A device loaded later just loses its session; the first device's token is replaced with one
 // nobody has, so that old cookie stops working too.
 async function logout(req, env) {
   const player = await findPlayer(req, env);
-  const clear = `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
-  if (!player) return withCookie(json({ ok: true }), clear);
+  if (!player) return withCookie(json({ ok: true }), [clearCookie(COOKIE), clearCookie(HOME)]);
   const id = await accountFor(env, player);
   if (!(id ? await ACC(env).waysIn(id) : 0)) throw new Oops("Make a save code or passkey first, or you'd have no way back in.");
   const h = await sha256(readCookie(req));
   const s = await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(h).run();
   if (!s.meta.changes) await env.DB.prepare("UPDATE players SET token_hash = ? WHERE id = ? AND token_hash = ?").bind(await sha256(newToken()), player.id, h).run();
-  return withCookie(json({ ok: true }), clear);
+  // back to this browser's own player if it is still there and still has no account; else the browser starts fresh
+  const home = readCookie(req, HOME);
+  const hp = home && (await env.DB.prepare("SELECT id FROM players WHERE token_hash = ? AND id != ?").bind(await sha256(home), player.id).first());
+  const back = hp && !(await accountFor(env, hp));
+  return withCookie(json({ ok: true }), [back ? setCookie(home) : clearCookie(COOKIE), clearCookie(HOME)]);
 }
