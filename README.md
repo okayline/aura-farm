@@ -10,7 +10,7 @@ higher total wins the pot.
 - **Cards**: a standard deck plus 2 jokers. Suits are styles, ranks are aura (2-4 = 1, 5-7 = 2, 8-10 = 3, J/Q = 4,
   K/A = 5), jokers are **CAPs** (0, but winning while holding one is **NO CAP**: +500,000).
 - **Styles**: DRIP ♦ > RIZZ ♥ > MOG ♠ > YAP ♣ > DRIP. A card whose style beats the card it faces counts double.
-- **VIBES**: 1 a day, +1 per DIP (up to 3). Spend one to peek at an unflipped card or ask if their next card is above 3.
+- **VIBES**: 1 a day, +1 per DIP (up to 3). Spend one to peek at one of their unflipped cards.
 - **Standing on the board**: up to 3 open challenges; while one stands untaken you farm 1,000 aura an hour.
 - **The ledger**: every finished duel, sealed in a SHA-256 hash chain with both lineups' fingerprints.
 

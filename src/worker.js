@@ -12,8 +12,7 @@
 //   GET  /api/duel?id=                 one duel, as you are allowed to see it
 //   POST /api/take  {id, slots}        take a challenge with 3 of your 5
 //   POST /api/move  {id, round, move}  your secret pick for this round: lock | farm | dip
-//   POST /api/vibes {id, kind, slot}   spend 1 VIBES: kind "peek" (see one of their unflipped cards) or "ask"
-//                                      (is their next card above 3?)
+//   POST /api/vibes {id, slot}         spend 1 VIBES to peek at one of their unflipped cards
 //   POST /api/name  {name}             pick a name
 //   GET  /api/leaderboard?day=         a day's players by net aura
 //   GET  /api/ledger?before=&limit=    finished duels, newest first
@@ -428,15 +427,9 @@ async function vibes(req, env) {
   const { lines } = await cardsOf(env, d);
   const theirs = lines[1 - side], flipped = d.n;
   const reads = JSON.parse(d[COL[side] + "_reads"]);
-  let read;
-  if (b.kind === "peek") {
-    if (!Number.isInteger(b.slot) || b.slot < flipped || b.slot >= A.ROUNDS) throw new Oops("Peek at a card that hasn't flipped.");
-    if (reads.some((x) => x.kind === "peek" && x.slot === b.slot)) throw new Oops("You already peeked at that one.");
-    read = { kind: "peek", slot: b.slot, card: theirs[b.slot] };
-  } else if (b.kind === "ask") {
-    if (reads.some((x) => x.kind === "ask" && x.slot === flipped)) throw new Oops("You already asked about that card.");
-    read = { kind: "ask", slot: flipped, above3: A.aura(theirs[flipped]) > 3 };
-  } else throw new Oops("Peek or ask.");
+  if (!Number.isInteger(b.slot) || b.slot < flipped || b.slot >= A.ROUNDS) throw new Oops("Peek at a card that hasn't flipped.");
+  if (reads.some((x) => x.slot === b.slot)) throw new Oops("You already peeked at that one.");
+  const read = { slot: b.slot, card: theirs[b.slot] };
   const day = utcDay();
   const col = COL[side] + "_reads";
   const res = await env.DB.batch([

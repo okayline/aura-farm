@@ -120,8 +120,7 @@ function duelScreen(v) {
       <button class="link" data-act="back" type="button">back</button>`;
   }
   const shown = v.shown || [[], []];
-  const peeks = Object.fromEntries((v.reads || []).filter((r) => r.kind === "peek").map((r) => [r.slot, r.card]));
-  const asks = (v.reads || []).filter((r) => r.kind === "ask");
+  const peeks = Object.fromEntries((v.reads || []).map((r) => [r.slot, r.card]));
   const theirs = [0, 1, 2].map((i) => shown[other][i] ? card(shown[other][i]) : peeks[i] ? card(peeks[i], { ghost: true })
     : v.status === "live" && v.vibes > 0 ? card(null, { onclick: "peek:" + i }) : card(null)).join("");
   const mine = [0, 1, 2].map((i) => v.mine ? card(v.mine[i], { ghost: i >= (v.flipped || 0) && v.status !== "done" }) : card(shown[side][i])).join("");
@@ -136,8 +135,8 @@ function duelScreen(v) {
     <div class="pot"><div class="small">POT</div><div class="n">${num(v.pot)} AURA</div></div>
     <div class="cap" style="color:${capColor}">${esc(capText)}</div>
     <div class="cards">${mine}</div>
-    <div class="row">${halo("🧍", v.pot)}<div class="grow"><b>you</b><br><span class="small">${asks.map((a) => `card ${a.slot + 1} ${a.above3 ? "is" : "isn't"} above 3`).join(" · ")}</span></div>
-      ${v.status === "live" ? `<button class="chip" data-act="ask" type="button" ${v.vibes > 0 ? "" : "disabled"}>👀 ask (${v.vibes})</button>` : ""}</div>
+    <div class="row">${halo("🧍", v.pot)}<div class="grow"><b>you</b></div>
+      ${v.status === "live" ? `<span class="chip">👀 VIBES ${v.vibes}</span>` : ""}</div>
     ${v.status === "live" && v.side >= 0 ? `<div class="moves">${A.MOVES.map((m) => `<button class="mv ${m}${v.myMove === m ? " on" : ""}" data-act="move:${m}" type="button" ${v.myMove ? "disabled" : ""}>${MOVE_WORD[m]}</button>`).join("")}</div>
       <p class="small" style="text-align:center">Picks are secret and flip together. Tap a ? to peek with VIBES.</p>` : ""}
     <button class="link" data-act="back" type="button">back</button>`;
@@ -181,8 +180,7 @@ document.addEventListener("click", (e) => {
   if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks }); await loadToday(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, slots: picks }); await loadToday(); });
   if (act === "move") return run(async () => { view = await api("POST", "move", { id: view.id, round: view.round, move: arg }); await loadToday(); });
-  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, kind: "peek", slot: Number(arg) }); await loadToday(); });
-  if (act === "ask") return run(async () => { view = await api("POST", "vibes", { id: view.id, kind: "ask" }); await loadToday(); });
+  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); await loadToday(); });
   if (act === "rename") {
     const name = prompt("Your name (2 to 16 characters):", me?.name || "");
     if (name) return run(async () => { await api("POST", "name", { name }); await loadToday(); });

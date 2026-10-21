@@ -106,10 +106,10 @@ test("a DIP ends it, keeps unflipped cards off the ledger and earns VIBES; reads
   const d = await call("ann", "POST", "/api/draft");
   await call("ann", "POST", "/api/post", { id: d.id, slots: [0, 1, 2] });
   await call("bo", "POST", "/api/take", { id: d.id, slots: [0, 1, 2] });
-  const p = await call("bo", "POST", "/api/vibes", { id: d.id, kind: "peek", slot: 2 });
+  const p = await call("bo", "POST", "/api/vibes", { id: d.id, slot: 2 });
   assert.equal(p.reads[0].card, d.hands[0][2]);
   assert.equal(p.vibes, 0);
-  assert.equal((await call("bo", "POST", "/api/vibes", { id: d.id, kind: "ask" })).status, 400, "out of VIBES");
+  assert.equal((await call("bo", "POST", "/api/vibes", { id: d.id, slot: 1 })).status, 400, "out of VIBES");
   await call("ann", "POST", "/api/move", { id: d.id, round: 1, move: "lock" });
   await call("bo", "POST", "/api/move", { id: d.id, round: 1, move: "dip" });
   const end = await call("bo", "GET", `/api/duel?id=${d.id}`);
