@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.40 (Oct 21 2026, HST)
+
+- Phones with Reduce Motion on now get the fight too, in a calm version: their card fades over (no flip), then the loser fades to grey, and the line, AURA FARMED. and the amount fade in one beat apart. No flipping, flying emoji, shaking or stamping. Removed: jumping straight to the finished screen for those phones.
+
+## v0.39 (Oct 21 2026, HST)
+
+- With 3 farms up, FARM AURA is greyed out even when a style is picked, instead of lighting up and then saying no. Removed: the button looking ready when you already have 3 up.
+
 ## v0.38 (Oct 21 2026, HST)
 
 - A farm that has stood longer is worth more when it is taken: the winner gets, and the loser loses, 100,000 plus 10,000 for every whole hour it stood (110,000 after 1 hour, 220,000 after 12, 330,000 after 23). The FLEX screen's "If you win" and "If you lose" count up as the hours pass. Removed: the flat 100,000.
