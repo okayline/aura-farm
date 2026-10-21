@@ -12,11 +12,10 @@ const ADJECTIVES = [
 ];
 const NOUNS = [
   "Gremlin", "Goblin", "NPC", "Rizzler", "Menace", "Icon", "Legend", "Bestie", "Pookie", "Baddie",
-  "Yapper", "Mogger", "Farmer", "Opp", "Stan", "Himbo", "Girlboss", "Goat", "Rat", "Pigeon",
-  "Raccoon", "Possum", "Frog", "Shrimp", "Capybara", "Moai", "Gamer", "Lurker", "Ghost", "Gremlin Era",
-  "Side Char", "Main Char", "Villain", "Hater", "Sweat", "Noob", "Sidekick", "Tryhard", "Enjoyer", "Andy",
-  "Simp", "Fiend", "Vibes", "Arc", "Era", "Boss", "Ally", "Raider", "Zaddy", "Ick",
-  "Bandit", "Rascal", "Ratio", "Cheugy", "Kid", "Plot Armor", "Besties",
+  "Yapper", "Mogger", "Farmer", "Opp", "Stan", "Himbo", "Girlboss", "Goat", "Moai", "Gamer",
+  "Lurker", "Ghost", "Gremlin Era", "Side Char", "Main Char", "Villain", "Hater", "Sweat", "Noob", "Sidekick",
+  "Tryhard", "Enjoyer", "Andy", "Simp", "Fiend", "Vibes", "Arc", "Era", "Boss", "Ally",
+  "Raider", "Zaddy", "Ick", "Bandit", "Rascal", "Ratio", "Cheugy", "Kid", "Plot Armor", "Besties",
 ];
 // only the pairs of 16 characters or fewer, so names fit the header on a phone
 const PAIRS = ADJECTIVES.flatMap((a) => NOUNS.map((n) => `${a} ${n}`)).filter((s) => s.length <= 16);
