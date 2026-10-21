@@ -66,6 +66,12 @@
   .bar { height: 6px; border-radius: 999px; background: var(--panel2); overflow: hidden; }
   .bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #b084ff, #ff6fcf); }
   .detail.wait { visibility: hidden; }
+  details.panel > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; font-weight: 700; letter-spacing: .3px; }
+  details.panel > summary::-webkit-details-marker { display: none; }
+  details.panel > summary::after { content: "▸"; color: var(--mute); }
+  details.panel[open] > summary::after { content: "▾"; }
+  details.panel[open] > summary { margin-bottom: 6px; }
+  details.panel > summary + .kv { border-top: 0; }
   .kv { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; font-size: 13px; border-top: 1px solid var(--line); }
   .kv:first-child { border-top: 0; }
   .kv span:first-child { color: var(--mute); white-space: nowrap; }
@@ -76,6 +82,7 @@
   .keys { gap: 6px; }
   .keys .chip { font-size: 12px; white-space: nowrap; }
   .list { display: flex; flex-direction: column; gap: 8px; }
+  .item.home { padding: 17px 16px; border-radius: 16px; font-size: 18px; } .item.home .small { font-size: 14px; }   /* the farms on the home screen, a size up */
   .item { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; width: 100%; text-align: left; }
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 4px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: rgba(11,10,18,.92); border-top: 1px solid var(--line); backdrop-filter: blur(8px); }
   .tab { flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 10px 4px 8px; font-size: 16px; white-space: nowrap; color: var(--dim); border-radius: 12px; }

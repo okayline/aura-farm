@@ -33,6 +33,9 @@ async function run(fn) {
 // A farm sends the seconds it has left; the page turns that into a moment on its own clock when the answer arrives (_t),
 // writes it into the page, and a timer redraws just those words, so nothing else on the screen is touched.
 const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m >= 1 ? `${m}m` : "under a minute"; };
+// what a farm has earned by standing so far: 10,000 for each whole hour since it went up (this farm on its own; farms up together earn once between them)
+const earnText = (since) => "+" + (Math.floor(Math.min(Date.now() - since, A.LIFE * 1000) / 3600000) * A.STAND_PER_HOUR).toLocaleString("en-US") + " aura";
+const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(end - A.LIFE * 1000)}</span>`;
 const leftText = (end) => (end - Date.now() <= 0 ? "time's up" : clock(end - Date.now()) + " left");
 const endOf = (x, from = x) => from._t + x.left * 1000;
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
@@ -42,6 +45,7 @@ setInterval(() => {
   let over = false;
   for (const n of document.querySelectorAll("[data-end]")) { n.textContent = leftText(+n.dataset.end); if (+n.dataset.end <= Date.now()) over = true; }
   for (const n of document.querySelectorAll("[data-since]")) n.textContent = clock(Date.now() - +n.dataset.since);
+  for (const n of document.querySelectorAll("[data-earn]")) n.textContent = earnText(+n.dataset.earn);
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
   if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
@@ -86,7 +90,7 @@ function header() {
 
 function farmsTab() {
   const list = (me?.farms || []).map((d) => `
-    <button class="item" data-act="open:${d.id}" type="button">
+    <button class="item home" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
       <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
@@ -110,7 +114,7 @@ function boardTab(b) {
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
-    <span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+    ${halo(pic(r.name))}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
@@ -126,7 +130,7 @@ function ledgerTab(l) {
     return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
       ${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span><span>›</span></button>`;
   }).join("");
-  return `<div class="panel"><div class="big glow">The ledger</div></div>
+  return `<div class="panel"><div class="big glow">Legends of AURA</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
@@ -138,6 +142,10 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
 
 const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
+// A panel that starts rolled up and opens when tapped. It stays as you left it while the same screen redraws, and starts rolled up again on the next one.
+const openBoxes = new Set();
+const rolled = (id, title, inner, cls = "", style = "") => `<details class="panel ${cls}" data-box="${id}" style="${style}"${openBoxes.has(id) ? " open" : ""}><summary>${title}</summary>${inner}</details>`;
+document.addEventListener("toggle", (e) => { const b = e.target.dataset?.box; if (b) e.target.open ? openBoxes.add(b) : openBoxes.delete(b); }, true);
 
 // A finished farm's details, under the face-off: who, what they played, the aura, when, and how anyone can check the seal.
 // (Hidden until the reveal has played, so it doesn't give the result away.)
@@ -147,12 +155,12 @@ function pastDetails(v, playing) {
   const played = (i) => (v.styles ? ` · ${emo(v.styles[i])} ${esc(A.STYLE[v.styles[i]] ?? "")}` : "");
   const verdict = win == null ? "A tie" : v.side >= 0 ? (win === v.side ? "You won" : "You lost") : `${esc(v.names[win] || "?")} won`;
   const proof = rec && v.styles ? [0, 1].map((i) => `<p class="small seal">${esc(v.names[i] || "?")} sealed ${esc(v.commits[i])}<br>then showed ${esc(v.styles[i])}|${esc(rec.salts?.[i] ?? "")}</p>`).join("") : "";
-  return `<div class="panel detail${playing ? " wait" : ""}" style="margin-top:30px">
+  return rolled("past", "Results", `
     ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]))}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clock((v.takenAt - v.postedAt) * 1000)) : ""}
     ${rec ? kv("Rules", "version " + rec.rules) : ""}
     ${v.records ? kv(`${esc(v.names[0] || "?")}'s latest styles`, recordLine(v.records[0])) + kv(`${esc(v.names[1] || "?")}'s latest styles`, recordLine(v.records[1])) : ""}
-    ${proof}</div>`;
+    ${proof}`, `detail${playing ? " wait" : ""}`, "margin-top:30px");
 }
 
 // Your own open farm: everything about it that is yours to see. The style is only ever sent to you; the commitment is
@@ -164,17 +172,27 @@ function openFarmPage(v, back) {
     <div class="panel" style="text-align:center">
       <div class="row" style="justify-content:center">${halo(pic(me?.name), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
       <div class="time glow">${leftSpan(end)}</div>${barOf(end)}
-      <p class="small">Nobody has taken it yet. It comes down on its own when the time is up.</p></div>
+      </div>
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
     <div class="small" style="text-align:center;margin-top:10px">${esc(A.STYLE[s])} ${A.EMOJI[s]} beats ${esc(A.STYLE[A.BEATS[s]])} ${A.EMOJI[A.BEATS[s]]} and loses to ${esc(A.STYLE[loses])} ${A.EMOJI[loses]}.</div>
-    <div class="panel" style="margin-top:12px">
-      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}
+    ${rolled("open", "Details", `
+      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Earned so far", earnSpan(end))}
       ${kv("Earning", `+${HOUR} an hour`)}${kv("At most", "+" + ((A.LIFE / 3600) * A.STAND_PER_HOUR).toLocaleString("en-US") + " if nobody takes it")}
       ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
       ${kv("Your record", recordLine(v.records[0]))}
-      <p class="small">Farms up at the same time earn once, not twice.</p>
-      <p class="small">Sealed with this fingerprint of your style, so you can't change it. It is the only thing anyone else can see until someone takes it:</p>
-      <p class="small seal">${esc(v.commits[0])}</p></div>${back}`;
+      <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px")}${back}`;
+}
+
+// Under the FLEX button: what is public about a farm you can take. Their style is never in here, only its sealed fingerprint.
+function takeInfo(v) {
+  const end = v.left != null ? endOf(v) : null, open = (me?.farms || []).filter((f) => f.status === "open").length;
+  return rolled("take", "Details", `
+    ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}
+    ${kv("If you win", num(A.STAKE) + " aura")}${kv("If you lose", num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}
+    ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
+    <p class="small">DRIP 💎 beats RIZZ 😏, RIZZ 😏 beats MOG 🗿, MOG 🗿 beats DRIP 💎.</p>
+    <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 
 function farmScreen(v) {
@@ -183,7 +201,7 @@ function farmScreen(v) {
     return `<div class="row">${halo(pic(v.names[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         ${styles()}
-      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${back}`;
+      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
   }
   if (v.status === "open" && v.left != null && v.mine) return openFarmPage(v, back);
   if (v.status === "open" || v.status === "expired") {
@@ -330,13 +348,17 @@ function refreshMe() {
   }).catch(() => {});
 }
 
+let shownFarm = null, scrollTop = false;   // the farm on screen: opening a different one starts at its top, with its panels rolled up
 function draw() {
+  const farmKey = view ? (view.you ? "you" : "f" + view.id) : null;
+  if (farmKey !== shownFarm) { shownFarm = farmKey; openBoxes.clear(); if (farmKey) scrollTop = true; }
   const body = view?.you ? youScreen() : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Today"], ["ledger", "📜", "Ledger"]]
     .map(([k, i, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button"><span class="ti">${i}</span>${w}</button>`).join("");
   syncAddress();
+  if (scrollTop) { scrollTop = false; window.scrollTo(0, 0); }
   if (flexed && view?.styles) { flexed = false; reveal($app.querySelector(".duel"), view); }
 }
 

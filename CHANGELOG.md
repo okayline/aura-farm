@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.33 (Oct 21 2026, HST)
+
+- The farm panels on the home screen ("Farming", "vs. Sleepy Mogger") are a size bigger: more room inside, larger name and a larger line under it. The other lists (The Farm, Today, Ledger) are as they were. Removed: the smaller size on the home screen.
+
+## v0.32 (Oct 21 2026, HST)
+
+- Your open farm's Details has "Earned so far": 10,000 for each whole hour it has stood, updating as the hours pass. It counts that farm on its own, so farms up together show the same amount while your total counts the time once. Removed: nothing.
+
+## v0.31 (Oct 21 2026, HST)
+
+- Three explainer sentences are gone: "Nobody has taken it yet. It comes down on its own when the time is up." and "Farms up at the same time earn once, not twice." on your open farm's page, and the "Sealed with this fingerprint…" sentence there and in the FLEX screen's panel. The fingerprints themselves stay. Removed: those sentences.
+
+## v0.30 (Oct 21 2026, HST)
+
+- The details panels start rolled up and open when you tap them: the one under FLEX, your open farm's details, and a finished farm's Results. A panel you open stays open while that screen refreshes, and starts rolled up again the next time you open a farm. Removed: the panels always being open.
+- Opening a farm starts at the top of its page (your farm: who is farming and the time left) instead of wherever the list was scrolled to. Removed: the page keeping the list's scroll position.
+
+## v0.29 (Oct 21 2026, HST)
+
+- The FLEX screen has a panel under the FLEX button with what is public about the farm: its number, who put it up, when it went up and comes down, the time left and how long it has stood, what you win or lose (or nothing on the same style), your aura today and farms up, which style beats which, and the sealed fingerprint of their style. Removed: nothing; the screen ended at the FLEX button.
+
+## v0.28 (Oct 21 2026, HST)
+
+- The AURA LEADERBOARD shows each player's profile pic beside their name. Removed: the rows with only a rank and a name.
+- The Ledger tab's heading reads "Legends of AURA". Removed: "The ledger" as that heading.
+
 ## v0.27 (Oct 21 2026, HST)
 
 - The menu at the bottom is bigger: each tab has its emoji large above its name, and the name is a size bigger. Removed: the emoji and name on one small line.
