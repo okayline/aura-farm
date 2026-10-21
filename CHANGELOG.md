@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.10 (Oct 20 2026, HST)
+
+- Home says "(your name)'s AURA FARM". Removed: the plain "AURA FARM" heading (still shown before you have a name).
+- The Today tab is the AURA LEADERBOARD. Removed: "Most aura today".
+- Bigger text in the bottom menu. Removed: nothing.
+- A finished farm is its ledger entry's page: tap any entry on the Ledger tab to open its farm, which shows its ledger entry number and fingerprint and links to The Registry. The registry's Aura Farm entries link back to the farm. Removed: nothing; ledger entries just weren't tappable before.
+- A farm you weren't in shows both players' names. Removed: "you" on farms that aren't yours.
+
 ## v0.9 (Oct 20 2026, HST)
 
 - STARE DOWN is now FLEX. Removed: the words STARE DOWN.
