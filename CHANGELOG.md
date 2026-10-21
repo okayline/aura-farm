@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.22 (Oct 21 2026, HST)
+
+- More random names: 22 new first words and 17 new last words (like "Clutch Raider", "Fanum Zaddy", "Gagged Ick"). Removed: the old last words "Bean", "Cat", "Rat", "Pigeon", "Raccoon", "Possum", "Frog", "Shrimp" and "Capybara" (all the animals).
+
 ## v0.21 (Oct 21 2026, HST)
 
 - Each browser keeps its own player. Log in as someone else and then log out, and you are back on the player this browser had, instead of getting a new empty one. If that player was deleted or has since got a save code, log out starts fresh. Removed: a new empty player after every log out.
