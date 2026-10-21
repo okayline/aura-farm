@@ -96,6 +96,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   const f = await call("ann", "POST", "/api/farm", { style: "R" });
   assert.equal(f.status, "open");
   assert.equal(f.mine, "R", "the poster sees their own sealed style");
+  assert.equal((await call("ann", "GET", "/api/today")).farms[0].style, "R", "and on their own Farming row");
 
   tick(2 * 3600 + 60);     // stood for 2 hours
   const b = await call("bo", "GET", "/api/board");

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.12 (Oct 21 2026, HST)
+
+- Your Farming rows on Home show what each farm is farming (💎, 😏 or 🗿), only to you. Removed: nothing.
+- More space above a finished farm's ledger entry. Removed: nothing.
+
 ## v0.11 (Oct 21 2026, HST)
 
 - A standing farm says "+10,000 an hour". Removed: "10,000 an hour" without the plus.
