@@ -31,7 +31,7 @@ export function reveal(el, v) {
   // 2. the emoji interaction, played by copies of the two emoji in a layer above everything
   at(1500, () => {
     const fx = document.createElement("div"); fx.className = "fx"; document.body.append(fx);
-    const pos = (n) => { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+    const pos = (n) => { const r = n.getBoundingClientRect(), pad = parseFloat(getComputedStyle(n).paddingBottom) || 0; return { x: r.left + r.width / 2, y: r.top + (r.height - pad) / 2 }; };   // the emoji's own centre, not the centre of the empty line under it, so its copy starts exactly where it sat
     const spawn = (text, p, size = 40, cls = "") => {
       const d = document.createElement("div"); d.textContent = text; d.className = cls;
       d.style.cssText = `left:${p.x}px;top:${p.y}px;font-size:${size}px`; fx.append(d); return d;

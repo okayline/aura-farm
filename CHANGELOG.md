@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.24 (Oct 21 2026, HST)
+
+- A finished farm has a blank line above the line ("RIZZ met RIZZ.") and one under the caption ("MUTUAL MOG. +0 aura"). Removed: the tighter spacing there.
+- In the reveal, the emoji no longer drops a little when the animation starts and then pops back up: its flying copy now starts exactly where the emoji sat. Removed: the copy being placed about 10px low, centred on the empty line under the emoji.
+
 ## v0.23 (Oct 21 2026, HST)
 
 - A finished farm's page shows its whole ledger entry: the record exactly as sealed, the hash before it and its own hash, so anyone can check it. Removed: the hash shown alone under "Ledger entry".
