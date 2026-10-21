@@ -1,6 +1,10 @@
 # Changelog
 
-## v0.2 (not released yet)
+## v0.2.1 (not released yet)
+
+- The version number is now shown at the bottom of every screen. Nothing was removed.
+
+## v0.2 (Oct 20 2026, HST)
 
 - Save codes and passkeys: tap your name (or "log in") at the top to make one, then log in as the same player on another browser or device. They're the same ones the other 88x31 games use. Removed: tapping your name no longer opens the rename box straight away; "change name" is on that screen now.
 - Every finished duel is now also checkpointed on the shared 88x31 registry, which is timestamped on Bitcoin. Nothing was removed for this.

@@ -1,5 +1,6 @@
 // The page: talks to /api/*, draws the aura-glow screens. The rules come from engine/aura.js (the Worker uses the same file).
 import * as A from "./engine/aura.js";
+import { VERSION } from "./engine/version.js";
 
 const EMOJI = { D: "💎", H: "😏", S: "🗿", C: "🗣️" };
 const COLOR = { D: "var(--D)", H: "var(--H)", S: "var(--S)", C: "var(--C)" };
@@ -243,7 +244,7 @@ function draw() {
   clearTimeout(timer);
   const body = view?.you ? youScreen() : view ? duelScreen(view)
     : tab === "duels" ? duelsTab() : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
-  $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div>`;
+  $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["duels", "⚔️ Duels"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
   // a live duel waiting on the other side checks back every 10 seconds

@@ -222,3 +222,9 @@ test("an ordinary click writes nothing: 'seen' times are saved at most every 15 
   tick(300); await call("ann", "GET", "/api/today");
   assert.equal(seen(), first + 900);
 });
+
+test("the version on the page matches the newest CHANGELOG heading", async () => {
+  const { VERSION } = await import("../public/engine/version.js");
+  const log = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
+  assert.equal(/^## v(\S+)/m.exec(log)[1], VERSION);
+});
