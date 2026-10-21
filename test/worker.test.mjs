@@ -4,6 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { execSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
 import worker, { setClock } from "../src/worker.js";
 
@@ -72,7 +73,7 @@ const T0 = Date.parse("2027-01-01T08:00:00Z") / 1000;
 function setup() {
   let t = T0;
   setClock(() => t);
-  const env = { DB: fakeD1(), ACCOUNTS: fakeAccounts(), REGISTRY: fakeRegistry(), DAILY_SECRET: "test-secret" };
+  const env = { DB: fakeD1(), ACCOUNTS: fakeAccounts(), REGISTRY: fakeRegistry() };
   const jar = {};
   const call = async (who, method, path, body) => {
     const headers = { "content-type": "application/json" };
@@ -85,126 +86,161 @@ function setup() {
   return { env, call, tick: (s) => { t += s; } };
 }
 
-// Who wins a face-off, written out by hand (not the engine): DRIP beats RIZZ beats MOG beats DRIP, the CAP loses.
+// Who wins, written out by hand (not the engine): DRIP beats RIZZ beats MOG beats DRIP.
 const BEAT = { D: "R", R: "M", M: "D" };
-const judge = (a, b) => (a[0] === "X" ? 1 : b[0] === "X" ? 0 : BEAT[a[0]] === b[0] ? 0 : BEAT[b[0]] === a[0] ? 1 : null);
+const judge = (a, b) => (BEAT[a] === b ? 0 : BEAT[b] === a ? 1 : null);
 
-test("a whole duel: post 3 in order, peek with VIBES, take: decided at once and sealed on the ledger", async () => {
+test("a whole farm: post a sealed style, peek with VIBES, take: decided at once and sealed on the ledger", async () => {
   const { env, call, tick } = setup();
-  const d = await call("ann", "POST", "/api/draft");
-  assert.equal(d.status, "draft");
-  assert.equal(d.hands[0].length, 5);
-  assert.equal((await call("ann", "POST", "/api/draft")).id, d.id, "an unposted draft comes back, not a new deal");
-  assert.equal((await call("ann", "POST", "/api/post", { id: d.id, slots: [0, 0, 1] })).status, 400);
-  await call("ann", "POST", "/api/post", { id: d.id, slots: [2, 0, 4] });
+  assert.equal((await call("ann", "POST", "/api/farm", { style: "X" })).status, 400);
+  const f = await call("ann", "POST", "/api/farm", { style: "R" });
+  assert.equal(f.status, "open");
+  assert.equal(f.mine, "R", "the poster sees their own sealed style");
 
   tick(2 * 3600 + 60);     // stood for 2 hours
   const b = await call("bo", "GET", "/api/board");
-  assert.equal(b.challenges.length, 1);
-  assert.equal(b.challenges[0].aura, 2000);
-  assert.equal(b.challenges[0].hands, undefined, "the board never shows cards");
+  assert.equal(b.farms.length, 1);
+  assert.equal(b.farms[0].aura, 2000);
+  assert.deepEqual(b.farms[0].record, []);
+  assert.equal(JSON.stringify(b).includes('"R"'), false, "the board never shows the style");
 
-  // before taking, bo sees ann's 5 but not her 3; a peek shows the card she plays in one round
-  const look = await call("bo", "GET", `/api/duel?id=${d.id}`);
+  // before taking, bo can't see ann's style; a peek shows one style she did not pick
+  const look = await call("bo", "GET", `/api/farm?id=${f.id}`);
   assert.equal(look.mine, undefined);
-  assert.equal(look.lineups, undefined);
+  assert.equal(look.styles, undefined);
   assert.equal(look.vibes, 1);
-  const p = await call("bo", "POST", "/api/vibes", { id: d.id, slot: 1 });
-  assert.deepEqual(p.peeks, [{ slot: 1, card: d.hands[0][0] }], "round 2 is slot 0 of [2, 0, 4]");
+  const p = await call("bo", "POST", "/api/vibes", { id: f.id });
+  assert.ok(["D", "M"].includes(p.peek), "ann picked RIZZ, so a peek says DRIP or MOG");
   assert.equal(p.vibes, 0);
-  assert.equal((await call("bo", "POST", "/api/vibes", { id: d.id, slot: 2 })).status, 400, "out of VIBES");
-  assert.equal((await call("bo", "POST", "/api/vibes", { id: d.id, slot: 1 })).vibes, 0, "the same peek again is free");
-  assert.equal((await call("ann", "POST", "/api/vibes", { id: d.id, slot: 0 })).status, 400, "not on your own challenge");
+  assert.equal((await call("bo", "POST", "/api/vibes", { id: f.id })).peek, p.peek, "the same peek again is free");
+  assert.equal((await call("ann", "POST", "/api/vibes", { id: f.id })).status, 400, "not on your own farm");
+  assert.equal((await call("ann", "POST", "/api/take", { id: f.id, style: "D" })).status, 400, "not your own farm");
+  assert.equal((await call("bo", "POST", "/api/take", { id: f.id, style: "?" })).status, 400);
 
-  const tk = await call("bo", "POST", "/api/take", { id: d.id, slots: [1, 3, 0] });
+  const tk = await call("bo", "POST", "/api/take", { id: f.id, style: "D" });   // DRIP beats RIZZ: bo wins
   assert.equal(tk.status, "done");
-  const lines = [[2, 0, 4].map((i) => d.hands[0][i]), [1, 3, 0].map((i) => d.hands[1][i])];
-  assert.deepEqual(tk.lineups, lines);
-  assert.equal((await call("cy", "POST", "/api/take", { id: d.id, slots: [1, 3, 0] })).status, 400, "already taken");
+  assert.deepEqual(tk.styles, ["R", "D"]);
+  assert.equal(judge("R", "D"), 1);
+  assert.deepEqual(tk.result.deltas, [-10000, 10000]);
+  assert.equal(tk.result.winner, 1);
+  assert.deepEqual(tk.captions, ["COOKED. -10,000 aura", "AURA FARMED. +10,000 aura"]);
+  assert.equal((await call("cy", "POST", "/api/take", { id: f.id, style: "M" })).status, 400, "already taken");
 
-  // the result, worked out by hand from the two lineups
-  const won = [0, 0];
-  for (let i = 0; i < 3; i++) { const w = judge(lines[0][i], lines[1][i]); if (w !== null) won[w]++; }
-  assert.deepEqual(tk.result.won, won);
-  const winner = won[0] === won[1] ? null : won[0] > won[1] ? 0 : 1;
-  const bonus = winner === null ? 0 : (won[winner] === 3 ? 100000 : 0) + (lines[winner].includes("X1") ? 500000 : 0);
-  const want = winner === null ? [0, 0] : winner === 0 ? [10000 + bonus, -10000] : [-10000, 10000 + bonus];
-  assert.deepEqual(tk.result.deltas, want);
-  // losing earns a VIBES: ann had none spent (1 + 1), bo had spent his (0 + 1)
-  const v = [(await call("ann", "GET", "/api/today")).vibes, (await call("bo", "GET", "/api/today")).vibes];
-  assert.deepEqual(v, winner === null ? [1, 0] : winner === 0 ? [1, 1] : [2, 0]);
+  // losing earns a VIBES: ann had her 1 (+1 for losing), bo spent his (0)
+  assert.equal((await call("ann", "GET", "/api/today")).vibes, 2);
+  assert.equal((await call("bo", "GET", "/api/today")).vibes, 0);
 
-  // the ledger: one entry, chained from GENESIS, both lineups revealed and matching their commitments
+  // the record is public once revealed: both players' styles, newest first, on the next farm of either
+  const g = await call("ann", "POST", "/api/farm", { style: "M" });
+  const b2 = await call("cy", "GET", "/api/board");
+  assert.deepEqual(b2.farms.find((x) => x.id === g.id).record, ["R"], "ann's record is the RIZZ she lost with");
+  assert.deepEqual((await call("cy", "GET", `/api/farm?id=${f.id}`)).records, [["R"], ["D"]]);
+
+  // the ledger: one entry, chained from GENESIS, both styles revealed and matching their commitments
   const { entries } = await call("ann", "GET", "/api/ledger");
   assert.equal(entries.length, 1);
   const row = env.DB.raw.prepare("SELECT * FROM ledger").get();
   assert.equal(row.prev_hash, "0".repeat(64));
   assert.equal(row.hash, sha(row.prev_hash + "|" + row.record));
+  assert.equal(row.farm_id, f.id);
   const rec = JSON.parse(row.record);
-  assert.equal(rec.rules, 3);
+  assert.equal(rec.rules, 4);
+  assert.deepEqual(rec.styles, ["R", "D"]);
   assert.equal(rec.players.includes(null), false);
-  assert.deepEqual(rec.lineups, lines);
-  for (const s of [0, 1]) assert.equal(sha(rec.lineups[s].join(",") + "|" + rec.salts[s]), rec.commits[s]);
+  for (const sd of [0, 1]) assert.equal(sha(rec.styles[sd] + "|" + rec.salts[sd]), rec.commits[sd]);
   assert.equal(JSON.stringify(rec).includes("ann"), false, "records hold ids, never names");
 
   const lb = await call("bo", "GET", "/api/leaderboard");
   assert.equal(lb.rows.length, 2);
+  // bo +10,000; ann -10,000 plus 2 full hours standing before bo took it
+  assert.deepEqual(lb.rows.map((r) => r.aura), [10000, -8000]);
 });
 
-test("at most 3 challenges on the board; the daily reset expires them", async () => {
+test("a draw changes nothing and earns no VIBES; the board record shows only revealed styles", async () => {
   const { call, tick } = setup();
-  for (let i = 0; i < 3; i++) {
-    const d = await call("ann", "POST", "/api/draft");
-    await call("ann", "POST", "/api/post", { id: d.id, slots: [0, 1, 2] });
-  }
-  assert.equal((await call("ann", "POST", "/api/draft")).status, 400);
-  const open = (await call("bo", "GET", "/api/board")).challenges;
-  await call("bo", "POST", "/api/take", { id: open[0].id, slots: [0, 1, 2] });
-  tick(16 * 3600 + 1);     // past midnight UTC
-  assert.equal((await call("bo", "GET", "/api/board")).challenges.length, 0);
-  assert.equal((await call("ann", "GET", `/api/duel?id=${open[0].id}`)).status, "done");
-  assert.equal((await call("ann", "GET", `/api/duel?id=${open[1].id}`)).status, "expired");
-  assert.equal((await call("bo", "POST", "/api/take", { id: open[1].id, slots: [0, 1, 2] })).status, 400);
+  const f = await call("ann", "POST", "/api/farm", { style: "M" });
+  tick(3600);
+  const tk = await call("bo", "POST", "/api/take", { id: f.id, style: "M" });
+  assert.equal(tk.result.winner, null);
+  assert.deepEqual(tk.result.deltas, [0, 0]);
+  assert.equal(tk.captions[1], "MUTUAL MOG. +0 aura");
+  assert.equal((await call("ann", "GET", "/api/today")).vibes, 1);
+  assert.equal((await call("bo", "GET", "/api/today")).vibes, 1);
 });
 
-test("each finished duel sends the registry a checkpoint of the ledger: public facts, never a player", async () => {
+test("at most 3 farms on the board; the daily reset expires them and says so", async () => {
+  const { call, tick } = setup();
+  for (let i = 0; i < 3; i++) await call("ann", "POST", "/api/farm", { style: "DRM"[i] });
+  assert.equal((await call("ann", "POST", "/api/farm", { style: "D" })).status, 400);
+  const open = (await call("bo", "GET", "/api/board")).farms;
+  assert.equal(open.length, 3);
+  await call("bo", "POST", "/api/take", { id: open[0].id, style: "D" });
+  tick(16 * 3600 + 1);     // past midnight UTC
+  assert.equal((await call("bo", "GET", "/api/board")).farms.length, 0);
+  assert.equal((await call("ann", "GET", `/api/farm?id=${open[0].id}`)).status, "done");
+  assert.equal((await call("ann", "GET", `/api/farm?id=${open[1].id}`)).status, "expired");
+  assert.equal((await call("bo", "POST", "/api/take", { id: open[1].id, style: "D" })).status, 400);
+  // ann's two untaken farms show as expired for a day, so she can see her time was up
+  assert.equal((await call("ann", "GET", "/api/today")).farms.filter((x) => x.status === "expired").length, 2);
+});
+
+test("each finished farm sends the registry a checkpoint of the ledger: public facts, never a player", async () => {
   const { env, call } = setup();
   for (let i = 0; i < 2; i++) {
-    const d = await call("ann", "POST", "/api/draft");
-    await call("ann", "POST", "/api/post", { id: d.id, slots: [0, 1, 2] });
-    await call("bo", "POST", "/api/take", { id: d.id, slots: [0, 1, 2] });
+    const f = await call("ann", "POST", "/api/farm", { style: "D" });
+    await call("bo", "POST", "/api/take", { id: f.id, style: i ? "M" : "R" });   // DRIP beats RIZZ; MOG beats DRIP
   }
   const rows = env.DB.raw.prepare("SELECT * FROM ledger ORDER BY id").all();
   const sent = env.REGISTRY.checkpoints;
   assert.deepEqual(sent.map((c) => [c.game, c.entries, c.head]), [["aura-farm", 1, rows[0].hash], ["aura-farm", 2, rows[1].hash]]);
-  const r = JSON.parse(rows[1].record);
-  assert.deepEqual(sent[1].detail, { day: "2027-01-01", duel: rows[1].duel_id, result: r.result, score: r.won,
-    winner: r.winner === 0 ? "challenger" : r.winner === 1 ? "taker" : null, aura: r.deltas, bonuses: r.bonuses.map((b) => b[0]) });
+  assert.deepEqual(sent.map((c) => c.detail), [
+    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [10000, -10000] },
+    { day: "2027-01-01", farm: 2, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-10000, 10000] },
+  ]);
   assert.equal(JSON.stringify(sent).includes("players"), false);
   assert.equal(JSON.stringify(sent).includes("ann"), false);
 });
 
+test("migration 004 turns a v0.5 card duel into a farm: the old ledger entry and result stay as sealed", async () => {
+  const old = new DatabaseSync(":memory:");
+  old.exec(execSync("git show a35b001:schema.sql", { encoding: "utf8" }));   // v0.5
+  old.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (1, 'a', 1, 1), (2, 'b', 1, 1)").run();
+  old.prepare("INSERT INTO duels (id, day, status, c_id, t_id, result, c_delta, t_delta, created_at, posted_at, taken_at) VALUES (7, '2027-01-01', 'done', 1, 2, '{\"winner\":0,\"deltas\":[110000,-10000],\"bonuses\":[]}', 110000, -10000, 1, 1, 100)").run();
+  old.prepare("INSERT INTO duels (id, day, status, c_id, created_at, posted_at) VALUES (8, '2027-01-01', 'open', 1, 1, 1)").run();
+  old.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 7, '{}', ?, ?, 5)")
+    .run("0".repeat(64), sha("0".repeat(64) + "|{}"));
+  old.exec(readFileSync(new URL("../migrations/004_aura_farm.sql", import.meta.url), "utf8"));
+  assert.deepEqual({ ...old.prepare("SELECT id, kind, farm_id, record FROM ledger").get() }, { id: 1, kind: "duel", farm_id: 7, record: "{}" });
+  assert.deepEqual({ ...old.prepare("SELECT status, c_delta, t_delta, c_style FROM farms WHERE id = 7").get() }, { status: "done", c_delta: 110000, t_delta: -10000, c_style: null });
+  assert.equal(old.prepare("SELECT status FROM farms WHERE id = 8").get().status, "expired", "an open card duel can't be taken as a farm");
+  const fresh = new DatabaseSync(":memory:");
+  fresh.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
+  const shape = (d) => d.prepare("SELECT name FROM sqlite_master WHERE type IN ('table', 'index') AND name NOT LIKE 'sqlite_%' ORDER BY name").all()
+    .map((r) => r.name + ":" + d.prepare(`SELECT group_concat(name || ' ' || type || ' ' || "notnull", ',') AS c FROM pragma_table_info('${r.name}')`).get().c);
+  assert.deepEqual(shape(old), shape(fresh));
+});
+
 test("save codes and passkeys: load your player on another device, log out only with a way back in", async () => {
   const { env, call } = setup();
-  const d = await call("ann", "POST", "/api/draft");
+  const f = await call("ann", "POST", "/api/farm", { style: "D" });
   assert.equal((await call("ann", "POST", "/api/logout")).status, 400, "no code or passkey yet");
   const { code } = await call("ann", "POST", "/api/codes", { action: "new" });
   assert.equal((await call("phone", "POST", "/api/load", { code: "WRONG" })).status, 404);
   assert.equal((await call("phone", "POST", "/api/load", { code })).status, 200);
-  assert.equal((await call("phone", "GET", `/api/duel?id=${d.id}`)).side, 0, "the phone is ann now");
+  assert.equal((await call("phone", "GET", `/api/farm?id=${f.id}`)).side, 0, "the phone is ann now");
   assert.equal((await call("phone", "GET", "/api/account")).devices, 2);
   await call("phone", "POST", "/api/passkey", { action: "register", label: "phone", credential: { id: "key1" } });
   assert.equal((await call("ann", "GET", "/api/account")).passkeys.length, 1);
   assert.equal((await call("ann", "POST", "/api/logout")).status, 200);
-  assert.equal((await call("ann", "GET", `/api/duel?id=${d.id}`)).status, 404, "logged out: the draft is hidden again");
+  assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).side, -1, "logged out: ann's farm is just someone's again");
   assert.equal((await call("ann", "POST", "/api/passkey", { action: "login", credential: { id: "key1" } })).status, 200);
-  assert.equal((await call("ann", "GET", `/api/duel?id=${d.id}`)).side, 0);
+  assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).side, 0);
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 1, "logging in never made a second player");
 });
 
 test("an ordinary click writes nothing: 'seen' times are saved at most every 15 minutes", async () => {
   const { env, call, tick } = setup();
-  await call("ann", "POST", "/api/draft");
+  await call("ann", "POST", "/api/farm", { style: "D" });
   const seen = () => env.DB.raw.prepare("SELECT seen_at FROM players").get().seen_at;
   const first = seen();
   tick(600); await call("ann", "GET", "/api/today");
@@ -221,28 +257,11 @@ test("the version on the page matches the newest CHANGELOG heading", async () =>
 
 test("names can't be typed: /api/name rerolls a new random two-word name", async () => {
   const { call } = setup();
-  await call("ann", "POST", "/api/draft");
+  await call("ann", "POST", "/api/name");
   const before = (await call("ann", "GET", "/api/today")).name;
   const r = await call("ann", "POST", "/api/name", { name: "Typed Name" });
   assert.notEqual(r.name, "Typed Name");
   assert.notEqual(r.name, before);
   assert.match(r.name, /^\S.{1,14}\S$/);
   assert.equal((await call("ann", "GET", "/api/today")).name, r.name);
-});
-
-test("a duel finished under older rules shows its cards and captions from its ledger record, with no hands", async () => {
-  const { env, call } = setup();
-  await call("ann", "POST", "/api/draft");                 // player 1
-  const rec = { kind: "duel", day: "2027-01-01", duel: 1, players: [1, 2], flipped: [["QH"], ["KS"]], lineups: null, pot: 10000,
-    caption: ["THEY DIPPED. +10,000 aura", "DIPPED. -10,000 aura"] };
-  env.DB.raw.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (2, 'x', 1, 1)").run();
-  env.DB.raw.prepare(`UPDATE duels SET status = 'done', t_id = 2, c_slots = '[0,1,2]', t_slots = '[0,1,2]',
-    result = '{"winner":0,"how":"dip","deltas":[10000,-10000],"bonuses":[]}', c_delta = 10000, t_delta = -10000 WHERE id = 1`).run();
-  env.DB.raw.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 1, ?, ?, ?, 1)")
-    .run(JSON.stringify(rec), "0".repeat(64), "a".repeat(64));
-  const v = await call("ann", "GET", "/api/duel?id=1");
-  assert.equal(v.hands, null);
-  assert.deepEqual(v.lineups, [["QH", null, null], ["KS", null, null]]);
-  assert.deepEqual(v.mine, ["QH", null, null]);
-  assert.equal(v.captions[0], "THEY DIPPED. +10,000 aura");
 });

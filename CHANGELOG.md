@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6 (Oct 20 2026, HST)
+
+- AURA FARM: no more cards. You put a style on the board, sealed: 💎 DRIP, 😏 RIZZ or 🗿 MOG. While it stands untaken you farm 1,000 aura an hour. Whoever takes it picks their own, both are revealed at once, and the style that beats the other wins 10,000 (the loser is COOKED, a draw is MUTUAL MOG). Removed: the 19 cards, the deal, 5-card hands, lineups and their order, face-offs, TOTAL MOG, NO CAP and the CAP.
+- Records: once a farm is taken, both styles are public, and the board shows each poster's latest 10. Read how they play. Removed: nothing, since no style was public before.
+- VIBES: before taking a farm, spend one to see one style it isn't. You earn one for each farm you lose (up to 3). Removed: peeking at a card in a round.
+- A farm that expires at midnight UTC says "Your time is up". Card duels from before this stay on the ledger and in your list as they were. Removed: challenges that were open when this went live were cancelled with nothing paid.
+
 ## v0.5 (Oct 20 2026, HST)
 
 - Cards vs cards: you keep 3 of your 5 in an order, they do the same, and the two lineups face off card by card the moment they take it. Win more face-offs to win 10,000 aura; win all 3 for TOTAL MOG (+100,000); win with the CAP in your 3 for NO CAP (+500,000). The bluff is the order you pick. Removed: LOCK IN, FARM and DIP, planning a move per round, playing round by round, the pot, CRASHED OUT and "dipped holding the win".

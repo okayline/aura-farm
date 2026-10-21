@@ -28,6 +28,4 @@
     // requests to any *.workers.dev address are sent here instead
     "CANONICAL_HOST": "aura.88x31.app"
   }
-  // Secret (not in this file): DAILY_SECRET, the key behind every duel's deal.
-  //   npx wrangler secret put DAILY_SECRET
 }

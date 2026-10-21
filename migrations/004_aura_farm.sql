@@ -1,0 +1,15 @@
+UPDATE duels SET status = 'expired', taken_at = COALESCE(taken_at, CAST(strftime('%s', 'now') AS INTEGER)) WHERE status IN ('draft', 'open');
+ALTER TABLE duels DROP COLUMN c_slots;
+ALTER TABLE duels DROP COLUMN t_slots;
+ALTER TABLE duels ADD COLUMN c_style TEXT;
+ALTER TABLE duels ADD COLUMN t_style TEXT;
+DROP INDEX duels_status;
+DROP INDEX duels_c;
+DROP INDEX duels_t;
+ALTER TABLE duels RENAME TO farms;
+CREATE INDEX farms_status ON farms (status, day);
+CREATE INDEX farms_c ON farms (c_id, day);
+CREATE INDEX farms_t ON farms (t_id, day);
+ALTER TABLE ledger RENAME COLUMN duel_id TO farm_id;
+DROP TABLE peeks;
+CREATE TABLE peeks (farm_id INTEGER NOT NULL REFERENCES farms(id), player_id INTEGER NOT NULL REFERENCES players(id), not_style TEXT NOT NULL, PRIMARY KEY (farm_id, player_id));
