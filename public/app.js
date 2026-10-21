@@ -105,11 +105,9 @@ function ledgerTab(l) {
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
-// A finished farm's seal: its whole ledger entry (the record exactly as hashed, the previous entry's hash and its own),
-// and the shared registry that keeps a checkpoint of it. The registry page links its Aura Farm entries here.
-const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;margin-top:3em">📜 Ledger entry #${v.ledger.entry}<br>
-  <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
-  <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
+// A finished farm's seal: its ledger entry and fingerprint, and the shared registry that keeps a checkpoint of it.
+const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;margin-top:3em">📜 Ledger entry #${v.ledger.entry}<br><code>${esc(v.ledger.hash)}</code><br>
+  <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>` : "");
 
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
@@ -176,11 +174,6 @@ function youScreen() {
     <p class="small" style="text-align:center">${esc(note)}</p>
     <button class="link" data-act="back" type="button">back</button>`;
 }
-
-// Before logging in as another player: this browser's player with no save code or passkey would be left behind for
-// good (the cookie is its only key), so ask first. Log out already refuses in that case.
-const leaveOk = () => !acct?.player || acct.codes.length + acct.passkeys.length > 0 ||
-  confirm(`${acct.name || "This player"} has no save code or passkey. If you switch, you won't be able to get back to it. Switch anyway?`);
 
 async function openYou() { view = { you: true }; newCode = null; acct = await api("GET", "account"); }
 
@@ -311,9 +304,8 @@ document.addEventListener("click", (e) => {
   if (act === "forgetcode" && confirm("Forget this save code? It stops working everywhere.")) return run(async () => { await api("POST", "codes", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Save code forgotten."; });
   if (act === "forgetkey" && confirm("Remove this passkey? It stops working everywhere.")) return run(async () => { await api("POST", "passkey", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Passkey removed."; });
   if (act === "addkey") return run(addPasskey);
-  if (act === "loadkey") return leaveOk() && run(loadWithPasskey);
+  if (act === "loadkey") return run(loadWithPasskey);
   if (act === "loadcode") {
-    if (!leaveOk()) return;
     const code = document.getElementById("code")?.value || "";
     return run(async () => { const d = await api("POST", "load", { code }); await loggedIn(d.name); });
   }

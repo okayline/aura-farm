@@ -260,7 +260,7 @@ async function farmView(env, d, player) {
   const [names, rec] = await env.DB.batch([
     env.DB.prepare(`SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t,
       (SELECT record FROM ledger WHERE farm_id = ?3) AS record, (SELECT id FROM ledger WHERE farm_id = ?3) AS entry,
-      (SELECT hash FROM ledger WHERE farm_id = ?3) AS hash, (SELECT prev_hash FROM ledger WHERE farm_id = ?3) AS prev`).bind(d.c_id, d.t_id, d.id),
+      (SELECT hash FROM ledger WHERE farm_id = ?3) AS hash`).bind(d.c_id, d.t_id, d.id),
     recordsStmt(env, [d.c_id, d.t_id].filter(Boolean)),
   ]);
   out.names = [names.results[0].c ?? null, names.results[0].t ?? null];
@@ -273,8 +273,7 @@ async function farmView(env, d, player) {
     out.captions = [A.caption(r, 0), A.caption(r, 1)];
     const sealed = names.results[0].record ? JSON.parse(names.results[0].record) : null;
     if (sealed?.line) out.line = sealed.line;   // the line sealed with the farm (farms before v0.9 have none)
-    // its seal: this screen is the entry's page, so it carries the whole entry (the record exactly as hashed, and both hashes)
-    if (sealed) out.ledger = { entry: names.results[0].entry, record: names.results[0].record, prev: names.results[0].prev, hash: names.results[0].hash };
+    if (sealed) out.ledger = { entry: names.results[0].entry, hash: names.results[0].hash };   // its seal: this screen is the entry's page
     // A farm finished under older rules (a card duel): show its cards and captions exactly as its ledger record has them.
     // After a DIP, cards that never flipped were never revealed: those are null.
     if (d.c_style) out.styles = [d.c_style, d.t_style];
