@@ -5,11 +5,12 @@ import { VERSION } from "./engine/version.js";
 const COLOR = { D: "var(--D)", R: "var(--H)", M: "var(--S)" };
 const $app = document.getElementById("app"), $tabs = document.getElementById("tabs");
 
-let tab = "duels", me = null, view = null, picks = [], err = "";
+let tab = "farms", me = null, view = null, pick = null, err = "";
 let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
+const STAKE = A.STAKE.toLocaleString("en-US"), HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
 
 async function api(method, path, body) {
   const res = await fetch("/api/" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -26,23 +27,21 @@ async function run(fn) {
 
 // ---------- pieces ----------
 
-// A card: its style, big, and what it beats (a CAP loses to everything). No numbers.
-function card(c, { small = false, pick = null, onclick = null } = {}) {
-  const tag = onclick ? "button" : "div";
-  const attrs = onclick ? ` data-act="${onclick}" type="button"` : "";
-  if (!c) return `<${tag} class="card back"${attrs}>?</${tag}>`;
-  // a card from before v0.4 (old 54-card deck, e.g. "QH"), on an old duel: shown as its code
-  if (!known(c)) return `<${tag} class="card"${attrs}><span class="e" style="font-size:18px">${esc(c)}</span></${tag}>`;
-  const cap = A.isCap(c), s = A.style(c);
-  const name = cap ? "CAP" : A.STYLE[s], beats = cap ? "loses to all" : `beats ${A.EMOJI[A.BEATS[s]]}`;
-  return `<${tag} class="card" style="--c: ${cap ? "var(--X)" : COLOR[s]}"${attrs} aria-label="${name}">
-    <span class="r">${small ? "" : name}</span><span class="e">${A.EMOJI[cap ? "X" : s]}</span>
-    <span class="s">${small ? name : beats}</span>${pick ? `<span class="pick">${pick}</span>` : ""}</${tag}>`;
+// A style: its name, a big emoji and what it beats. A button to tap when `tap` is set (`on` marks the one picked),
+// otherwise just shown.
+function style(s, { tap = false, on = false } = {}) {
+  const tag = tap ? "button" : "div", attrs = tap ? ` data-act="pick:${s}" type="button"` : "";
+  return `<${tag} class="card${on ? " on" : ""}" style="--c: ${COLOR[s]}"${attrs} aria-label="${A.STYLE[s]}">
+    <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span><span class="s">beats ${A.EMOJI[A.BEATS[s]]}</span></${tag}>`;
 }
+const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>`;
+const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
 
-// a card code the styles cover (v0.4's second CAP "X2" included); older codes are shown as text
-const known = (c) => /^[DRMX]\d$/.test(c);
-const emo = (c) => (c == null ? "❔" : known(c) ? A.EMOJI[c[0]] : c);
+// the emoji for a style or a card code from a duel before v0.6 ("D3" is DRIP, "X1" the CAP; older codes show as text)
+const emo = (s) => (s == null ? "❔" : s[0] === "X" ? "🤫" : A.EMOJI[s[0]] ?? s);
+
+// A player's record: their latest styles, newest first, as emoji.
+const recordLine = (rec) => (rec && rec.length ? rec.map(emo).join(" ") : "no flexes yet");
 
 const halo = (emoji, glow = 18) => `<div class="halo" style="box-shadow: 0 0 ${glow}px ${Math.round(glow / 4)}px rgba(255,111,207,.55)">${emoji}</div>`;
 
@@ -56,91 +55,80 @@ function header() {
   </header>`;
 }
 
-function duelsTab() {
-  const list = (me?.duels || []).map((d) => `
+function farmsTab() {
+  const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
-      <span class="grow"><b>${d.status === "open" ? "Standing on the board" : d.status === "draft" ? "Not posted yet" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? "farming 1,000 aura an hour" : "pick your 3"}</span></span>
-      <span>›</span>
+      <span class="grow"><b>${d.status === "open" ? "Farming" : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} aura an hour until someone takes it` : "nobody took it"}</span></span>
+      <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
-  return `<div class="panel"><div class="big glow">Your duels</div>
-      <p class="small">Post up to 3 challenges. While one stands untaken you farm 1,000 aura an hour.</p>
-      <button class="go" data-act="draft" type="button">🧍 NEW CHALLENGE</button></div>
-    <div class="list">${list || `<p class="small">No duels yet today.</p>`}</div>`;
+  return `<div class="panel"><div class="big glow">AURA FARM</div>
+      <p class="small">Pick a style and put it on the board, sealed. While it stands untaken you farm ${HOUR} aura an hour. Whoever takes it
+      picks their own: the style that beats the other wins ${STAKE}. Up to 3 a day.</p></div>
+    ${styles()}
+    <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
+    <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
 
 function boardTab(b) {
-  const rows = (b?.challenges || []).map((c) => `
+  const rows = (b?.farms || []).map((c) => `
     <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
-      ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span></span>
-      <span class="meme glow">${c.mine ? "STANDING" : "STARE DOWN ›"}</span></button>`).join("");
-  return `<div class="panel"><div class="big glow">The board</div><p class="small">Open challenges. You see their 5 cards when you step up, never the 3 they kept.</p></div>
-    <div class="list">${rows || `<p class="small">Nobody is standing on the board right now.</p>`}</div>`;
+      ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
+      <span class="small">${recordLine(c.record)}</span></span>
+      <span class="meme glow">${c.mine ? "FARMING" : "STARE DOWN ›"}</span></button>`).join("");
+  return `<div class="panel"><div class="big glow">The board</div><p class="small">Open farms. Their style is sealed, but every style a player has played is public: read their record.</p></div>
+    <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
     <span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
-  return `<div class="panel"><div class="big glow">Most aura today</div><p class="small">Net aura: wins, losses and standing. Resets at midnight UTC.</p></div>
+  return `<div class="panel"><div class="big glow">Most aura today</div><p class="small">Net aura: wins, losses and farming. Resets at midnight UTC.</p></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
 
 function ledgerTab(l) {
   const rows = (l?.entries || []).map((e) => {
     const r = e.record;
-    return `<div class="item entry"><span class="grow"><span class="meme glow">DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}</span><br>
-      <span class="small">${(r.lineups ?? r.flipped).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ")}${r.won ? ` · ${r.won[0]}-${r.won[1]}` : ""}</span><br>
-      <code>${e.hash.slice(0, 16)}…</code></span></div>`;
+    const [title, line] = r.styles
+      ? [`FARM #${r.farm} · ${esc(r.caption[r.winner ?? 0])}`, r.styles.map(emo).join(" vs ")]
+      // a card duel from before v0.6, as it was sealed
+      : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
+    return `<div class="item entry"><span class="grow"><span class="meme glow">${title}</span><br>
+      <span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span></div>`;
   }).join("");
-  return `<div class="panel"><div class="big glow">The ledger</div><p class="small">Every finished duel, sealed in a hash chain. Each lineup is sealed by a fingerprint when it locks in, and revealed when the duel is decided.</p></div>
-    <div class="list">${rows || `<p class="small">No duels finished yet.</p>`}</div>`;
+  return `<div class="panel"><div class="big glow">The ledger</div><p class="small">Every finished farm, sealed in a hash chain. Each style is sealed by a fingerprint when it goes up, and revealed when the farm is taken.</p></div>
+    <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
-// picking 3 of 5 in order, for posting or taking
-function pickScreen(v, side, title, action) {
-  const mine = v.hands[side], theirs = v.hands[1 - side];
-  // the taker can spend VIBES to see which card they play in a round
-  const peeks = Object.fromEntries((v.peeks || []).map((p) => [p.slot, p.card]));
-  const rounds = side === 1 ? `<div class="small">Their 3, in order${v.vibes > 0 ? ` · tap a ? to peek (👀 VIBES ${v.vibes})` : " · 👀 no VIBES left"}</div>
-    <div class="cards">${[0, 1, 2].map((i) => (peeks[i] ? card(peeks[i]) : card(null, { onclick: v.vibes > 0 ? "peek:" + i : null }))).join("")}</div>` : "";
-  return `<div class="panel"><div class="big glow">${title}</div>
-      <p class="small">${side === 0
-        ? "Tap 3 cards in the order they'll face off. Whoever takes this sees your 5, never which 3 you kept or their order. You never have to come back."
-        : "They kept 3 of their 5 in a secret order. Tap 3 of yours in order: card 1 faces their 1st, and so on. Win more face-offs to win."}</p></div>
-    <div class="small">${side === 0 ? "Whoever steps up holds" : esc(v.names[0]) + " holds"}</div>
-    <div class="cards five">${theirs.map((c) => card(c, { small: true })).join("")}</div>
-    ${rounds}
-    <div class="small">You hold</div>
-    <div class="cards five">${mine.map((c, i) => card(c, { small: true, pick: picks.includes(i) ? picks.indexOf(i) + 1 : null, onclick: "pick:" + i })).join("")}</div>
-    <button class="go" data-act="${action}" type="button" ${picks.length === 3 ? "" : "disabled"}>${side === 0 ? "🔒 LOCK IN & POST" : "😤 STARE DOWN"}</button>
-    <button class="link" data-act="back" type="button">back</button>`;
-}
-
-function duelScreen(v) {
-  if (v.status === "draft") return pickScreen(v, 0, "New challenge", "post");
-  if (v.status === "open" && v.side !== 0) return pickScreen(v, 1, `Stare down ${esc(v.names[0])}`, "take");
-  if (v.status === "open" || v.status === "expired") {
-    return `<div class="panel"><div class="big glow">${v.status === "open" ? "Standing on the board" : "Nobody stepped up"}</div>
-      <p class="small">${v.status === "open" ? "Farming 1,000 aura an hour until someone takes it." : "It expired at the daily reset."}</p></div>
-      <div class="small">Your lineup</div><div class="cards">${(v.mine || []).map((c) => card(c)).join("")}</div>
-      <button class="link" data-act="back" type="button">back</button>`;
+function farmScreen(v) {
+  const back = `<button class="link" data-act="back" type="button">back</button>`;
+  if (v.status === "open" && v.side !== 0) {
+    const peek = v.peek ? `<p class="small">👀 It's not ${A.label(v.peek)}.</p>`
+      : v.vibes > 0 ? `<button class="chip" data-act="peek" type="button">👀 Peek: one style it isn't (VIBES ${v.vibes})</button>`
+      : `<p class="small">👀 No VIBES left today. Losing a farm earns one.</p>`;
+    return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
+        <span class="small">${recordLine(v.records[0])}</span></div></div>
+      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win ${STAKE}, if theirs beats yours you lose ${STAKE}, and the
+        same style is a draw.</p>${peek}</div>
+      ${styles()}
+      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 STARE DOWN</button>${back}`;
   }
-  // done: both lineups face off, round by round (their card above yours)
-  const side = v.side >= 0 ? v.side : 1, other = 1 - side;
-  const L = v.lineups || [[], []], r = v.result, d = r.deltas[side];
-  const won = [0, 1, 2].map((i) => (L[0][i] && L[1][i] && known(L[0][i]) && known(L[1][i]) ? A.faceOff(L[side][i], L[other][i]) : undefined));
-  const mark = (w) => (w === 0 ? `<b style="color:var(--H)">YOU</b>` : w === 1 ? "THEM" : w === null ? "DRAW" : "");
-  const score = r.won ? (side === 0 ? r.won : [r.won[1], r.won[0]]) : null;
+  if (v.status === "open" || v.status === "expired") {
+    return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div>
+      <p class="small">${v.status === "open" ? `${HOUR} aura an hour until someone takes it.` : "Nobody took it before the daily reset."}</p></div>
+      ${v.mine ? `<div class="small">Your style (only you can see it)</div>${shown(v.mine)}` : ""}${back}`;
+  }
+  // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
+  const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
+  const hand = (i) => (v.styles ? shown(v.styles[i]) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
   return `
-    <div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[other] || "?")}</b></div>
-      <div class="small" style="text-align:right">Duel #${v.id}</div></div>
-    <div class="cards">${[0, 1, 2].map((i) => card(L[other][i])).join("")}</div>
-    <div class="cards meme small" style="text-align:center">${won.map((w) => `<div>${mark(w)}</div>`).join("")}</div>
-    <div class="cards">${[0, 1, 2].map((i) => card(L[side][i])).join("")}</div>
-    <div class="row">${halo("🧍", d > 0 ? 30 : 12)}<div class="grow"><b>you</b></div>
-      ${score ? `<span class="chip">rounds ${score[0]}-${score[1]}</span>` : ""}</div>
-    <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${esc(v.captions[side])}</div>
-    <button class="link" data-act="back" type="button">back</button>`;
+    <div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[other] || "?")}</b><br><span class="small">${recordLine(v.records[other])}</span></div>
+      <div class="small" style="text-align:right">Farm #${v.id}</div></div>
+    ${hand(other)}
+    <div class="row">${halo("🧍", d > 0 ? 30 : 12)}<div class="grow"><b>you</b></div></div>
+    ${hand(side)}
+    <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${esc(v.captions[side])}</div>${back}`;
 }
 
 // ---------- you: name, save codes and passkeys (kept by the shared Accounts, like the other 88x31 games) ----------
@@ -245,28 +233,28 @@ function showTab(t) {
   tab = t; view = null; err = "";
   extra = cache[t] ?? null;
   draw();
-  const path = { duels: "today", board: "board", top: "leaderboard", ledger: "ledger" }[t];
+  const path = { farms: "today", board: "board", top: "leaderboard", ledger: "ledger" }[t];
   api("GET", path).then((d) => {
-    if (t === "duels") me = d; else cache[t] = d;
+    if (t === "farms") me = d; else cache[t] = d;
     if (tab === t && !view) { extra = cache[t] ?? null; draw(); }
   }).catch((e) => { err = e.message; draw(); });
 }
 
-// The header (aura, VIBES) and your duels list, refreshed in the background after an action.
+// The header (aura, VIBES) and your farms list, refreshed in the background after an action.
 function refreshMe() { api("GET", "today").then((d) => { me = d; draw(); }).catch(() => {}); }
 
 function draw() {
-  const body = view?.you ? youScreen() : view ? duelScreen(view)
-    : tab === "duels" ? duelsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
+  const body = view?.you ? youScreen() : view ? farmScreen(view)
+    : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
-  $tabs.innerHTML = [["duels", "⚔️ Duels"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
+  $tabs.innerHTML = [["farms", "🌾 Farm"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
 }
 
 async function loadToday() { me = await api("GET", "today"); }
-async function openDuel(id) {
-  view = await api("GET", "duel?id=" + id);
-  picks = [];
+async function openFarm(id) {
+  view = await api("GET", "farm?id=" + id);
+  pick = null;
 }
 
 document.addEventListener("click", (e) => {
@@ -274,17 +262,12 @@ document.addEventListener("click", (e) => {
   if (!t) return;
   if (t.dataset.tab) return showTab(t.dataset.tab);
   const [act, arg] = t.dataset.act.split(":");
-  if (act === "pick") {
-    const i = Number(arg);
-    picks = picks.includes(i) ? picks.filter((x) => x !== i) : picks.length < 3 ? [...picks, i] : picks;
-    return draw();
-  }
+  if (act === "pick") { pick = pick === arg ? null : arg; return draw(); }
   if (act === "back") return showTab(tab);
-  if (act === "open" || act === "look") return run(() => openDuel(Number(arg)));
-  if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; refreshMe(); });
-  if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks }); refreshMe(); });
-  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, slots: picks }); refreshMe(); });
-  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); refreshMe(); });
+  if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
+  if (act === "farm") return run(async () => { view = await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
+  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); pick = null; refreshMe(); });
+  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id }); refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 

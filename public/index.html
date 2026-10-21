@@ -4,15 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AURA FARMING SIMULATOR: NO CAP BATTLE EDITION 2027</title>
-<meta name="description" content="Stand there. Look cool. Bluff. An async aura battling card game.">
+<meta name="description" content="Stand there. Look cool. Bluff. An async aura battle: put a style on the board and farm.">
 <meta name="theme-color" content="#0b0a12">
 <style>
-  /* "Aura glow": near-black with purple light; every card glows in its style's colour (DRIP cyan, RIZZ pink, MOG violet,
-     CAP gold). Text glows. Literal aura. */
+  /* "Aura glow": near-black with purple light; every style glows in its colour (DRIP cyan, RIZZ pink, MOG violet). Text glows. Literal aura. */
   :root {
     --bg: #0b0a12; --panel: #171226; --panel2: #1b1530; --line: #3a2f5c;
     --ink: #f4f1ff; --mute: #c9b8ff; --dim: #a99ccf;
-    --D: #5ad1ff; --H: #ff6fcf; --S: #b084ff; --X: #ffd23f;
+    --D: #5ad1ff; --H: #ff6fcf; --S: #b084ff;
     --meme: Impact, "Arial Black", "Helvetica Neue", sans-serif;
   }
   * { box-sizing: border-box; }
@@ -39,17 +38,13 @@
   .big { font-family: var(--meme); font-size: 22px; }
   .halo { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 24px; background: var(--panel2); transition: box-shadow .4s; }
   .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .cards.five { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
   .card { position: relative; height: 118px; border-radius: 14px; background: var(--panel); border: 2px solid var(--c, var(--line));
           box-shadow: 0 0 16px color-mix(in srgb, var(--c, transparent) 60%, transparent); padding: 8px 10px;
           display: flex; flex-direction: column; justify-content: space-between; text-align: left; color: var(--ink); }
-  .five .card { height: 84px; padding: 6px; border-radius: 10px; }
-  .five .card .e { font-size: 26px; }
   .card .r { font-family: var(--meme); letter-spacing: .5px; font-size: 16px; color: var(--c); text-shadow: 0 0 8px var(--c); }
   .card .e { font-size: 40px; text-align: center; }
   .card .s { display: flex; justify-content: center; font-size: 11px; font-weight: 700; color: var(--c); text-shadow: 0 0 6px var(--c); }
-  .card.back { background: repeating-linear-gradient(45deg, #1b1530 0 8px, #221a3d 8px 16px); align-items: center; justify-content: center; font-size: 26px; color: #8f80b8; box-shadow: none; }
-  .card .pick { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font-weight: 800; display: grid; place-items: center; font-size: 13px; box-shadow: 0 0 12px #fff; }
+  .card.on { outline: 3px solid var(--ink); outline-offset: 2px; box-shadow: 0 0 26px var(--c); }
   .cap { font-family: var(--meme); font-size: 22px; text-align: center; min-height: 28px; text-shadow: 0 0 14px currentColor; }
   .go { width: 100%; height: 54px; border-radius: 14px; border: 0; background: linear-gradient(135deg, #b084ff, #ff6fcf); font-family: var(--meme); font-size: 19px; letter-spacing: .5px; text-shadow: 0 0 6px rgba(255,255,255,.35); box-shadow: 0 0 22px rgba(255,111,207,.45); }
   .go:disabled { opacity: .4; }

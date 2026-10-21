@@ -12,23 +12,20 @@ CREATE TABLE IF NOT EXISTS players (
   seen_at     INTEGER NOT NULL
 );
 
--- A duel starts as a challenge. Its two 5-card hands come from its own seed (HMAC of the server secret, its day and
--- its id), so they are never stored. A lineup is 3 slots of a hand in face-off order, sealed by a commitment
--- (SHA-256 of the cards and a random salt) when it is locked in.
---   draft   - dealt to the challenger, lineup not locked yet
---   open    - on the board, standing (farms aura), waiting for a taker (at most 3 per player)
---   done    - taken: the two lineups faced off at once, sealed on the ledger
+-- A farm is a style on the board, sealed by a commitment (SHA-256 of the style and a random salt). The poster picks
+-- DRIP, RIZZ or MOG when they post it; the taker picks theirs, and both are revealed at once (v0.6).
+--   open    - on the board, standing (farms aura), waiting for a taker (at most 3 per player per day)
+--   done    - taken: both styles faced off at once, sealed on the ledger
 --   expired - the day ended with nobody taking it
-CREATE TABLE IF NOT EXISTS duels (
+-- Farms from before v0.6 were card duels (status draft too, now gone); their c_style and t_style stay null.
+CREATE TABLE IF NOT EXISTS farms (
   id          INTEGER PRIMARY KEY,
-  day         TEXT NOT NULL,          -- "2027-01-01" (UTC), the day it was dealt
-  status      TEXT NOT NULL DEFAULT 'draft',
-  c_id        INTEGER NOT NULL REFERENCES players(id),   -- challenger (side 0)
+  day         TEXT NOT NULL,          -- "2027-01-01" (UTC), the day it was posted
+  status      TEXT NOT NULL DEFAULT 'open',
+  c_id        INTEGER NOT NULL REFERENCES players(id),   -- poster (side 0)
   t_id        INTEGER REFERENCES players(id),            -- taker (side 1)
-  c_slots     TEXT,                   -- JSON [2,0,4]
   c_salt      TEXT,
   c_commit    TEXT,
-  t_slots     TEXT,
   t_salt      TEXT,
   t_commit    TEXT,
   result      TEXT,                   -- JSON, once done
@@ -37,13 +34,15 @@ CREATE TABLE IF NOT EXISTS duels (
   created_at  INTEGER NOT NULL,
   posted_at   INTEGER,
   taken_at    INTEGER,
-  ended_at    INTEGER
+  ended_at    INTEGER,
+  c_style     TEXT,                   -- "D", "R" or "M": secret until the farm is taken
+  t_style     TEXT
 );
-CREATE INDEX IF NOT EXISTS duels_status ON duels (status, day);
-CREATE INDEX IF NOT EXISTS duels_c ON duels (c_id, day);
-CREATE INDEX IF NOT EXISTS duels_t ON duels (t_id, day);
+CREATE INDEX IF NOT EXISTS farms_status ON farms (status, day);
+CREATE INDEX IF NOT EXISTS farms_c ON farms (c_id, day);
+CREATE INDEX IF NOT EXISTS farms_t ON farms (t_id, day);
 
--- VIBES: everyone holds 1 at the start of each UTC day, +1 per duel lost (up to 3), -1 per peek.
+-- VIBES: everyone holds 1 at the start of each UTC day, +1 per farm lost (up to 3), -1 per peek.
 CREATE TABLE IF NOT EXISTS vibes (
   player_id   INTEGER NOT NULL REFERENCES players(id),
   day         TEXT NOT NULL,
@@ -51,20 +50,20 @@ CREATE TABLE IF NOT EXISTS vibes (
   PRIMARY KEY (player_id, day)
 );
 
--- Peeks bought with VIBES before taking a challenge: which of the poster's cards plays in that round (0-2) (v0.5).
+-- Peeks bought with VIBES before taking a farm: one style the poster did not pick, per player and farm (v0.6).
 CREATE TABLE IF NOT EXISTS peeks (
-  duel_id     INTEGER NOT NULL REFERENCES duels(id),
+  farm_id     INTEGER NOT NULL REFERENCES farms(id),
   player_id   INTEGER NOT NULL REFERENCES players(id),
-  slot        INTEGER NOT NULL,
-  PRIMARY KEY (duel_id, player_id, slot)
+  not_style   TEXT NOT NULL,
+  PRIMARY KEY (farm_id, player_id)
 );
 
--- The ledger: one entry per finished duel, a SHA-256 hash chain (src/ledger.js).
+-- The ledger: one entry per finished farm (finished duel before v0.6), a SHA-256 hash chain (src/ledger.js).
 CREATE TABLE IF NOT EXISTS ledger (
   id          INTEGER PRIMARY KEY,
-  kind        TEXT NOT NULL,          -- duel
+  kind        TEXT NOT NULL,          -- farm (duel before v0.6)
   day         TEXT NOT NULL,
-  duel_id     INTEGER NOT NULL UNIQUE,  -- one entry per duel
+  farm_id     INTEGER NOT NULL UNIQUE,  -- one entry per farm
   record      TEXT NOT NULL,          -- the sealed JSON record (player ids, never names)
   prev_hash   TEXT NOT NULL UNIQUE,   -- one entry per chain head: the chain can't fork
   hash        TEXT NOT NULL UNIQUE,   -- SHA-256(prev_hash + "|" + record)
