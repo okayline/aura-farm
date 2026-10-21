@@ -68,6 +68,10 @@ const emo = (s) => (s == null ? "❔" : s[0] === "X" ? "🤫" : A.EMOJI[s[0]] ??
 // A player's record: their latest styles, newest first, as emoji.
 const recordLine = (rec) => (rec && rec.length ? rec.map(emo).join(" ") : "no flexes yet");
 
+// A player's profile pic: one of these, chosen from their name, so it looks random but is the same for them everywhere and
+// doesn't change when the page redraws.
+const PICS = ["😎", "🤠", "🥸", "😈", "🤡", "👻", "🧌", "🦝", "🐸", "🐢", "🦊", "🐙", "🤖", "👽", "🧙", "🥷", "🧛", "🧑‍🚀", "🤓", "😼", "🦄", "🐲", "🦖", "🧃"];
+const pic = (name) => { let h = 2166136261; for (const c of String(name ?? "?").toLowerCase()) h = Math.imul(h ^ c.codePointAt(0), 16777619); return PICS[(h >>> 0) % PICS.length]; };
 const halo = (emoji, glow = 18) => `<div class="halo" style="box-shadow: 0 0 ${glow}px ${Math.round(glow / 4)}px rgba(255,111,207,.55)">${emoji}</div>`;
 
 // ---------- screens ----------
@@ -97,7 +101,7 @@ function farmsTab() {
 function boardTab(b) {
   const rows = (b?.farms || []).map((c) => `
     <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
-      ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
+      ${halo(pic(c.name))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
@@ -143,7 +147,7 @@ function pastDetails(v, playing) {
   const played = (i) => (v.styles ? ` · ${emo(v.styles[i])} ${esc(A.STYLE[v.styles[i]] ?? "")}` : "");
   const verdict = win == null ? "A tie" : v.side >= 0 ? (win === v.side ? "You won" : "You lost") : `${esc(v.names[win] || "?")} won`;
   const proof = rec && v.styles ? [0, 1].map((i) => `<p class="small seal">${esc(v.names[i] || "?")} sealed ${esc(v.commits[i])}<br>then showed ${esc(v.styles[i])}|${esc(rec.salts?.[i] ?? "")}</p>`).join("") : "";
-  return `<div class="panel detail${playing ? " wait" : ""}" style="margin-top:14px">
+  return `<div class="panel detail${playing ? " wait" : ""}" style="margin-top:30px">
     ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]))}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clock((v.takenAt - v.postedAt) * 1000)) : ""}
     ${rec ? kv("Rules", "version " + rec.rules) : ""}
@@ -158,7 +162,7 @@ function openFarmPage(v, back) {
   const open = (me?.farms || []).filter((f) => f.status === "open").length;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="panel" style="text-align:center">
-      <div class="row" style="justify-content:center">${halo("🧍", 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
+      <div class="row" style="justify-content:center">${halo(pic(me?.name), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
       <div class="time glow">${leftSpan(end)}</div>${barOf(end)}
       <p class="small">Nobody has taken it yet. It comes down on its own when the time is up.</p></div>
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
@@ -176,7 +180,7 @@ function openFarmPage(v, back) {
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
   if (v.status === "open" && v.side !== 0) {
-    return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
+    return `<div class="row">${halo(pic(v.names[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${back}`;
@@ -193,7 +197,7 @@ function farmScreen(v) {
   // right after you FLEX, their card starts face down (the reveal flips it, and drains the loser when it's time)
   const playing = flexed && !!v.styles;
   const flip = (i) => (playing && i === other ? `<div class="slot"><div class="card back">?</div>${hand(i)}</div>` : hand(i));
-  const face = (name, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i && !playing ? " lost" : ""}">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
+  const face = (name, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i && !playing ? " lost" : ""}">${halo(pic(v.names[i]), glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
   // the line and the caption, each cut into sentences ("Same DRIP." "Same Energy." "AURA FARMED." "+100,000 aura",
   // the amount bigger), which the reveal drops in one at a time
   const sentences = (t) => t.split(/(?<=\.) /), bit = (t, cls = "") => `<span class="bit ${cls}">${esc(t)}</span>`;

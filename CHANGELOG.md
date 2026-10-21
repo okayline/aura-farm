@@ -3,6 +3,8 @@
 ## v0.27 (Oct 21 2026, HST)
 
 - The menu at the bottom is bigger: each tab has its emoji large above its name, and the name is a size bigger. Removed: the emoji and name on one small line.
+- Each player's profile pic is one of 24 emojis chosen from their name (it looks random, but it is the same for them on every screen and doesn't change when the page redraws), on the board, the face-off, the open farm page and the take screen. Removed: the same 😎 for everyone else and 🧍 for you.
+- A blank row above the Results box on a finished farm's page. Removed: the tighter gap.
 
 ## v0.26 (Oct 21 2026, HST)
 
