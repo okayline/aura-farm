@@ -129,10 +129,6 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.deepEqual(tk.captions, ["COOKED. -100,000 aura", "AURA FARMED. +100,000 aura"]);
   assert.equal(f.id, 1);
   assert.equal(tk.line, "Too much DRIP. RIZZ slipped.");
-  // the past-games cards (a done row on each player's list): both styles with theirs first, and who won
-  const annRow = (await call("ann", "GET", "/api/today")).farms.find((x) => x.id === f.id), boRow = (await call("bo", "GET", "/api/today")).farms.find((x) => x.id === f.id);
-  assert.deepEqual([annRow.styles, annRow.won], [["R", "D"], false], "ann lost with RIZZ to DRIP");
-  assert.deepEqual([boRow.styles, boRow.won], [["D", "R"], true], "bo won with DRIP over RIZZ");
   assert.equal(tk.takenAt - tk.postedAt, 2 * 3600 + 60, "the farm's own page knows when it was put up and taken: it stood for the 2 hours and a minute above");
   assert.equal(tk.left, null, "a finished farm has no time left");
   const raw = env.DB.raw.prepare("SELECT id, record, prev_hash, hash FROM ledger WHERE farm_id = 1").get();

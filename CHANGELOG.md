@@ -2,7 +2,6 @@
 
 ## v0.26 (Oct 21 2026, HST)
 
-- A past game's card on your list says WON, LOST or TIE on the right with both styles ("😏 vs 🗿", yours first), and stays otherwise as clean as before. Removed: the lone emoji on the right.
 - A finished farm's own page is detailed: the result, who put it up and who took it with what each played and their aura, when it went up and was taken and how long it stood, the rules version, both players' latest styles, and each side's sealed fingerprint with the salt that opens it, so anyone can check it. It waits until the reveal has played. Removed: the face-off with only the seal under it.
 - The open farm's page no longer says "Only you can see it" under your style. Removed: that sentence.
 

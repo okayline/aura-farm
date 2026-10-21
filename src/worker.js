@@ -312,9 +312,6 @@ async function today(req, env) {
     const side = sideOf(d, player), row = { id: d.id, status, side, opponent: d.opponent ?? null };
     if (d.status === "done") {
       const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style;
-      // for the past-games card: both styles (yours first; public once it's done) and whether you won (null: a tie)
-      row.styles = d.c_style ? (side === 0 ? [d.c_style, d.t_style] : [d.t_style, d.c_style]) : null;
-      row.won = r.winner == null ? null : r.winner === side;
     }
     else if (side === 0) row.style = d.c_style;   // your own farm's sealed style, shown only to you
     if (status === "open" && d.posted_at != null) row.left = Math.max(0, farmEnd(d) - now());   // seconds until it comes down

@@ -85,7 +85,7 @@ function farmsTab() {
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
       <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
-      ${d.status === "done" ? `<span class="res ${d.won === true ? "won" : d.won === false ? "lost" : ""}">${d.won === true ? "WON" : d.won === false ? "LOST" : "TIE"}<br><span class="small">${d.styles ? d.styles.map(emo).join(" vs ") : emo(d.style)}</span></span>` : "<span>›</span>"}
+      <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
@@ -148,7 +148,7 @@ function pastDetails(v, playing) {
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clock((v.takenAt - v.postedAt) * 1000)) : ""}
     ${rec ? kv("Rules", "version " + rec.rules) : ""}
     ${v.records ? kv(`${esc(v.names[0] || "?")}'s latest styles`, recordLine(v.records[0])) + kv(`${esc(v.names[1] || "?")}'s latest styles`, recordLine(v.records[1])) : ""}
-    ${proof ? `<p class="small">Each style was sealed before the other side picked: a fingerprint of the style and a secret salt. Now the salts are public too, so anyone can check that the style and salt hash to the fingerprint (sha256 of the style, a bar, then the salt).</p>${proof}` : ""}</div>`;
+    ${proof}</div>`;
 }
 
 // Your own open farm: everything about it that is yours to see. The style is only ever sent to you; the commitment is
