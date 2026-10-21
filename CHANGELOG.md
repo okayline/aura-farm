@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.43 (Oct 21 2026, HST)
+
+- You can FLEX 3 times in any 30 minutes. The 4th says how many minutes until the next one. Stops one player clearing the whole board in one go. Removed: no limit on FLEXes.
+
 ## v0.42 (Oct 21 2026, HST)
 
 - A new player made by putting up or taking a farm without logging in is now limited to 3 an hour from one address; past that you get "Too many new players from here. Try again later." Stops one person making endless players to take or post farms. Logging in with a save code or passkey keeps its own limit of 20 an hour. Removed: no limit on new guests.
