@@ -3,6 +3,7 @@
 ## v0.26 (Oct 21 2026, HST)
 
 - A past game's card on your list says more: WON, LOST or TIE on the right with both styles ("😏 vs 🗿", yours first), and a small line under the caption with the farm number, the styles by name and when it was taken. Removed: the lone emoji on the right.
+- The open farm's page no longer says "Only you can see it" under your style. Removed: that sentence.
 
 ## v0.25 (Oct 21 2026, HST)
 
