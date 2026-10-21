@@ -28,7 +28,7 @@ import { giveName } from "./names.js";
 
 const COOKIE = "af";
 const COOKIE_MAX_AGE = 400 * 86400;
-const SEEN_EVERY = 3600;
+const SEEN_EVERY = 900;   // 15 minutes
 const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_.\- ]{0,14}[A-Za-z0-9_.\-]$/;
 const RESERVED = new Set(["admin", "webmaster", "anonymous", "nobody", "system", "aura", "cap", "no cap"]);
 
@@ -125,7 +125,7 @@ async function findPlayer(req, env) {
   const token = readCookie(req);
   if (!token) return null;
   const h = await sha256(token);
-  // "seen" times are written at most once an hour, so an ordinary click is reads only
+  // "seen" times are written at most every 15 minutes, so an ordinary click is reads only
   let p = await env.DB.prepare("SELECT id, name, seen_at FROM players WHERE token_hash = ?").bind(h).first();
   if (!p) {
     p = await env.DB.prepare("SELECT p.id, p.name, p.seen_at, s.seen_at AS s_seen FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?").bind(h).first();

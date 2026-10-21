@@ -212,13 +212,13 @@ test("save codes and passkeys: load your player on another device, log out only 
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 1, "logging in never made a second player");
 });
 
-test("an ordinary click writes nothing: 'seen' times are saved at most once an hour", async () => {
+test("an ordinary click writes nothing: 'seen' times are saved at most every 15 minutes", async () => {
   const { env, call, tick } = setup();
   await call("ann", "POST", "/api/draft");
   const seen = () => env.DB.raw.prepare("SELECT seen_at FROM players").get().seen_at;
   const first = seen();
   tick(600); await call("ann", "GET", "/api/today");
   assert.equal(seen(), first);
-  tick(3000); await call("ann", "GET", "/api/today");
-  assert.equal(seen(), first + 3600);
+  tick(300); await call("ann", "GET", "/api/today");
+  assert.equal(seen(), first + 900);
 });
