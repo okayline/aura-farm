@@ -109,7 +109,7 @@ function farmsTab() {
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+10,000 Aura in the first hour, then 1,000 more each hour while your Farm is up</p></div>
     ${styles()}
-    <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
+    <button class="go" data-act="farm" type="button" ${pick && (me?.farms || []).filter((f) => f.status === "open").length < A.MAX_OPEN ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
 
