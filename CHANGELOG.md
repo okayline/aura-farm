@@ -2,7 +2,7 @@
 
 ## v0.7 (Oct 20 2026, HST)
 
-- Fewer labels: the Farm tab says one short line, and the Board, Today and Ledger tabs, the take screen and your own farm are just their titles. Removed: "beats X" on every style button and the paragraphs of explainer text on every screen.
+- Fewer labels: the Farm tab says one short line ("+10,000 Aura per hour while your Farm is up"), and the Board, Today and Ledger tabs, the take screen and your own farm are just their titles. Removed: "beats X" on every style button and the paragraphs of explainer text on every screen.
 - "👆 Use passkey" is a button in one row with "🔑 New code" and "👆 Add passkey". Removed: the longer "New save code" and "Add a passkey" labels: the "or log in with a passkey" link under the save code box.
 - VIBES are gone: no more peeking at a style, and no VIBES counter at the top. Removed: the peek, earning VIBES by losing a farm, and the VIBES tables (migration 005).
 

@@ -10,7 +10,7 @@ let acct = null, newCode = null, note = "";   // the "you" screen: account, a ju
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
-const STAKE = A.STAKE.toLocaleString("en-US"), HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
+const HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
 
 async function api(method, path, body) {
   const res = await fetch("/api/" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -63,7 +63,7 @@ function farmsTab() {
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">AURA FARM</div>
-      <p class="small">Pick a style. Farm aura while it's up.</p></div>
+      <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
     ${styles()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
