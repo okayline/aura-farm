@@ -19,7 +19,7 @@ export function reveal(el, v) {
   const [them, you] = el.querySelectorAll(".face"), bits = [...el.querySelectorAll(".cap .bit")];
   const winner = v.result.winner, other = 1 - (v.side >= 0 ? v.side : 1);
   const winFace = winner == null ? null : winner === other ? them : you, loseFace = winner == null ? null : winFace === them ? you : them;
-  const end = () => { loseFace?.classList.add("lost"); el.querySelector(".back")?.remove(); if (run === mine) run = null; };   // the finished screen, as drawn without the reveal
+  const end = () => { loseFace?.classList.add("lost"); el.querySelector(".back")?.remove(); el.parentNode?.querySelector(".detail.wait")?.classList.remove("wait"); if (run === mine) run = null; };   // the finished screen, as drawn without the reveal
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return end();
 
   // 1. their card face down, a wobble, then the flip

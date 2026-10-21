@@ -80,16 +80,11 @@ function header() {
   </header>`;
 }
 
-// the small line on a past game's card: its number, the styles by name, and when it was taken
-const pastLine = (d) => [`Farm #${d.id}`, d.styles ? d.styles.map((s) => A.STYLE[s]).join(" vs ") : null,
-  d.at ? new Date(d.at * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null].filter(Boolean).join(" · ");
-
 function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span>
-      ${d.status === "done" ? `<br><span class="small dim">${pastLine(d)}</span>` : ""}</span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
       ${d.status === "done" ? `<span class="res ${d.won === true ? "won" : d.won === false ? "lost" : ""}">${d.won === true ? "WON" : d.won === false ? "LOST" : "TIE"}<br><span class="small">${d.styles ? d.styles.map(emo).join(" vs ") : emo(d.style)}</span></span>` : "<span>›</span>"}
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
@@ -137,13 +132,30 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
   <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
+const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
+
+// A finished farm's details, under the face-off: who, what they played, the aura, when, and how anyone can check the seal.
+// (Hidden until the reveal has played, so it doesn't give the result away.)
+function pastDetails(v, playing) {
+  let rec = null; try { rec = v.ledger ? JSON.parse(v.ledger.record) : null; } catch { rec = null; }
+  const win = v.result.winner, who = (i) => esc(v.names[i] || "?") + (v.side === i ? " (you)" : "");
+  const played = (i) => (v.styles ? ` · ${emo(v.styles[i])} ${esc(A.STYLE[v.styles[i]] ?? "")}` : "");
+  const verdict = win == null ? "A tie" : v.side >= 0 ? (win === v.side ? "You won" : "You lost") : `${esc(v.names[win] || "?")} won`;
+  const proof = rec && v.styles ? [0, 1].map((i) => `<p class="small seal">${esc(v.names[i] || "?")} sealed ${esc(v.commits[i])}<br>then showed ${esc(v.styles[i])}|${esc(rec.salts?.[i] ?? "")}</p>`).join("") : "";
+  return `<div class="panel detail${playing ? " wait" : ""}" style="margin-top:14px">
+    ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]))}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]))}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clock((v.takenAt - v.postedAt) * 1000)) : ""}
+    ${rec ? kv("Rules", "version " + rec.rules) : ""}
+    ${v.records ? kv(`${esc(v.names[0] || "?")}'s latest styles`, recordLine(v.records[0])) + kv(`${esc(v.names[1] || "?")}'s latest styles`, recordLine(v.records[1])) : ""}
+    ${proof ? `<p class="small">Each style was sealed before the other side picked: a fingerprint of the style and a secret salt. Now the salts are public too, so anyone can check that the style and salt hash to the fingerprint (sha256 of the style, a bar, then the salt).</p>${proof}` : ""}</div>`;
+}
+
 // Your own open farm: everything about it that is yours to see. The style is only ever sent to you; the commitment is
 // public (a hash of the style and a secret salt), so showing it gives nothing away.
 function openFarmPage(v, back) {
   const end = endOf(v), s = v.mine, loses = A.STYLES.find((x) => A.BEATS[x] === s);
-  const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const open = (me?.farms || []).filter((f) => f.status === "open").length;
-  const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="panel" style="text-align:center">
       <div class="row" style="justify-content:center">${halo("🧍", 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
@@ -188,7 +200,7 @@ function farmScreen(v) {
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="duel">${face(esc(v.names[other] || "?"), other, 18)}
       <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${v.line ? `<div class="why">${sentences(v.line).map((t) => bit(t)).join(" ")}</div>` : ""}${sentences(v.captions[side]).map((t, i, all) => bit(t, i === all.length - 1 && all.length > 1 ? "amt" : "")).join(" ")}</div>
-      ${face(v.side >= 0 ? "you" : esc(v.names[side] || "?"), side, d > 0 ? 30 : 12)}</div>${seal(v)}${back}`;
+      ${face(v.side >= 0 ? "you" : esc(v.names[side] || "?"), side, d > 0 ? 30 : 12)}</div>${pastDetails(v, playing)}${seal(v)}${back}`;
 }
 
 // ---------- you: name, save codes and passkeys (kept by the shared Accounts, like the other 88x31 games) ----------
