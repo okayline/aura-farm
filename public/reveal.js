@@ -2,7 +2,7 @@
 // thing to the losing one: DRIP rains diamonds on RIZZ, RIZZ grows and MOG crumbles, MOG leans in and DRIP crumbles,
 // and a draw just sparkles on each side. Then the loser drains to black and white, and the line and the caption drop in a
 // sentence at a time, one beat apart. Mocked up and agreed: https://claude.ai/artifact/WM4HGFmPJ1cDaf184WeKAn
-// Phones set to reduce motion get the finished screen straight away.
+// Phones set to reduce motion get the same beats with fades only: no flip, no flying emoji, no stamping.
 import { BEATS } from "./engine/aura.js";
 
 const PACE = 1.25;   // every time below, stretched: the agreed version is 20% slower than the first mockup
@@ -20,10 +20,35 @@ export function reveal(el, v) {
   const winner = v.result.winner, other = 1 - (v.side >= 0 ? v.side : 1);
   const winFace = winner == null ? null : winner === other ? them : you, loseFace = winner == null ? null : winFace === them ? you : them;
   const end = () => { loseFace?.classList.add("lost"); el.querySelector(".back")?.remove(); el.parentNode?.querySelector(".detail.wait")?.classList.remove("wait"); if (run === mine) run = null; };   // the finished screen, as drawn without the reveal
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return end();
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // 1. their card face down, a wobble, then the flip
+  // 3. back to the real cards: the loser drains, the winner glows, then the line, a beat, AURA FARMED., a beat, +100,000 aura.
+  // cleanup puts the page back after the emoji layer. Reduce-motion players get the same beats with fades only.
+  const settle = (done, cleanup) => {
+    at(done, () => {
+      cleanup();
+      if (!loseFace) return;
+      anim(loseFace, [{ filter: "grayscale(0)", opacity: 1 }, { filter: "grayscale(1)", opacity: .6 }], { duration: 600 });
+      loseFace.classList.add("lost");
+      anim(winFace.querySelector(".card.on"), [{ boxShadow: "0 0 26px var(--c)" }, { boxShadow: "0 0 60px 12px var(--c)" }, { boxShadow: "0 0 26px var(--c)" }], { duration: 900 });
+    });
+    // a beat between pieces, and two after the whole line
+    let when = done + 400;
+    const times = bits.map((b, i) => (when += i === 0 ? 0 : b.parentNode !== bits[i - 1].parentNode ? 1600 : 800));
+    bits.forEach((b, i) => at(times[i], () => {
+      b.style.opacity = "";   // each one stamps down, with only a tiny bounce
+      anim(b, calm ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: "scale(1.6)", opacity: 0, easing: "ease-in" }, { transform: "scale(.96)", opacity: 1, offset: .7 }, { transform: "none", opacity: 1 }], { duration: 350 });
+      if (i === bits.length - 1) end();
+    }));
+    at(when + 800, cleanup);
+  };
+
+  // 1. their card face down, a wobble, then the flip. Reduce-motion players get the card fading over instead, then the same beats.
   for (const b of bits) b.style.opacity = 0;
+  if (calm) {
+    anim(them.querySelector(".back"), [{ opacity: 1 }, { opacity: 0 }], { duration: 500, delay: 800, fill: "both" });
+    return settle(1800, () => {});
+  }
   anim(them.querySelector(".slot"), [{ rotate: "0deg" }, { rotate: "-3deg" }, { rotate: "3deg" }, { rotate: "0deg" }], { duration: 600, delay: 100 });
   anim(them.querySelector(".back"), [{ transform: "rotateY(0)" }, { transform: "rotateY(180deg)" }], { duration: 500, delay: 800, easing: "ease-in", fill: "both" });
   anim(them.querySelector(".slot .card.on"), [{ transform: "rotateY(-180deg)" }, { transform: "rotateY(0)" }], { duration: 500, delay: 800, easing: "ease-out", fill: "both" });
@@ -83,22 +108,6 @@ export function reveal(el, v) {
       done = 1800;
     }
 
-    // 3. back to the real cards: the loser drains, the winner glows, then the line, a beat, AURA FARMED., a beat, +100,000 aura
-    at(done, () => {
-      fx.remove(); wSpan.style.visibility = lSpan.style.visibility = "";
-      if (!loseFace) return;
-      anim(loseFace, [{ filter: "grayscale(0)", opacity: 1 }, { filter: "grayscale(1)", opacity: .6 }], { duration: 600 });
-      loseFace.classList.add("lost");
-      anim(winFace.querySelector(".card.on"), [{ boxShadow: "0 0 26px var(--c)" }, { boxShadow: "0 0 60px 12px var(--c)" }, { boxShadow: "0 0 26px var(--c)" }], { duration: 900 });
-    });
-    // a beat between pieces, and two after the whole line
-    let when = done + 400;
-    const times = bits.map((b, i) => (when += i === 0 ? 0 : b.parentNode !== bits[i - 1].parentNode ? 1600 : 800));
-    bits.forEach((b, i) => at(times[i], () => {
-      b.style.opacity = "";   // each one stamps down, with only a tiny bounce
-      anim(b, [{ transform: "scale(1.6)", opacity: 0, easing: "ease-in" }, { transform: "scale(.96)", opacity: 1, offset: .7 }, { transform: "none", opacity: 1 }], { duration: 350 });
-      if (i === bits.length - 1) end();
-    }));
-    at(when + 800, () => fx.remove());
+    settle(done, () => { fx.remove(); wSpan.style.visibility = lSpan.style.visibility = ""; });
   });
 }

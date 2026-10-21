@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.40 (Oct 21 2026, HST)
+
+- Phones with Reduce Motion on now get the fight too, in a calm version: their card fades over (no flip), then the loser fades to grey, and the line, AURA FARMED. and the amount fade in one beat apart. No flipping, flying emoji, shaking or stamping. Removed: jumping straight to the finished screen for those phones.
+
 ## v0.39 (Oct 21 2026, HST)
 
 - With 3 farms up, FARM AURA is greyed out even when a style is picked, instead of lighting up and then saying no. Removed: the button looking ready when you already have 3 up.
