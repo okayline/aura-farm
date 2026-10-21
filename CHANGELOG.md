@@ -4,7 +4,7 @@
 
 - The tabs are renamed: Home (was Farm) and 🌾 The Farm (was Board). Removed: the names "Farm" and "Board" for those tabs.
 - FARM AURA keeps you on Home: your farm shows up in the list below instead of opening its own screen. Removed: the jump to the farm screen after tapping FARM AURA.
-- The finished-farm screen is centered: both players side by side, each with their name, record and style card, and the result underneath. Removed: the stacked, left-aligned layout.
+- The finished-farm screen is centered: the other player, then you, each with name, record and style card, and the result underneath. The one who lost is black and white. Removed: the left-aligned layout.
 
 ## v0.7 (Oct 20 2026, HST)
 
