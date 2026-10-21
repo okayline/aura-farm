@@ -7,6 +7,7 @@ const MOVE_WORD = { lock: "🔒 LOCK IN", farm: "🗿 FARM", dip: "💨 DIP" };
 const $app = document.getElementById("app"), $tabs = document.getElementById("tabs");
 
 let tab = "duels", me = null, view = null, picks = [], err = "", timer = null;
+let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
@@ -50,7 +51,7 @@ const halo = (emoji, pot) => {
 function header() {
   return `<header>
     <div class="title">AURA FARMING SIMULATOR<small>NO CAP BATTLE EDITION 2027</small></div>
-    <div class="me">${me?.name ? `<button class="link" data-act="rename">${esc(me.name)}</button><br>` : ""}
+    <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button><br>
       ${me?.aura != null ? `<b>${num(me.aura)}</b> aura today<br>👀 VIBES ${me.vibes}` : "stand there. look cool."}</div>
   </header>`;
 }
@@ -142,11 +143,105 @@ function duelScreen(v) {
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
+// ---------- you: name, save codes and passkeys (kept by the shared Accounts, like the other 88x31 games) ----------
+
+const md = (t) => (t ? new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
+
+function youScreen() {
+  const a = acct;
+  if (!a) return `<div class="panel"><p class="small">Loading…</p></div>`;
+  if (newCode) {
+    return `<div class="panel"><div class="big glow">Your new save code</div>
+        <p class="meme" style="font-size:20px;text-align:center;word-break:break-all">${esc(newCode)}</p>
+        <p class="small">Write it down or keep it in a password manager. It won't be shown again. Anyone with it can log in as you.</p>
+        <div class="row"><button class="chip" data-act="copycode" type="button">📋 Copy</button><button class="chip" data-act="savecode" type="button">⬇️ Download .txt</button></div></div>
+      <button class="go" data-act="codedone" type="button">DONE</button>`;
+  }
+  const ways = [
+    ...a.codes.map((c) => `<div class="item"><span class="grow">🔑 Save code<br><span class="small">made ${md(c.created_at)}${c.last_used_at ? " · last used " + md(c.last_used_at) : " · never used"}</span></span>
+      <button class="link" data-act="forgetcode:${c.id}" type="button">forget</button></div>`),
+    ...a.passkeys.map((k) => `<div class="item"><span class="grow">👆 Passkey: ${esc(k.label || "passkey")}<br><span class="small">${k.created_at ? "made " + md(k.created_at) : ""}</span></span>
+      <button class="link" data-act="forgetkey:${k.id}" type="button">remove</button></div>`),
+  ].join("");
+  const hasWay = a.codes.length + a.passkeys.length > 0;
+  return `<div class="panel"><div class="big glow">${a.name ? esc(a.name) : "You"}</div>
+      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>
+      ${a.player ? `<button class="link" data-act="rename" type="button">change name</button>` : ""}</div>
+    <div class="list">${ways || `<p class="small">No save codes or passkeys yet.</p>`}</div>
+    <div class="row"><button class="chip" data-act="newcode" type="button">🔑 New save code</button>
+      ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add a passkey</button>` : ""}</div>
+    <div class="panel"><div class="small">Log in as another player</div>
+      <div class="row" style="margin-top:8px"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
+        <button class="chip" data-act="loadcode" type="button">Log in</button></div>
+      ${pkSupported() ? `<button class="link" data-act="loadkey" type="button" style="margin-top:8px">or log in with a passkey</button>` : ""}</div>
+    ${a.player && hasWay ? `<button class="link" data-act="logout" type="button">log out of this browser</button>` : ""}
+    <p class="small" style="text-align:center">${esc(note)}</p>
+    <button class="link" data-act="back" type="button">back</button>`;
+}
+
+async function openYou() { view = { you: true }; newCode = null; acct = await api("GET", "account"); }
+
+// the save code as a little text file, so it can be kept somewhere safe (from scoundrel.exe)
+function downloadCode() {
+  const text = ["AURA FARMING SIMULATOR save code", "", "  " + newCode, "",
+    `This code logs you in as ${me?.name || "your player"} on any browser or device, here and in the other 88x31 games.`,
+    `On that one: open ${location.origin}, tap "log in" at the top, and type it in.`,
+    "Keep it private: anyone with this code can log in as you.", `Made ${new Date().toISOString().slice(0, 10)}.`, ""].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+  a.download = "aura-farm-save-code.txt";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// The browser speaks WebAuthn in ArrayBuffers; the server speaks base64url. (From scoundrel.exe and the 88x31 cLuB.)
+const pkSupported = () => !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+const fromB64 = (s) => { const t = s.replace(/-/g, "+").replace(/_/g, "/"); return Uint8Array.from(atob(t + "===".slice((t.length + 3) % 4)), (c) => c.charCodeAt(0)).buffer; };
+const toB64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const deviceName = () => {
+  const u = navigator.userAgent;
+  return /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) ? "iPad" : /Android/.test(u) ? "Android" : /Mac/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows PC" : /Linux/.test(u) ? "Linux" : "this device";
+};
+const pkOops = (e) => new Error(e && e.name === "NotAllowedError" ? "Passkey cancelled (or it timed out)." : e && e.name === "InvalidStateError" ? "This device already has a passkey for you." : (e && e.message) || "The passkey didn't work.");
+
+async function addPasskey() {
+  try {
+    const o = await api("POST", "passkey", { action: "register_options" });
+    const cred = await navigator.credentials.create({ publicKey: {
+      ...o, challenge: fromB64(o.challenge), user: { ...o.user, id: fromB64(o.user.id) },
+      excludeCredentials: o.excludeCredentials.map((c) => ({ ...c, id: fromB64(c.id) })),
+    } });
+    await api("POST", "passkey", { action: "register", label: deviceName(), credential: {
+      id: cred.id, response: { clientDataJSON: toB64(cred.response.clientDataJSON), attestationObject: toB64(cred.response.attestationObject) },
+    } });
+  } catch (e) { throw pkOops(e); }
+  acct = await api("GET", "account");
+  // passkeys only work on this site's address: a save code is the backup if that ever changes
+  note = acct.codes.length ? "Passkey saved." : "Passkey saved. Make a save code too, as a backup.";
+}
+
+async function loadWithPasskey() {
+  let d;
+  try {
+    const o = await api("POST", "passkey", { action: "login_options" });
+    const cred = await navigator.credentials.get({ publicKey: { ...o, challenge: fromB64(o.challenge) } });
+    d = await api("POST", "passkey", { action: "login", credential: {
+      id: cred.id, response: { clientDataJSON: toB64(cred.response.clientDataJSON), authenticatorData: toB64(cred.response.authenticatorData), signature: toB64(cred.response.signature) },
+    } });
+  } catch (e) { throw pkOops(e); }
+  await loggedIn(d.name);
+}
+
+async function loggedIn(name) {
+  await loadToday(); acct = await api("GET", "account");
+  note = `Logged in as ${name || "your player"}. Welcome back.`;
+}
+
 let extra = null;   // the board, leaderboard or ledger, fetched for its tab
 
 function draw() {
   clearTimeout(timer);
-  const body = view ? duelScreen(view)
+  const body = view?.you ? youScreen() : view ? duelScreen(view)
     : tab === "duels" ? duelsTab() : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div>`;
   $tabs.innerHTML = [["duels", "⚔️ Duels"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
@@ -181,9 +276,25 @@ document.addEventListener("click", (e) => {
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, slots: picks }); await loadToday(); });
   if (act === "move") return run(async () => { view = await api("POST", "move", { id: view.id, round: view.round, move: arg }); await loadToday(); });
   if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); await loadToday(); });
+  if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") {
     const name = prompt("Your name (2 to 16 characters):", me?.name || "");
-    if (name) return run(async () => { await api("POST", "name", { name }); await loadToday(); });
+    if (name) return run(async () => { await api("POST", "name", { name }); await loadToday(); if (view?.you) acct = await api("GET", "account"); });
+  }
+  if (act === "newcode") return run(async () => { newCode = (await api("POST", "codes", { action: "new" })).code; acct = await api("GET", "account"); await loadToday(); });
+  if (act === "copycode") return navigator.clipboard?.writeText(newCode).then(() => { note = "Copied."; draw(); }, () => {});
+  if (act === "savecode") return downloadCode();
+  if (act === "codedone") { newCode = null; note = "Save code made."; return draw(); }
+  if (act === "forgetcode" && confirm("Forget this save code? It stops working everywhere.")) return run(async () => { await api("POST", "codes", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Save code forgotten."; });
+  if (act === "forgetkey" && confirm("Remove this passkey? It stops working everywhere.")) return run(async () => { await api("POST", "passkey", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Passkey removed."; });
+  if (act === "addkey") return run(addPasskey);
+  if (act === "loadkey") return run(loadWithPasskey);
+  if (act === "loadcode") {
+    const code = document.getElementById("code")?.value || "";
+    return run(async () => { const d = await api("POST", "load", { code }); await loggedIn(d.name); });
+  }
+  if (act === "logout" && confirm("Log out of this browser? Log back in any time with your save code or passkey.")) {
+    return run(async () => { await api("POST", "logout", {}); await loadToday(); acct = await api("GET", "account"); note = "Logged out."; });
   }
 });
 

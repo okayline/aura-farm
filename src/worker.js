@@ -16,9 +16,14 @@
 //   POST /api/name  {name}             pick a name
 //   GET  /api/leaderboard?day=         a day's players by net aura
 //   GET  /api/ledger?before=&limit=    finished duels, newest first
+//   GET  /api/account                  your save codes, passkeys and devices
+//   POST /api/codes {action, id}       "new": make a save code (shown once); "remove": forget one
+//   POST /api/load  {code}             load the player a save code belongs to on this device (log in)
+//   POST /api/passkey {action ...}     register_options / register / login_options / login / remove
+//   POST /api/logout                   this browser forgets its player (needs a save code or passkey first)
 
 import * as A from "../public/engine/aura.js";
-import { sha256, commitment, head, chainInsert, isUnique } from "./ledger.js";
+import { sha256, commitment, head, chainInsert, verifyChain, isUnique } from "./ledger.js";
 import { giveName } from "./names.js";
 
 const COOKIE = "af";
@@ -63,6 +68,11 @@ const ROUTES = {
   "POST /api/name": setName,
   "GET /api/leaderboard": leaderboard,
   "GET /api/ledger": ledger,
+  "GET /api/account": account,
+  "POST /api/codes": codes,
+  "POST /api/load": loadCode,
+  "POST /api/passkey": passkey,
+  "POST /api/logout": logout,
 };
 
 // ---------- helpers ----------
@@ -108,11 +118,18 @@ function readCookie(req) {
 const setCookie = (token) => `${COOKIE}=${token}; Path=/; Max-Age=${COOKIE_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`;
 
 // The player behind this request's cookie, or null. Never creates one (so crawlers don't make players).
+// The first device's token is players.token_hash; a device loaded later with a save code or passkey has its own
+// token in `sessions`.
 async function findPlayer(req, env) {
   const token = readCookie(req);
   if (!token) return null;
-  const p = await env.DB.prepare("SELECT id, name FROM players WHERE token_hash = ?").bind(await sha256(token)).first();
-  if (!p) return null;
+  const h = await sha256(token);
+  let p = await env.DB.prepare("SELECT id, name FROM players WHERE token_hash = ?").bind(h).first();
+  if (!p) {
+    p = await env.DB.prepare("SELECT p.id, p.name FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?").bind(h).first();
+    if (!p) return null;
+    await env.DB.prepare("UPDATE sessions SET seen_at = ? WHERE token_hash = ?").bind(now(), h).run();
+  }
   await env.DB.prepare("UPDATE players SET seen_at = ? WHERE id = ?").bind(now(), p.id).run();
   return giveName(env, p);
 }
@@ -225,13 +242,40 @@ async function finish(env, d, moves, state, { dipper = null } = {}) {
          ON CONFLICT (player_id, day) DO UPDATE SET balance = MIN(?3, balance + 1)`)
         .bind(pid, utcDay(), A.VIBES_MAX, A.VIBES_START, d.id, t));
     }
-    try { await env.DB.batch(stmts); return; }
+    try { await env.DB.batch(stmts); }
     catch (e) {
       if (!isUnique(e)) throw e;
       // someone else sealed something first: build on the new head and try again
+      continue;
     }
+    await checkpoint(env, d.id);
+    return;
   }
   throw new Error("The ledger is busy. Try again.");
+}
+
+// After every finished duel, the ledger up to that duel's entry goes into the shared registry (dungeon-items, bound
+// as REGISTRY) as a checkpoint: its entry count and that entry's fingerprint, which covers every entry before it. The
+// registry is timestamped on Bitcoin, so this ledger is too. Only a chain that checks out is sent, with a few public
+// facts about the duel and never a player. A registry that's away never stops a duel: the next checkpoint covers it.
+// (Copied from scoundrel.exe's checkpoint.)
+async function checkpoint(env, duelId) {
+  try {
+    if (!env.REGISTRY) return;
+    const end = await env.DB.prepare("SELECT id, record FROM ledger WHERE duel_id = ?").bind(duelId).first();
+    if (!end) return;
+    const rows = (await env.DB.prepare("SELECT id, record, prev_hash, hash FROM ledger WHERE id <= ? ORDER BY id").bind(end.id).all()).results;
+    const v = await verifyChain(rows);
+    if (!v.ok) return console.error("The ledger is broken at entry " + v.at + ": no checkpoint sent.");
+    const r = JSON.parse(end.record);
+    const detail = {
+      day: r.day, duel: r.duel, result: r.result, rounds: r.moves.length, pot: r.pot,
+      winner: r.winner === 0 ? "challenger" : r.winner === 1 ? "taker" : null,
+      aura: r.deltas, bonuses: r.bonuses.map((b) => b[0]),
+    };
+    const res = await env.REGISTRY.checkpoint({ game: "aura-farm", entries: rows.length, head: rows[rows.length - 1].hash, detail });
+    if (res && res.error) console.error("The registry refused the checkpoint: " + res.error);
+  } catch (e) { console.error(e); }
 }
 
 // Once both picks of a round are in, play the round. Safe to call twice: the n guard lets one request do it.
@@ -476,4 +520,138 @@ async function ledger(req, env, url) {
   const { results } = await env.DB.prepare(
     "SELECT id, duel_id, record, prev_hash, hash, created_at FROM ledger WHERE id < ? ORDER BY id DESC LIMIT ?").bind(before, limit).all();
   return json({ entries: results.map((r) => ({ id: r.id, duel: r.duel_id, record: JSON.parse(r.record), prev: r.prev_hash, hash: r.hash })) });
+}
+
+
+// ---------- save codes and passkeys (kept by the shared Accounts service in dungeon-items) ----------
+// This game keeps its own players and cookie. Save codes and passkeys belong to an account there; the account says
+// which player here is yours. A player gets an account the first time they make a code or passkey.
+// (Copied from scoundrel.exe, without its import of save codes from before accounts: this game never had any.)
+
+const GAME = "aura-farm";
+const ACC = (env) => { if (!env.ACCOUNTS) throw new Oops("Accounts are unavailable right now. Try again in a moment.", 503); return env.ACCOUNTS; };
+const ipOf = (req) => req.headers.get("cf-connecting-ip") || "unknown";
+const ok = (r) => { if (r && r.error) throw new Oops(r.error, r.status || 400); return r; };
+
+// Load a player on this device: a new token for it in `sessions`. Returns the cookie.
+async function newSession(env, playerId) {
+  const token = newToken(), t = now();
+  await env.DB.prepare("INSERT INTO sessions (token_hash, player_id, created_at, seen_at) VALUES (?, ?, ?, ?)")
+    .bind(await sha256(token), playerId, t, t).run();
+  return setCookie(token);
+}
+
+// Fixed window per hashed IP and action. Returns true if allowed.
+async function rateLimit(env, req, action, limit, windowSecs) {
+  const key = action + ":" + (await sha256("ip:" + ipOf(req))).slice(0, 32);
+  const t = now(), windowStart = t - (t % windowSecs);
+  const row = await env.DB.prepare(
+    `INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1)
+     ON CONFLICT (key, window_start) DO UPDATE SET count = count + 1 RETURNING count`).bind(key, windowStart).first();
+  if (Math.random() < 0.02) await env.DB.prepare("DELETE FROM rate_limits WHERE window_start < ?").bind(t - 86400).run();
+  return row.count <= limit;
+}
+
+// This player's account id (or null; made on the spot with `make`).
+async function accountFor(env, player, make = false) {
+  const acc = ACC(env);
+  let id = (await acc.accountOf(GAME, player.id)).accountId;
+  if (id || !make) return id ?? null;
+  id = (await acc.createAccount()).accountId;
+  if (!ok(await acc.link(id, GAME, player.id)).linked) throw new Oops("That didn't work. Try again.");
+  return id;
+}
+
+// Log this browser in as the account's player here: the one it already has, else this browser's own player (if it has
+// no account yet), else a new one. Returns { player, cookie }.
+async function enter(req, env, accountId) {
+  const acc = ACC(env);
+  let { playerId } = await acc.playerFor(accountId, GAME);
+  if (!playerId) {
+    const cur = await findPlayer(req, env);
+    if (cur && !(await acc.accountOf(GAME, cur.id)).accountId) playerId = cur.id;
+    else {
+      if (!(await rateLimit(env, req, "new-player", 20, 3600))) throw new Oops("Too many new players from here. Try again later.", 429);
+      const t = now();
+      playerId = (await env.DB.prepare("INSERT INTO players (token_hash, created_at, seen_at) VALUES (?, ?, ?) RETURNING id").bind(await sha256(newToken()), t, t).first()).id;
+    }
+    playerId = ok(await acc.link(accountId, GAME, playerId)).playerId;
+  }
+  const p = await env.DB.prepare("SELECT id, name FROM players WHERE id = ?").bind(playerId).first();
+  if (!p) throw new Oops("That player is gone.", 404);
+  const player = await giveName(env, p);
+  return { player, cookie: await newSession(env, player.id) };
+}
+
+async function account(req, env) {
+  const player = await findPlayer(req, env);
+  if (!player) return json({ player: false, name: null, codes: [], passkeys: [], devices: 0 });
+  const id = await accountFor(env, player);
+  const ways = id ? ok(await ACC(env).info(id)) : { codes: [], passkeys: [] };
+  const devices = 1 + (await env.DB.prepare("SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?").bind(player.id).first()).n;
+  return json({ player: true, name: player.name, codes: ways.codes, passkeys: ways.passkeys, devices });
+}
+
+async function codes(req, env) {
+  const b = await body(req);
+  if (b.action === "new") {
+    const { player, cookie } = await needPlayer(req, env);
+    const r = ok(await ACC(env).addCode(await accountFor(env, player, true)));
+    return withCookie(json({ code: r.code }), cookie);
+  }
+  if (b.action === "remove") {
+    const player = await mustPlayer(req, env);
+    const id = await accountFor(env, player);
+    if (!id) throw new Oops("No such save code.", 404);
+    ok(await ACC(env).removeCode(id, Number(b.id)));
+    return json({ ok: true });
+  }
+  throw new Oops("Unknown action.");
+}
+
+// Type a save code: this device becomes that player (the player it was before stays where it is).
+async function loadCode(req, env) {
+  const r = ok(await ACC(env).loginCode({ code: (await body(req)).code, ip: ipOf(req) }));
+  const { player, cookie } = await enter(req, env, r.accountId);
+  return withCookie(json({ name: player.name }), cookie);
+}
+
+async function passkey(req, env) {
+  const b = await body(req), acc = ACC(env), origin = new URL(req.url).origin;
+  if (b.action === "login_options") return json(ok(await acc.passkeyLoginOptions({ origin, ip: ipOf(req) })));
+  if (b.action === "login") {
+    const r = ok(await acc.passkeyLogin({ origin, ip: ipOf(req), credential: b.credential }));
+    const { player, cookie } = await enter(req, env, r.accountId);
+    return withCookie(json({ name: player.name }), cookie);
+  }
+  if (b.action === "register_options" || b.action === "register") {
+    const { player, cookie } = await needPlayer(req, env);
+    const accountId = await accountFor(env, player, true);
+    const r = b.action === "register_options"
+      ? await acc.passkeyRegisterOptions({ accountId, origin })
+      : await acc.passkeyRegister({ accountId, origin, credential: b.credential, label: b.label });
+    return withCookie(json(ok(r)), cookie);
+  }
+  if (b.action === "remove") {
+    const player = await mustPlayer(req, env);
+    const id = await accountFor(env, player);
+    if (!id) throw new Oops("No such passkey.", 404);
+    return json(ok(await acc.passkeyRemove(id, Number(b.id))));
+  }
+  throw new Oops("Unknown action.");
+}
+
+// Log out: this browser forgets its player. Only once the player has a save code or passkey, so nobody locks
+// themselves out. A device loaded later just loses its session; the first device's token is replaced with one
+// nobody has, so that old cookie stops working too.
+async function logout(req, env) {
+  const player = await findPlayer(req, env);
+  const clear = `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+  if (!player) return withCookie(json({ ok: true }), clear);
+  const id = await accountFor(env, player);
+  if (!(id ? await ACC(env).waysIn(id) : 0)) throw new Oops("Make a save code or passkey first, or you'd have no way back in.");
+  const h = await sha256(readCookie(req));
+  const s = await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(h).run();
+  if (!s.meta.changes) await env.DB.prepare("UPDATE players SET token_hash = ? WHERE id = ? AND token_hash = ?").bind(await sha256(newToken()), player.id, h).run();
+  return withCookie(json({ ok: true }), clear);
 }

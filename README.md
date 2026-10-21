@@ -12,7 +12,10 @@ higher total wins the pot.
 - **Styles**: DRIP ♦ > RIZZ ♥ > MOG ♠ > YAP ♣ > DRIP. A card whose style beats the card it faces counts double.
 - **VIBES**: 1 a day, +1 per DIP (up to 3). Spend one to peek at one of their unflipped cards.
 - **Standing on the board**: up to 3 open challenges; while one stands untaken you farm 1,000 aura an hour.
-- **The ledger**: every finished duel, sealed in a SHA-256 hash chain with both lineups' fingerprints.
+- **The ledger**: every finished duel, sealed in a SHA-256 hash chain with both lineups' fingerprints. After each one,
+  the chain's length and newest fingerprint go to the shared registry (dungeon-items `REGISTRY`) as a checkpoint.
+- **Save codes and passkeys**: the shared Accounts service (dungeon-items `ACCOUNTS.md`, bound as `ACCOUNTS`). This game
+  keeps its own players and cookie; a device loaded later gets its own token in `sessions`.
 
 ## Running it
 
@@ -23,5 +26,7 @@ npx wrangler d1 create aura-db           # put the id in wrangler.jsonc
 npx wrangler d1 execute aura-db --remote --file=schema.sql
 npx wrangler secret put DAILY_SECRET     # any long random string
 ```
+
+Database changes go in `migrations/` (and `schema.sql`), run on the live aura-db before the push that needs them.
 
 Tests: `npm test` (Node 22+, uses node:sqlite in place of D1).

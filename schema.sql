@@ -69,3 +69,22 @@ CREATE TABLE IF NOT EXISTS ledger (
   hash        TEXT NOT NULL UNIQUE,   -- SHA-256(prev_hash + "|" + record)
   created_at  INTEGER NOT NULL
 );
+
+-- Devices loaded later with a save code or passkey: each has its own cookie token here (v0.2, migrations/001).
+-- The first device's token is players.token_hash. Save codes and passkeys themselves live in the shared Accounts
+-- service (dungeon-items), not here.
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash  TEXT PRIMARY KEY,         -- SHA-256 of the cookie token
+  player_id   INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+  created_at  INTEGER NOT NULL,
+  seen_at     INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sessions_player ON sessions (player_id);
+
+-- New players made by logging in, per hashed IP and hour (v0.2, migrations/001).
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key           TEXT NOT NULL,
+  window_start  INTEGER NOT NULL,
+  count         INTEGER NOT NULL,
+  PRIMARY KEY (key, window_start)
+);

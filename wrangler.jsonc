@@ -19,6 +19,11 @@
       "database_id": "d859ef38-1c68-45e3-a271-4e303daa9952"
     }
   ],
+  // the shared save codes and passkeys, and the copy registry's checkpoints (both in the dungeon-items Worker)
+  "services": [
+    { "binding": "ACCOUNTS", "service": "dungeon-items", "entrypoint": "Accounts" },
+    { "binding": "REGISTRY", "service": "dungeon-items", "entrypoint": "Registry" }
+  ],
   "vars": {
     // requests to any *.workers.dev address are sent here instead
     "CANONICAL_HOST": "aura.88x31.app"
