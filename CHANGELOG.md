@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.28 (Oct 21 2026, HST)
+
+- The AURA LEADERBOARD shows each player's profile pic beside their name. Removed: the rows with only a rank and a name.
+- The Ledger tab's heading reads "Legends of AURA". Removed: "The ledger" as that heading.
+
 ## v0.27 (Oct 21 2026, HST)
 
 - The menu at the bottom is bigger: each tab has its emoji large above its name, and the name is a size bigger. Removed: the emoji and name on one small line.

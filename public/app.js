@@ -110,7 +110,7 @@ function boardTab(b) {
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
-    <span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+    ${halo(pic(r.name))}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
@@ -126,7 +126,7 @@ function ledgerTab(l) {
     return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
       ${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span><span>›</span></button>`;
   }).join("");
-  return `<div class="panel"><div class="big glow">The ledger</div></div>
+  return `<div class="panel"><div class="big glow">Legends of AURA</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
