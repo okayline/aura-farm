@@ -77,10 +77,13 @@ function setup() {
   const jar = {};
   const call = async (who, method, path, body) => {
     const headers = { "content-type": "application/json" };
-    if (jar[who]) headers.cookie = jar[who];
+    const mine = (jar[who] ||= {});
+    if (Object.keys(mine).length) headers.cookie = Object.entries(mine).map(([k, v]) => `${k}=${v}`).join("; ");
     const res = await worker.fetch(new Request("https://aura.test" + path, { method, headers, body: body ? JSON.stringify(body) : undefined }), env);
-    const c = res.headers.get("set-cookie");
-    if (c) jar[who] = /Max-Age=0/.test(c) ? null : c.split(";")[0];
+    for (const c of res.headers.getSetCookie()) {
+      const [k, v] = c.split(";")[0].split("=");
+      if (/Max-Age=0/.test(c)) delete mine[k]; else mine[k] = v;
+    }
     return { status: res.status, ...(await res.json()) };
   };
   return { env, call, tick: (s) => { t += s; } };
@@ -238,6 +241,33 @@ test("save codes and passkeys: load your player on another device, log out only 
   assert.equal((await call("ann", "POST", "/api/passkey", { action: "login", credential: { id: "key1" } })).status, 200);
   assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).side, 0);
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 1, "logging in never made a second player");
+});
+
+test("logging out goes back to this browser's own player, so it never makes a new one", async () => {
+  const { env, call } = setup();
+  await call("ann", "POST", "/api/farm", { style: "D" });
+  const { code } = await call("ann", "POST", "/api/codes", { action: "new" });
+  const g = await call("cafe", "POST", "/api/farm", { style: "R" });       // the cafe browser's own player
+  assert.equal((await call("cafe", "POST", "/api/load", { code })).status, 200);
+  assert.equal((await call("cafe", "GET", `/api/farm?id=${g.id}`)).side, -1, "logged in as ann");
+  assert.equal((await call("cafe", "POST", "/api/logout")).status, 200);
+  assert.equal((await call("cafe", "GET", `/api/farm?id=${g.id}`)).side, 0, "back on the cafe's own player");
+  assert.equal((await call("cafe", "POST", "/api/load", { code })).status, 200);
+  assert.equal((await call("cafe", "POST", "/api/logout")).status, 200);
+  assert.equal((await call("cafe", "GET", `/api/farm?id=${g.id}`)).side, 0, "and again");
+  assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 2, "no new player was made");
+});
+
+test("logging out: if the browser's own player now has a save code or is gone, nothing is restored", async () => {
+  const { env, call } = setup();
+  await call("ann", "POST", "/api/farm", { style: "D" });
+  const { code } = await call("ann", "POST", "/api/codes", { action: "new" });
+  const g = await call("cafe", "POST", "/api/farm", { style: "R" });
+  await call("cafe", "POST", "/api/load", { code });
+  env.DB.raw.prepare("DELETE FROM farms WHERE id = ?").run(g.id);
+  env.DB.raw.prepare("DELETE FROM players WHERE id = 2").run();            // the guest is gone
+  assert.equal((await call("cafe", "POST", "/api/logout")).status, 200);
+  assert.equal((await call("cafe", "GET", "/api/account")).player, false, "no player: starts fresh");
 });
 
 test("an ordinary click writes nothing: 'seen' times are saved at most every 15 minutes", async () => {

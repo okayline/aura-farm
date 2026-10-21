@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.21 (Oct 21 2026, HST)
+
+- Each browser keeps its own player. Log in as someone else and then log out, and you are back on the player this browser had, instead of getting a new empty one. If that player was deleted or has since got a save code, log out starts fresh. Removed: a new empty player after every log out.
+
 ## v0.20 (Oct 21 2026, HST)
 
 - Log out happens on one tap. "Forget" a save code and "remove" a passkey ask "are you sure?" on the page itself, with Yes and No. Removed: the browser pop-ups for all three.
