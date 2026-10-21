@@ -90,7 +90,7 @@ function header() {
 
 function farmsTab() {
   const list = (me?.farms || []).map((d) => `
-    <button class="item" data-act="open:${d.id}" type="button">
+    <button class="item home" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
       <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>

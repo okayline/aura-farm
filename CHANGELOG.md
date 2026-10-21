@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.33 (Oct 21 2026, HST)
+
+- The farm panels on the home screen ("Farming", "vs. Sleepy Mogger") are a size bigger: more room inside, larger name and a larger line under it. The other lists (The Farm, Today, Ledger) are as they were. Removed: the smaller size on the home screen.
+
 ## v0.32 (Oct 21 2026, HST)
 
 - Your open farm's Details has "Earned so far": 10,000 for each whole hour it has stood, updating as the hours pass. It counts that farm on its own, so farms up together show the same amount while your total counts the time once. Removed: nothing.
