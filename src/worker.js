@@ -10,8 +10,8 @@
 //
 // API (all JSON):
 //   GET  /api/today                    the day, your name, aura today, your farms
-//   POST /api/farm  {style}            put a farm on the board with a sealed style (at most 3 open a day)
-//   GET  /api/board                    today's open farms (who posted and their record, never the style)
+//   POST /api/farm  {style}            put a farm on the board with a sealed style (at most 3 up at once, 24 hours each)
+//   GET  /api/board                    the open farms (who posted and their record, never the style)
 //   GET  /api/farm?id=                 one farm, as you are allowed to see it
 //   POST /api/take  {id, style}        take a farm with your style: both are revealed and sealed on the ledger at once
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
@@ -85,7 +85,10 @@ let clock = () => Math.floor(Date.now() / 1000);
 export function setClock(fn) { clock = fn; }
 const now = () => clock();
 const utcDay = (t = now()) => new Date(t * 1000).toISOString().slice(0, 10);
-const dayEnd = (day) => Date.parse(day + "T00:00:00Z") / 1000 + 86400;
+const dayStart = (day) => Date.parse(day + "T00:00:00Z") / 1000;
+const dayEnd = (day) => dayStart(day) + 86400;
+// a farm comes down 24 hours after it was posted, if nobody took it first
+const farmEnd = (d) => d.posted_at + A.LIFE;
 
 function randomHex(bytes = 16) {
   return [...crypto.getRandomValues(new Uint8Array(bytes))].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -157,20 +160,23 @@ const posed = (s, what) => { if (!A.isStyle(s)) throw new Oops(`Pick ${what}: DR
 
 // ---------- aura totals ----------
 
-// Aura on a day, from that day's farm rows (each: c_id, t_id, status, c_delta, t_delta, posted_at, taken_at).
-// Wins and losses of finished farms, plus standing: each posted farm stands from posting until taken (or the day
-// ends), counted once however many stood at the same time. Returns a Map of player id -> aura.
+// Aura on a UTC day, from the farms that were up that day (each: c_id, t_id, status, c_delta, t_delta, posted_at,
+// taken_at). A farm can span midnight, so each thing counts on the day it happened: a win or loss on the day the farm
+// was taken, and standing for the hours it stood within the day (from posting until taken or its 24 hours ran out),
+// counted once however many stood at the same time. Returns a Map of player id -> aura.
 function aurasFrom(rows, day) {
-  const end = Math.min(now(), dayEnd(day)), sum = new Map(), spans = new Map();
+  const from = dayStart(day), end = Math.min(now(), dayEnd(day)), sum = new Map(), spans = new Map();
   const add = (id, n) => sum.set(id, (sum.get(id) || 0) + n);
   for (const r of rows) {
-    if (r.status === "done") { add(r.c_id, r.c_delta); add(r.t_id, r.t_delta); }
-    if (r.posted_at != null) {
-      if (!spans.has(r.c_id)) spans.set(r.c_id, []);
-      spans.get(r.c_id).push([r.posted_at, r.taken_at ?? end]);
+    if (r.posted_at == null) continue;   // a farm that was never posted doesn't count as playing
+    if (r.status === "done" && r.taken_at >= from && r.taken_at < dayEnd(day)) {
+      add(r.c_id, r.c_delta); add(r.t_id, r.t_delta);
     }
-    if (r.posted_at != null) add(r.c_id, 0);   // a farm that was never posted doesn't count as playing
-    if (r.t_id) add(r.t_id, 0);
+    const f = Math.max(r.posted_at, from), t = Math.min(r.taken_at ?? farmEnd(r), end);
+    if (t <= f) continue;
+    if (!spans.has(r.c_id)) spans.set(r.c_id, []);
+    spans.get(r.c_id).push([f, t]);
+    add(r.c_id, 0);
   }
   for (const [id, sp] of spans) add(id, A.standing(sp));
   return sum;
@@ -178,16 +184,19 @@ function aurasFrom(rows, day) {
 
 const AURA_COLS = "c_id, t_id, status, c_delta, t_delta, posted_at, taken_at";
 
+// The farms that could count on a day: posted that day or the day before (a farm is up at most 24 hours).
+const daysOf = (day) => [utcDay(dayStart(day) - 86400), day];
+
 // One player's aura on a day. The statement goes in a batch with the call's other reads: one trip to the database.
 const auraStmt = (env, playerId, day) => env.DB.prepare(
-  `SELECT ${AURA_COLS} FROM farms WHERE day = ?1 AND c_id = ?2 UNION ALL SELECT ${AURA_COLS} FROM farms WHERE day = ?1 AND t_id = ?2`)
-  .bind(day, playerId);
+  `SELECT ${AURA_COLS} FROM farms WHERE day IN (?1, ?2) AND c_id = ?3 UNION ALL SELECT ${AURA_COLS} FROM farms WHERE day IN (?1, ?2) AND t_id = ?3`)
+  .bind(...daysOf(day), playerId);
 
 // Everyone's aura on a day, with their names (also batched).
 const aurasStmt = (env, day) => env.DB.prepare(
   `SELECT d.c_id, d.t_id, d.status, d.c_delta, d.t_delta, d.posted_at, d.taken_at, pc.name AS c_name, pt.name AS t_name
    FROM farms d LEFT JOIN players pc ON pc.id = d.c_id LEFT JOIN players pt ON pt.id = d.t_id
-   WHERE d.status IN ('open', 'done', 'expired') AND d.day = ?`).bind(day);
+   WHERE d.status IN ('open', 'done', 'expired') AND d.day IN (?, ?)`).bind(...daysOf(day));
 const namesFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_name], [r.t_id, r.t_name]]));
 
 // ---------- records ----------
@@ -231,14 +240,13 @@ async function checkpoint(env, farmId) {
   } catch (e) { console.error(e); }
 }
 
-// The daily reset: open farms from an earlier day expire. (Farms are decided when taken, so nothing is ever left
-// halfway.)
-let settledDay = null;   // this Worker instance already did today's reset (it runs again after midnight UTC)
+// Farms whose 24 hours are up expire. (Farms are decided when taken, so nothing is ever left halfway.) Every read
+// also checks the time itself, so a farm is never shown or taken after its 24 hours even before this runs.
+let settledAt = 0;   // this Worker instance last expired farms then (at most once a minute)
 async function settleStale(env) {
-  const day = utcDay();
-  if (settledDay === day) return;
-  await env.DB.prepare("UPDATE farms SET status = 'expired' WHERE status = 'open' AND day < ?").bind(day).run();
-  settledDay = day;
+  if (now() - settledAt < 60) return;
+  await env.DB.prepare("UPDATE farms SET status = 'expired' WHERE status = 'open' AND posted_at <= ?").bind(now() - A.LIFE).run();
+  settledAt = now();
 }
 
 // ---------- what a player sees ----------
@@ -246,7 +254,8 @@ async function settleStale(env) {
 // A farm as this player may see it. The poster's style is secret until the farm is taken; then both are public.
 async function farmView(env, d, player) {
   const side = sideOf(d, player);
-  const out = { id: d.id, day: d.day, status: d.status, side, names: null, commits: [d.c_commit, d.t_commit], deadline: dayEnd(d.day) };
+  if (d.status === "open" && d.posted_at != null && farmEnd(d) <= now()) d = { ...d, status: "expired" };   // its 24 hours are up
+  const out = { id: d.id, day: d.day, status: d.status, side, names: null, commits: [d.c_commit, d.t_commit], deadline: d.posted_at == null ? null : farmEnd(d) };
   // names, the poster's record and the ledger record of a finished farm, in one trip
   const [names, rec] = await env.DB.batch([
     env.DB.prepare(`SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t,
@@ -286,11 +295,14 @@ async function today(req, env) {
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
     `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, o.name AS opponent FROM farms d
      LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
-     WHERE (d.c_id = ?1 OR d.t_id = ?1) AND ((d.day = ?2 AND d.status != 'expired') OR (d.status = 'expired' AND d.day >= ?3))
-     ORDER BY d.id DESC LIMIT 30`).bind(player.id, day, utcDay(now() - 86400))]);
+     WHERE (d.c_id = ?1 OR d.t_id = ?1) AND ((d.status = 'open' AND d.posted_at > ?2) OR (d.status = 'done' AND d.taken_at >= ?3)
+       OR (d.status != 'done' AND d.posted_at > ?4))
+     ORDER BY d.id DESC LIMIT 30`).bind(player.id, now() - A.LIFE, dayStart(day), now() - 2 * A.LIFE)]);
   out.aura = aurasFrom(a.results, day).get(player.id) || 0;
   out.farms = list.results.map((d) => {
-    const side = sideOf(d, player), row = { id: d.id, status: d.status, side, opponent: d.opponent ?? null };
+    // a farm past its 24 hours that the minute-by-minute expiry hasn't reached yet already reads as expired
+    const status = d.status === "open" && farmEnd(d) <= now() ? "expired" : d.status;
+    const side = sideOf(d, player), row = { id: d.id, status, side, opponent: d.opponent ?? null };
     if (d.status === "done") { const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style; }
     else if (side === 0) row.style = d.c_style;   // your own farm's sealed style, shown only to you
     return row;
@@ -305,8 +317,8 @@ async function postFarm(req, env) {
   const day = utcDay(), salt = randomHex(), t = now();
   const r = await env.DB.prepare(
     `INSERT INTO farms (day, status, c_id, c_style, c_salt, c_commit, created_at, posted_at)
-     SELECT ?1, 'open', ?2, ?3, ?4, ?5, ?6, ?6 WHERE (SELECT COUNT(*) FROM farms WHERE c_id = ?2 AND day = ?1 AND status = 'open') < ?7 RETURNING id`)
-    .bind(day, player.id, style, salt, await commitment(style, salt), t, A.MAX_OPEN).first();
+     SELECT ?1, 'open', ?2, ?3, ?4, ?5, ?6, ?6 WHERE (SELECT COUNT(*) FROM farms WHERE c_id = ?2 AND status = 'open' AND posted_at > ?8) < ?7 RETURNING id`)
+    .bind(day, player.id, style, salt, await commitment(style, salt), t, A.MAX_OPEN, t - A.LIFE).first();
   if (!r) throw new Oops(`You already have ${A.MAX_OPEN} farms on the board.`);
   return withCookie(json(await farmView(env, await getFarm(env, r.id), player)), cookie);
 }
@@ -316,7 +328,7 @@ async function board(req, env) {
   const player = await findPlayer(req, env);
   const [list, rows] = await env.DB.batch([env.DB.prepare(
     `SELECT d.id, d.c_id, d.posted_at, p.name FROM farms d JOIN players p ON p.id = d.c_id
-     WHERE d.status = 'open' AND d.day = ? ORDER BY d.posted_at DESC LIMIT 100`).bind(day), aurasStmt(env, day)]);
+     WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at DESC LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
   const results = list.results, auras = aurasFrom(rows.results, day);
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
   const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, mine: !!player && r.c_id === player.id }));
@@ -334,7 +346,7 @@ async function take(req, env) {
   const { player, cookie } = await needPlayer(req, env);
   const b = await body(req);
   const d = await getFarm(env, b.id);
-  if (d.status !== "open" || d.day !== utcDay()) throw new Oops("Someone already took that one, or it expired.");
+  if (d.status !== "open" || farmEnd(d) <= now()) throw new Oops("Someone already took that one, or it expired.");
   if (d.c_id === player.id) throw new Oops("You can't take your own farm.");
   const style = posed(b.style, "a style"), salt = randomHex(), commit = await commitment(style, salt);
   const r = A.farm(d.c_style, style), t = now();
@@ -349,8 +361,8 @@ async function take(req, env) {
     const stmts = [
       env.DB.prepare(
         `UPDATE farms SET status = 'done', t_id = ?, t_style = ?, t_salt = ?, t_commit = ?, result = ?, c_delta = ?, t_delta = ?,
-           taken_at = ?, ended_at = ? WHERE id = ? AND status = 'open'`)
-        .bind(player.id, style, salt, commit, JSON.stringify(r), r.deltas[0], r.deltas[1], t, t, d.id),
+           taken_at = ?, ended_at = ? WHERE id = ? AND status = 'open' AND posted_at > ?`)
+        .bind(player.id, style, salt, commit, JSON.stringify(r), r.deltas[0], r.deltas[1], t, t, d.id, t - A.LIFE),
       await chainInsert(env.DB, await head(env.DB), { day: d.day, farmId: d.id, record, t }, sealed),
     ];
     let res;

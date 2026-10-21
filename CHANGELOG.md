@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.15 (Oct 21 2026, HST)
+
+- A farm stays up for 24 hours from when you post it, even past midnight. You can have 3 up at once. Your aura still counts by the day: hours a farm stands and wins or losses land on the day they happen. Removed: every farm ending at midnight UTC, and "3 a day".
+
+## v0.14 (Oct 21 2026, HST)
+
+- Each style card says what it beats, just below it ("beats 😏"), on Home and when you FLEX. Removed: nothing.
+
+## v0.13 (Oct 21 2026, HST)
+
+- Opening a farm puts its address in the bar (aura.88x31.app/?farm=N), so you can copy or share it. Your browser's back button goes back from a farm, and "back" in the game does the same. Removed: the address staying the same whatever you opened.
+
 ## v0.12 (Oct 21 2026, HST)
 
 - Your Farming rows on Home show what each farm is farming (💎, 😏 or 🗿), only to you. Removed: nothing.

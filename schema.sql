@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS players (
 
 -- A farm is a style on the board, sealed by a commitment (SHA-256 of the style and a random salt). The poster picks
 -- DRIP, RIZZ or MOG when they post it; the taker picks theirs, and both are revealed at once (v0.6).
---   open    - on the board, standing (farms aura), waiting for a taker (at most 3 per player per day)
+--   open    - on the board, standing (farms aura), waiting for a taker (at most 3 per player at once, 24 hours each)
 --   done    - taken: both styles faced off at once, sealed on the ledger
---   expired - the day ended with nobody taking it
+--   expired - its 24 hours ran out with nobody taking it (before v0.15: the UTC day ended)
 -- Farms from before v0.6 were card duels (status draft too, now gone); their c_style and t_style stay null.
 CREATE TABLE IF NOT EXISTS farms (
   id          INTEGER PRIMARY KEY,
