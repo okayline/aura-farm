@@ -3,6 +3,7 @@
 ## v0.8 (Oct 20 2026, HST)
 
 - The tabs are renamed: Home (was Farm) and 🌾 The Farm (was Board). Removed: the names "Farm" and "Board" for those tabs.
+- FARM AURA keeps you on Home: your farm shows up in the list below instead of opening its own screen. Removed: the jump to the farm screen after tapping FARM AURA.
 
 ## v0.7 (Oct 20 2026, HST)
 

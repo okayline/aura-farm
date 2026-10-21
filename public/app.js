@@ -259,7 +259,7 @@ document.addEventListener("click", (e) => {
   if (act === "pick") { pick = pick === arg ? null : arg; return draw(); }
   if (act === "back") return showTab(tab);
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
-  if (act === "farm") return run(async () => { view = await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
+  if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); pick = null; refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
