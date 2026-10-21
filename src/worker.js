@@ -28,6 +28,7 @@ import { giveName } from "./names.js";
 
 const COOKIE = "af";
 const COOKIE_MAX_AGE = 400 * 86400;
+const SEEN_EVERY = 3600;
 const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_.\- ]{0,14}[A-Za-z0-9_.\-]$/;
 const RESERVED = new Set(["admin", "webmaster", "anonymous", "nobody", "system", "aura", "cap", "no cap"]);
 
@@ -124,14 +125,15 @@ async function findPlayer(req, env) {
   const token = readCookie(req);
   if (!token) return null;
   const h = await sha256(token);
-  let p = await env.DB.prepare("SELECT id, name FROM players WHERE token_hash = ?").bind(h).first();
+  // "seen" times are written at most once an hour, so an ordinary click is reads only
+  let p = await env.DB.prepare("SELECT id, name, seen_at FROM players WHERE token_hash = ?").bind(h).first();
   if (!p) {
-    p = await env.DB.prepare("SELECT p.id, p.name FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?").bind(h).first();
+    p = await env.DB.prepare("SELECT p.id, p.name, p.seen_at, s.seen_at AS s_seen FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?").bind(h).first();
     if (!p) return null;
-    await env.DB.prepare("UPDATE sessions SET seen_at = ? WHERE token_hash = ?").bind(now(), h).run();
+    if (now() - p.s_seen >= SEEN_EVERY) await env.DB.prepare("UPDATE sessions SET seen_at = ? WHERE token_hash = ?").bind(now(), h).run();
   }
-  await env.DB.prepare("UPDATE players SET seen_at = ? WHERE id = ?").bind(now(), p.id).run();
-  return giveName(env, p);
+  if (now() - p.seen_at >= SEEN_EVERY) await env.DB.prepare("UPDATE players SET seen_at = ? WHERE id = ?").bind(now(), p.id).run();
+  return giveName(env, { id: p.id, name: p.name });
 }
 
 // The player behind this request, made on the spot if there isn't one. Returns { player, cookie? }.
@@ -175,31 +177,46 @@ const COL = ["c", "t"];
 
 // ---------- aura totals ----------
 
-// A player's standing aura on a day: their posted challenges, each standing from posting until taken (or the day
-// ends), counted once however many stood at the same time.
-async function standingOn(env, playerId, day) {
-  const { results } = await env.DB.prepare(
-    "SELECT posted_at, taken_at FROM duels WHERE c_id = ? AND day = ? AND posted_at IS NOT NULL").bind(playerId, day).all();
-  const end = Math.min(now(), dayEnd(day));
-  return A.standing(results.map((r) => [r.posted_at, r.taken_at ?? end]));
+// Aura on a day, from that day's duel rows (each: c_id, t_id, status, c_delta, t_delta, posted_at, taken_at).
+// Wins and losses of finished duels, plus standing: each posted challenge stands from posting until taken (or the
+// day ends), counted once however many stood at the same time. Returns a Map of player id -> aura.
+function aurasFrom(rows, day) {
+  const end = Math.min(now(), dayEnd(day)), sum = new Map(), spans = new Map();
+  const add = (id, n) => sum.set(id, (sum.get(id) || 0) + n);
+  for (const r of rows) {
+    if (r.status === "done") { add(r.c_id, r.c_delta); add(r.t_id, r.t_delta); }
+    if (r.posted_at != null) {
+      if (!spans.has(r.c_id)) spans.set(r.c_id, []);
+      spans.get(r.c_id).push([r.posted_at, r.taken_at ?? end]);
+    }
+    if (r.posted_at != null) add(r.c_id, 0);   // a draft that was never posted doesn't count as playing
+    if (r.t_id) add(r.t_id, 0);
+  }
+  for (const [id, sp] of spans) add(id, A.standing(sp));
+  return sum;
 }
 
+const AURA_COLS = "c_id, t_id, status, c_delta, t_delta, posted_at, taken_at";
+
+// One player's aura on a day: one query.
 async function auraOn(env, playerId, day) {
-  const r = await env.DB.prepare(
-    `SELECT COALESCE(SUM(CASE WHEN c_id = ?1 THEN c_delta ELSE t_delta END), 0) AS s
-     FROM duels WHERE status = 'done' AND day = ?2 AND (c_id = ?1 OR t_id = ?1)`).bind(playerId, day).first();
-  return r.s + (await standingOn(env, playerId, day));
+  const { results } = await env.DB.prepare(
+    `SELECT ${AURA_COLS} FROM duels WHERE day = ?1 AND c_id = ?2 UNION ALL SELECT ${AURA_COLS} FROM duels WHERE day = ?1 AND t_id = ?2`)
+    .bind(day, playerId).all();
+  return aurasFrom(results, day).get(playerId) || 0;
 }
 
-async function auraLife(env, playerId) {
-  const r = await env.DB.prepare(
-    `SELECT COALESCE(SUM(CASE WHEN c_id = ?1 THEN c_delta ELSE t_delta END), 0) AS s
-     FROM duels WHERE status = 'done' AND (c_id = ?1 OR t_id = ?1)`).bind(playerId).first();
-  const { results } = await env.DB.prepare(
-    "SELECT DISTINCT day FROM duels WHERE c_id = ? AND posted_at IS NOT NULL").bind(playerId).all();
-  let s = r.s;
-  for (const { day } of results) s += await standingOn(env, playerId, day);
-  return s;
+// Everyone's aura on a day, with names: one query.
+async function aurasOn(env, day) {
+  const { results } = await env.DB.prepare(`SELECT ${AURA_COLS} FROM duels WHERE status IN ('open', 'live', 'done', 'expired') AND day = ?`).bind(day).all();
+  return aurasFrom(results, day);
+}
+
+async function namesOf(env, ids) {
+  ids = [...new Set(ids.filter(Boolean))];
+  if (!ids.length) return new Map();
+  const { results } = await env.DB.prepare(`SELECT id, name FROM players WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all();
+  return new Map(results.map((r) => [r.id, r.name]));
 }
 
 async function vibesOf(env, playerId, day = utcDay()) {
@@ -297,8 +314,10 @@ async function resolve(env, id) {
 
 // The daily reset: a live duel from an earlier day ends now, a missing pick counting as a DIP (no VIBES for it);
 // drafts and open challenges from an earlier day expire.
+let settledDay = null;   // this Worker instance already did today's reset (it runs again after midnight UTC)
 async function settleStale(env) {
   const day = utcDay();
+  if (settledDay === day) return;
   await env.DB.prepare("UPDATE duels SET status = 'expired' WHERE status IN ('draft', 'open') AND day < ?").bind(day).run();
   const { results } = await env.DB.prepare("SELECT * FROM duels WHERE status = 'live' AND day < ? LIMIT 20").bind(day).all();
   for (const d of results) {
@@ -308,15 +327,10 @@ async function settleStale(env) {
     // every unfinished duel has an unfinished round, so a forced DIP always ends it
     await finish(env, d, moves, state);
   }
+  if (results.length < 20) settledDay = day;
 }
 
 // ---------- what a player sees ----------
-
-async function nameOf(env, id) {
-  if (!id) return null;
-  const r = await env.DB.prepare("SELECT name FROM players WHERE id = ?").bind(id).first();
-  return r ? r.name : null;
-}
 
 async function duelView(env, d, player) {
   const side = sideOf(d, player);
@@ -324,7 +338,7 @@ async function duelView(env, d, player) {
   const moves = JSON.parse(d.moves);
   const out = {
     id: d.id, day: d.day, status: d.status, side,
-    names: [await nameOf(env, d.c_id), await nameOf(env, d.t_id)],
+    names: await namesOf(env, [d.c_id, d.t_id]).then((m) => [m.get(d.c_id) ?? null, m.get(d.t_id) ?? null]),
     // both hands are face up to anyone looking at the duel: what each side could keep
     hands,
     commits: [d.c_commit, d.t_commit],
@@ -360,17 +374,18 @@ async function today(req, env) {
   const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null };
   if (!player) return json(out);
   out.aura = await auraOn(env, player.id, day);
-  out.life = await auraLife(env, player.id);
   out.vibes = await vibesOf(env, player.id, day);
   const { results } = await env.DB.prepare(
-    `SELECT * FROM duels WHERE (c_id = ?1 OR t_id = ?1) AND (day = ?2 OR status = 'live') AND status != 'expired'
-     ORDER BY id DESC LIMIT 30`).bind(player.id, day).all();
+    `SELECT d.*, o.name AS opponent FROM duels d LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
+     WHERE (d.c_id = ?1 OR d.t_id = ?1) AND (d.day = ?2 OR d.status = 'live') AND d.status != 'expired'
+     ORDER BY d.id DESC LIMIT 30`).bind(player.id, day).all();
   out.duels = [];
   for (const d of results) {
-    const side = sideOf(d, player), row = { id: d.id, status: d.status, side, opponent: await nameOf(env, side === 0 ? d.t_id : d.c_id) };
+    const side = sideOf(d, player), row = { id: d.id, status: d.status, side, opponent: d.opponent ?? null };
     if (d.status === "live") {
-      const v = await duelView(env, d, player);
-      Object.assign(row, { round: v.round, pot: v.pot, yourMove: !v.myMove });
+      const { lines } = await cardsOf(env, d);
+      const st = A.play(lines[0], lines[1], JSON.parse(d.moves));
+      Object.assign(row, { round: st.round, pot: st.pot, yourMove: !d[COL[side] + "_move"] });
     }
     if (d.status === "done") row.caption = A.caption(JSON.parse(d.result), side);
     out.duels.push(row);
@@ -417,11 +432,10 @@ async function board(req, env) {
   const day = utcDay();
   const player = await findPlayer(req, env);
   const { results } = await env.DB.prepare(
-    "SELECT id, c_id, posted_at FROM duels WHERE status = 'open' AND day = ? ORDER BY posted_at DESC LIMIT 100").bind(day).all();
-  const out = [];
-  for (const r of results) {
-    out.push({ id: r.id, name: await nameOf(env, r.c_id), aura: await auraOn(env, r.c_id, day), postedAt: r.posted_at, mine: !!player && r.c_id === player.id });
-  }
+    `SELECT d.id, d.c_id, d.posted_at, p.name FROM duels d JOIN players p ON p.id = d.c_id
+     WHERE d.status = 'open' AND d.day = ? ORDER BY d.posted_at DESC LIMIT 100`).bind(day).all();
+  const auras = results.length ? await aurasOn(env, day) : new Map();
+  const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, postedAt: r.posted_at, mine: !!player && r.c_id === player.id }));
   return json({ day, challenges: out });
 }
 
@@ -505,13 +519,10 @@ async function setName(req, env) {
 async function leaderboard(req, env, url) {
   const day = url.searchParams.get("day") || utcDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Oops("Bad day.");
-  const { results } = await env.DB.prepare(
-    `SELECT c_id AS id FROM duels WHERE day = ?1 AND posted_at IS NOT NULL
-     UNION SELECT t_id FROM duels WHERE day = ?1 AND t_id IS NOT NULL`).bind(day).all();
-  const rows = [];
-  for (const { id } of results) rows.push({ name: await nameOf(env, id), aura: await auraOn(env, id, day) });
-  rows.sort((a, b) => b.aura - a.aura);
-  return json({ day, rows: rows.slice(0, 100) });
+  const top = [...(await aurasOn(env, day))].sort((a, b) => b[1] - a[1]).slice(0, 100);
+  const names = await namesOf(env, top.map(([id]) => id));   // D1 takes up to 100 bound values
+  const rows = top.map(([id, aura]) => ({ name: names.get(id) ?? null, aura }));
+  return json({ day, rows });
 }
 
 async function ledger(req, env, url) {

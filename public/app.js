@@ -262,14 +262,14 @@ async function openDuel(id, keepPicks = false) {
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-tab],[data-act]");
   if (!t) return;
-  if (t.dataset.tab) { tab = t.dataset.tab; view = null; return run(async () => { await loadToday(); await loadTab(); }); }
+  if (t.dataset.tab) { tab = t.dataset.tab; view = null; return run(() => Promise.all([loadToday(), loadTab()])); }
   const [act, arg] = t.dataset.act.split(":");
   if (act === "pick") {
     const i = Number(arg);
     picks = picks.includes(i) ? picks.filter((x) => x !== i) : picks.length < 3 ? [...picks, i] : picks;
     return draw();
   }
-  if (act === "back") { view = null; return run(async () => { await loadToday(); await loadTab(); }); }
+  if (act === "back") { view = null; return run(() => Promise.all([loadToday(), loadTab()])); }
   if (act === "open" || act === "look") return run(() => openDuel(Number(arg)));
   if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; await loadToday(); });
   if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks }); await loadToday(); });
