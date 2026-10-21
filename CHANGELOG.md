@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3 (not released yet)
+## v0.3 (Oct 20 2026, HST)
 
 - Play against the plan: when you post a challenge you also plan your move for each round. Whoever takes it plays the whole duel straight away, one round at a time, and you never have to come back. Removed: waiting for the other player each round, "your move" on challenges you posted, and the page checking back every 10 seconds.
 - Challenges that were open or being played when this went live were cancelled (they had no plan). Nothing was paid out for them.
