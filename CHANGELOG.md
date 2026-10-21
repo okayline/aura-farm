@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7 (Oct 20 2026, HST)
+
+- A "Who beats who" panel (💎 DRIP beats 😏 RIZZ, 😏 RIZZ beats 🗿 MOG, 🗿 MOG beats 💎 DRIP) on the Farm tab and when you take a farm. Removed: "beats X" on every style button.
+- VIBES are gone: no more peeking at a style, and no VIBES counter at the top. Removed: the peek, earning VIBES by losing a farm, and the VIBES tables (migration 005).
+
 ## v0.6 (Oct 20 2026, HST)
 
 - AURA FARM: no more cards. You pick a style and tap FARM AURA to put it on the board, sealed: 💎 DRIP, 😏 RIZZ or 🗿 MOG. While it stands untaken you farm 10,000 aura an hour. Whoever takes it picks their own, both are revealed at once, and the style that beats the other wins 100,000 (the loser is COOKED, a draw is MUTUAL MOG). Removed: the 19 cards, the deal, 5-card hands, lineups and their order, face-offs, TOTAL MOG, NO CAP and the CAP.

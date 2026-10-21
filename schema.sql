@@ -42,22 +42,6 @@ CREATE INDEX IF NOT EXISTS farms_status ON farms (status, day);
 CREATE INDEX IF NOT EXISTS farms_c ON farms (c_id, day);
 CREATE INDEX IF NOT EXISTS farms_t ON farms (t_id, day);
 
--- VIBES: everyone holds 1 at the start of each UTC day, +1 per farm lost (up to 3), -1 per peek.
-CREATE TABLE IF NOT EXISTS vibes (
-  player_id   INTEGER NOT NULL REFERENCES players(id),
-  day         TEXT NOT NULL,
-  balance     INTEGER NOT NULL,
-  PRIMARY KEY (player_id, day)
-);
-
--- Peeks bought with VIBES before taking a farm: one style the poster did not pick, per player and farm (v0.6).
-CREATE TABLE IF NOT EXISTS peeks (
-  farm_id     INTEGER NOT NULL REFERENCES farms(id),
-  player_id   INTEGER NOT NULL REFERENCES players(id),
-  not_style   TEXT NOT NULL,
-  PRIMARY KEY (farm_id, player_id)
-);
-
 -- The ledger: one entry per finished farm (finished duel before v0.6), a SHA-256 hash chain (src/ledger.js).
 CREATE TABLE IF NOT EXISTS ledger (
   id          INTEGER PRIMARY KEY,

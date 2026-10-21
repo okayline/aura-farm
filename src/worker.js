@@ -1,4 +1,4 @@
-// AURA FARMING SIMULATOR Worker: cookie players, the board of farms, takes, VIBES, standing aura, the daily board and
+// AURA FARMING SIMULATOR Worker: cookie players, the board of farms, takes, standing aura, the daily board and
 // the ledger.
 //
 // AURA FARM (v0.6): a poster puts a style (DRIP, RIZZ or MOG) on the board, sealed, and farms aura while it stands.
@@ -9,11 +9,10 @@
 // player is allowed to see (farmView). The rules are public/engine/aura.js, the same file the page loads.
 //
 // API (all JSON):
-//   GET  /api/today                    the day, your name, aura today, VIBES, your farms
+//   GET  /api/today                    the day, your name, aura today, your farms
 //   POST /api/farm  {style}            put a farm on the board with a sealed style (at most 3 open a day)
 //   GET  /api/board                    today's open farms (who posted and their record, never the style)
 //   GET  /api/farm?id=                 one farm, as you are allowed to see it
-//   POST /api/vibes {id}               before taking: spend 1 VIBES to see one style the poster didn't pick
 //   POST /api/take  {id, style}        take a farm with your style: both are revealed and sealed on the ledger at once
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
 //   GET  /api/leaderboard?day=         a day's players by net aura
@@ -62,7 +61,6 @@ const ROUTES = {
   "GET /api/board": board,
   "GET /api/farm": farmOf,
   "POST /api/take": take,
-  "POST /api/vibes": vibes,
   "POST /api/name": setName,
   "GET /api/leaderboard": leaderboard,
   "GET /api/ledger": ledger,
@@ -192,10 +190,6 @@ const aurasStmt = (env, day) => env.DB.prepare(
    WHERE d.status IN ('open', 'done', 'expired') AND d.day = ?`).bind(day);
 const namesFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_name], [r.t_id, r.t_name]]));
 
-const vibesStmt = (env, playerId, day = utcDay()) =>
-  env.DB.prepare("SELECT balance FROM vibes WHERE player_id = ? AND day = ?").bind(playerId, day);
-const vibesFrom = (rows) => (rows.length ? rows[0].balance : A.VIBES_START);
-
 // ---------- records ----------
 
 // The latest styles each of these players has played, newest first (A.RECORD of them): public once revealed, so read
@@ -253,23 +247,16 @@ async function settleStale(env) {
 async function farmView(env, d, player) {
   const side = sideOf(d, player);
   const out = { id: d.id, day: d.day, status: d.status, side, names: null, commits: [d.c_commit, d.t_commit], deadline: dayEnd(d.day) };
-  // names, the poster's record, the ledger record of a finished farm, and a would-be taker's VIBES and peek, in one trip
-  const wantPeek = d.status === "open" && side !== 0 && !!player;
-  const [names, rec, v, pk] = await env.DB.batch([
+  // names, the poster's record and the ledger record of a finished farm, in one trip
+  const [names, rec] = await env.DB.batch([
     env.DB.prepare(`SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t,
       (SELECT record FROM ledger WHERE farm_id = ?3) AS record`).bind(d.c_id, d.t_id, d.id),
     recordsStmt(env, [d.c_id, d.t_id].filter(Boolean)),
-    ...(wantPeek ? [vibesStmt(env, player.id),
-      env.DB.prepare("SELECT not_style FROM peeks WHERE farm_id = ? AND player_id = ?").bind(d.id, player.id)] : []),
   ]);
   out.names = [names.results[0].c ?? null, names.results[0].t ?? null];
   const records = recordsFrom(rec.results);
   out.records = [records.get(d.c_id) ?? [], d.t_id ? records.get(d.t_id) ?? [] : []];
   if (side === 0 && d.status === "open") out.mine = d.c_style;          // only the poster sees their own sealed style
-  if (d.status === "open" && side !== 0) {
-    out.vibes = wantPeek ? vibesFrom(v.results) : A.VIBES_START;
-    out.peek = wantPeek ? pk.results[0]?.not_style ?? null : null;
-  }
   if (d.status === "done") {
     const r = JSON.parse(d.result);
     out.result = r;
@@ -293,13 +280,12 @@ async function today(req, env) {
   const player = await findPlayer(req, env);
   const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null };
   if (!player) return json(out);
-  const [a, v, list] = await env.DB.batch([auraStmt(env, player.id, day), vibesStmt(env, player.id, day), env.DB.prepare(
+  const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
     `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, o.name AS opponent FROM farms d
      LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
      WHERE (d.c_id = ?1 OR d.t_id = ?1) AND ((d.day = ?2 AND d.status != 'expired') OR (d.status = 'expired' AND d.day >= ?3))
      ORDER BY d.id DESC LIMIT 30`).bind(player.id, day, utcDay(now() - 86400))]);
   out.aura = aurasFrom(a.results, day).get(player.id) || 0;
-  out.vibes = vibesFrom(v.results);
   out.farms = list.results.map((d) => {
     const side = sideOf(d, player), row = { id: d.id, status: d.status, side, opponent: d.opponent ?? null };
     if (d.status === "done") { const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style; }
@@ -339,7 +325,7 @@ async function farmOf(req, env, url) {
   return json(await farmView(env, d, player));
 }
 
-// Taking a farm decides it: the farms row, its ledger entry and the loser's +1 VIBES in one batch.
+// Taking a farm decides it: the farms row and its ledger entry in one batch.
 async function take(req, env) {
   const { player, cookie } = await needPlayer(req, env);
   const b = await body(req);
@@ -363,14 +349,6 @@ async function take(req, env) {
         .bind(player.id, style, salt, commit, JSON.stringify(r), r.deltas[0], r.deltas[1], t, t, d.id),
       await chainInsert(env.DB, await head(env.DB), { day: d.day, farmId: d.id, record, t }, sealed),
     ];
-    // losing earns +1 VIBES (up to 3) on today's count
-    if (r.winner !== null) {
-      stmts.push(env.DB.prepare(
-        `INSERT INTO vibes (player_id, day, balance) SELECT ?1, ?2, MIN(?3, ?4 + 1)
-           WHERE EXISTS (SELECT 1 FROM farms WHERE id = ?5 AND status = 'done' AND t_id = ?6 AND ended_at = ?7)
-         ON CONFLICT (player_id, day) DO UPDATE SET balance = MIN(?3, balance + 1)`)
-        .bind(r.winner === 0 ? player.id : d.c_id, utcDay(t), A.VIBES_MAX, A.VIBES_START, d.id, player.id, t));
-    }
     let res;
     try { res = await env.DB.batch(stmts); }
     catch (e) {
@@ -383,32 +361,6 @@ async function take(req, env) {
     return withCookie(json(await farmView(env, await getFarm(env, d.id), player)), cookie);
   }
   throw new Error("The ledger is busy. Try again.");
-}
-
-// Before taking: spend 1 VIBES to see one style the poster didn't pick. One peek per player per farm; asking again
-// shows the same one, free.
-async function vibes(req, env) {
-  const { player, cookie } = await needPlayer(req, env);
-  const b = await body(req);
-  const d = await getFarm(env, b.id);
-  if (d.status !== "open" || d.day !== utcDay()) throw new Oops("Someone already took that one, or it expired.");
-  if (d.c_id === player.id) throw new Oops("That's your own farm.");
-  const others = A.STYLES.filter((s) => s !== d.c_style);
-  const not = others[crypto.getRandomValues(new Uint8Array(1))[0] % others.length];
-  const day = utcDay();
-  const res = await env.DB.batch([
-    env.DB.prepare("INSERT INTO vibes (player_id, day, balance) VALUES (?, ?, ?) ON CONFLICT (player_id, day) DO NOTHING")
-      .bind(player.id, day, A.VIBES_START),
-    // pay only for a farm not peeked at yet
-    env.DB.prepare(`UPDATE vibes SET balance = balance - 1 WHERE player_id = ?1 AND day = ?2 AND balance > 0
-      AND NOT EXISTS (SELECT 1 FROM peeks WHERE farm_id = ?3 AND player_id = ?1)`).bind(player.id, day, d.id),
-    env.DB.prepare("INSERT INTO peeks (farm_id, player_id, not_style) SELECT ?, ?, ? WHERE changes() = 1").bind(d.id, player.id, not),
-  ]);
-  if (!res[1].meta.changes) {
-    const had = await env.DB.prepare("SELECT 1 AS y FROM peeks WHERE farm_id = ? AND player_id = ?").bind(d.id, player.id).first();
-    if (!had) throw new Oops("You're out of VIBES for today. Losing a farm earns one.");
-  }
-  return withCookie(json(await farmView(env, d, player)), cookie);
 }
 
 async function setName(req, env) {

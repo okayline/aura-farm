@@ -27,15 +27,20 @@ async function run(fn) {
 
 // ---------- pieces ----------
 
-// A style: its name, a big emoji and what it beats. A button to tap when `tap` is set (`on` marks the one picked),
+// A style: its name and a big emoji. A button to tap when `tap` is set (`on` marks the one picked),
 // otherwise just shown.
 function style(s, { tap = false, on = false } = {}) {
   const tag = tap ? "button" : "div", attrs = tap ? ` data-act="pick:${s}" type="button"` : "";
   return `<${tag} class="card${on ? " on" : ""}" style="--c: ${COLOR[s]}"${attrs} aria-label="${A.STYLE[s]}">
-    <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span><span class="s">beats ${A.EMOJI[A.BEATS[s]]}</span></${tag}>`;
+    <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span></${tag}>`;
 }
 const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>`;
 const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
+
+// Who beats who, from the rules file, so the page can't disagree with the game.
+const rules = () => `<div class="panel"><div class="small">Who beats who</div>
+  ${A.STYLES.map((s) => `<div>${A.label(s)} beats ${A.label(A.BEATS[s])}</div>`).join("")}
+  <div class="small" style="margin-top:6px">The same style is a draw.</div></div>`;
 
 // the emoji for a style or a card code from a duel before v0.6 ("D3" is DRIP, "X1" the CAP; older codes show as text)
 const emo = (s) => (s == null ? "❔" : s[0] === "X" ? "🤫" : A.EMOJI[s[0]] ?? s);
@@ -51,7 +56,7 @@ function header() {
   return `<header>
     <div class="title">AURA FARMING SIMULATOR<small>NO CAP BATTLE EDITION 2027</small></div>
     <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button><br>
-      ${me?.aura != null ? `<b>${num(me.aura)}</b> aura today<br>👀 VIBES ${me.vibes}` : "stand there. look cool."}</div>
+      ${me?.aura != null ? `<b>${num(me.aura)}</b> aura today` : "stand there. look cool."}</div>
   </header>`;
 }
 
@@ -66,6 +71,7 @@ function farmsTab() {
       <p class="small">Pick a style and put it on the board, sealed. While it stands untaken you farm ${HOUR} aura an hour. Whoever takes it
       picks their own: the style that beats the other wins ${STAKE}. Up to 3 a day.</p></div>
     ${styles()}
+    ${rules()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
@@ -104,13 +110,10 @@ function ledgerTab(l) {
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
   if (v.status === "open" && v.side !== 0) {
-    const peek = v.peek ? `<p class="small">👀 It's not ${A.label(v.peek)}.</p>`
-      : v.vibes > 0 ? `<button class="chip" data-act="peek" type="button">👀 Peek: one style it isn't (VIBES ${v.vibes})</button>`
-      : `<p class="small">👀 No VIBES left today. Losing a farm earns one.</p>`;
     return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
-      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win ${STAKE}, if theirs beats yours you lose ${STAKE}, and the
-        same style is a draw.</p>${peek}</div>
+      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win ${STAKE}, and if theirs beats yours you lose ${STAKE}.</p></div>
+      ${rules()}
       ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 STARE DOWN</button>${back}`;
   }
@@ -240,7 +243,7 @@ function showTab(t) {
   }).catch((e) => { err = e.message; draw(); });
 }
 
-// The header (aura, VIBES) and your farms list, refreshed in the background after an action.
+// The header (aura) and your farms list, refreshed in the background after an action.
 function refreshMe() { api("GET", "today").then((d) => { me = d; draw(); }).catch(() => {}); }
 
 function draw() {
@@ -267,7 +270,6 @@ document.addEventListener("click", (e) => {
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
   if (act === "farm") return run(async () => { view = await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); pick = null; refreshMe(); });
-  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id }); refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 

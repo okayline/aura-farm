@@ -90,7 +90,7 @@ function setup() {
 const BEAT = { D: "R", R: "M", M: "D" };
 const judge = (a, b) => (BEAT[a] === b ? 0 : BEAT[b] === a ? 1 : null);
 
-test("a whole farm: post a sealed style, peek with VIBES, take: decided at once and sealed on the ledger", async () => {
+test("a whole farm: post a sealed style, take: decided at once and sealed on the ledger", async () => {
   const { env, call, tick } = setup();
   assert.equal((await call("ann", "POST", "/api/farm", { style: "X" })).status, 400);
   const f = await call("ann", "POST", "/api/farm", { style: "R" });
@@ -104,16 +104,11 @@ test("a whole farm: post a sealed style, peek with VIBES, take: decided at once 
   assert.deepEqual(b.farms[0].record, []);
   assert.equal(JSON.stringify(b).includes('"R"'), false, "the board never shows the style");
 
-  // before taking, bo can't see ann's style; a peek shows one style she did not pick
+  // before taking, bo can't see ann's style
   const look = await call("bo", "GET", `/api/farm?id=${f.id}`);
   assert.equal(look.mine, undefined);
   assert.equal(look.styles, undefined);
-  assert.equal(look.vibes, 1);
-  const p = await call("bo", "POST", "/api/vibes", { id: f.id });
-  assert.ok(["D", "M"].includes(p.peek), "ann picked RIZZ, so a peek says DRIP or MOG");
-  assert.equal(p.vibes, 0);
-  assert.equal((await call("bo", "POST", "/api/vibes", { id: f.id })).peek, p.peek, "the same peek again is free");
-  assert.equal((await call("ann", "POST", "/api/vibes", { id: f.id })).status, 400, "not on your own farm");
+  assert.equal((await call("bo", "POST", "/api/vibes", { id: f.id })).status, 404, "no VIBES any more");
   assert.equal((await call("ann", "POST", "/api/take", { id: f.id, style: "D" })).status, 400, "not your own farm");
   assert.equal((await call("bo", "POST", "/api/take", { id: f.id, style: "?" })).status, 400);
 
@@ -125,10 +120,6 @@ test("a whole farm: post a sealed style, peek with VIBES, take: decided at once 
   assert.equal(tk.result.winner, 1);
   assert.deepEqual(tk.captions, ["COOKED. -100,000 aura", "AURA FARMED. +100,000 aura"]);
   assert.equal((await call("cy", "POST", "/api/take", { id: f.id, style: "M" })).status, 400, "already taken");
-
-  // losing earns a VIBES: ann had her 1 (+1 for losing), bo spent his (0)
-  assert.equal((await call("ann", "GET", "/api/today")).vibes, 2);
-  assert.equal((await call("bo", "GET", "/api/today")).vibes, 0);
 
   // the record is public once revealed: both players' styles, newest first, on the next farm of either
   const g = await call("ann", "POST", "/api/farm", { style: "M" });
@@ -156,7 +147,7 @@ test("a whole farm: post a sealed style, peek with VIBES, take: decided at once 
   assert.deepEqual(lb.rows.map((r) => r.aura), [100000, -80000]);
 });
 
-test("a draw changes nothing and earns no VIBES; the board record shows only revealed styles", async () => {
+test("a draw changes nothing", async () => {
   const { call, tick } = setup();
   const f = await call("ann", "POST", "/api/farm", { style: "M" });
   tick(3600);
@@ -164,8 +155,6 @@ test("a draw changes nothing and earns no VIBES; the board record shows only rev
   assert.equal(tk.result.winner, null);
   assert.deepEqual(tk.result.deltas, [0, 0]);
   assert.equal(tk.captions[1], "MUTUAL MOG. +0 aura");
-  assert.equal((await call("ann", "GET", "/api/today")).vibes, 1);
-  assert.equal((await call("bo", "GET", "/api/today")).vibes, 1);
 });
 
 test("at most 3 farms on the board; the daily reset expires them and says so", async () => {
@@ -201,7 +190,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   assert.equal(JSON.stringify(sent).includes("ann"), false);
 });
 
-test("migration 004 turns a v0.5 card duel into a farm: the old ledger entry and result stay as sealed", async () => {
+test("migrations 004 and 005 turn a v0.5 card duel into a farm and drop VIBES: the old ledger entry and result stay as sealed", async () => {
   const old = new DatabaseSync(":memory:");
   old.exec(execSync("git show a35b001:schema.sql", { encoding: "utf8" }));   // v0.5
   old.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (1, 'a', 1, 1), (2, 'b', 1, 1)").run();
@@ -209,7 +198,7 @@ test("migration 004 turns a v0.5 card duel into a farm: the old ledger entry and
   old.prepare("INSERT INTO duels (id, day, status, c_id, created_at, posted_at) VALUES (8, '2027-01-01', 'open', 1, 1, 1)").run();
   old.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 7, '{}', ?, ?, 5)")
     .run("0".repeat(64), sha("0".repeat(64) + "|{}"));
-  old.exec(readFileSync(new URL("../migrations/004_aura_farm.sql", import.meta.url), "utf8"));
+  for (const m of ["004_aura_farm", "005_no_vibes"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
   assert.deepEqual({ ...old.prepare("SELECT id, kind, farm_id, record FROM ledger").get() }, { id: 1, kind: "duel", farm_id: 7, record: "{}" });
   assert.deepEqual({ ...old.prepare("SELECT status, c_delta, t_delta, c_style FROM farms WHERE id = 7").get() }, { status: "done", c_delta: 110000, t_delta: -10000, c_style: null });
   assert.equal(old.prepare("SELECT status FROM farms WHERE id = 8").get().status, "expired", "an open card duel can't be taken as a farm");

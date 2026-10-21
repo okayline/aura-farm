@@ -19,7 +19,6 @@ export const STAKE = 100000;
 export const STAND_PER_HOUR = 10000;
 export const MAX_OPEN = 3;
 export const RECORD = 10;     // how many of a player's latest styles are shown
-export const VIBES_START = 1, VIBES_MAX = 3;
 
 export const isStyle = (s) => STYLES.includes(s);
 export const label = (s) => `${EMOJI[s]} ${STYLE[s]}`;
