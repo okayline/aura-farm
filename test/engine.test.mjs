@@ -31,7 +31,7 @@ test("the line: picked by the farm's number from the winning matchup's four; a d
   assert.equal(A.line(["R", "M"], 0), "MOG couldn't handle the RIZZ.");        // RIZZ beats MOG, line 1 of 8
   assert.equal(A.line(["M", "R"], 11), "MOG blushed. gg, out-RIZZed.");        // same matchup either way round, 11 % 8 = 3
   assert.equal(A.line(["D", "M"], 9), "All that DRIP, still got MOGGED.");     // MOG beats DRIP, 9 % 8 = 1
-  assert.equal(A.line(["R", "D"], 15), "Dripped on. RIZZ is soaked.");         // DRIP beats RIZZ, the last of 8
+  assert.equal(A.line(["R", "D"], 15), "RIZZ got iced out.");                  // DRIP beats RIZZ, 15 % 3 = 0
   assert.equal(A.line(["M", "M"], 2), "Two MOGS. One Love.");
   assert.equal(A.line(["R", "R"], 3), "A RIZZY standoff.");
   assert.equal(A.line(["D", "D"], 7), "DRIP recognizes DRIP.");
