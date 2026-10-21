@@ -2,7 +2,7 @@
 
 ## v0.22 (Oct 21 2026, HST)
 
-- More random names: 28 new first words and 30 new last words (like "Touch Grass Axolotl", "Clutch Sloth", "Fanum Zaddy"). Removed: nothing.
+- More random names: 28 new first words and 30 new last words (like "Clutch Sloth", "Fanum Zaddy", "Gagged Ick"). Removed: nothing.
 
 ## v0.21 (Oct 21 2026, HST)
 
