@@ -15,8 +15,8 @@ export const EMOJI = { D: "💎", R: "😏", M: "🗿" };
 export const BEATS = { D: "R", R: "M", M: "D" };
 export const STYLES = Object.keys(STYLE);
 
-export const STAKE = 10000;
-export const STAND_PER_HOUR = 1000;
+export const STAKE = 100000;
+export const STAND_PER_HOUR = 10000;
 export const MAX_OPEN = 3;
 export const RECORD = 10;     // how many of a player's latest styles are shown
 export const VIBES_START = 1, VIBES_MAX = 3;
@@ -44,7 +44,7 @@ export function caption(result, side) {
 // A player's latest styles, newest first, from their finished farms (rows of { id, style }, any order).
 export const record = (rows) => [...rows].sort((a, b) => b.id - a.id).slice(0, RECORD).map((r) => r.style);
 
-// Standing aura: 1,000 an hour while at least one farm stood untaken. spans = [[from, to], ...] in seconds.
+// Standing aura: 10,000 an hour while at least one farm stood untaken. spans = [[from, to], ...] in seconds.
 // Overlapping farms count once.
 export function standing(spans) {
   const s = spans.filter(([f, t]) => t > f).sort((x, y) => x[0] - y[0]);

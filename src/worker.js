@@ -308,7 +308,7 @@ async function today(req, env) {
   return json(out);
 }
 
-// Put a farm on the board: the style is sealed by a commitment, and the poster starts farming 1,000 aura an hour.
+// Put a farm on the board: the style is sealed by a commitment, and the poster starts farming aura every hour.
 async function postFarm(req, env) {
   const { player, cookie } = await needPlayer(req, env);
   const style = posed((await body(req)).style, "a style");

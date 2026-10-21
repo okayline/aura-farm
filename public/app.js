@@ -10,6 +10,7 @@ let acct = null, newCode = null, note = "";   // the "you" screen: account, a ju
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
+const STAKE = A.STAKE.toLocaleString("en-US"), HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
 
 async function api(method, path, body) {
   const res = await fetch("/api/" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -58,14 +59,14 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming" : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? "1,000 aura an hour until someone takes it" : "nobody took it"}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} aura an hour until someone takes it` : "nobody took it"}</span></span>
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">AURA FARM</div>
-      <p class="small">Pick a style and put it on the board, sealed. While it stands untaken you farm 1,000 aura an hour. Whoever takes it
-      picks their own: the style that beats the other wins 10,000. Up to 3 a day.</p></div>
+      <p class="small">Pick a style and put it on the board, sealed. While it stands untaken you farm ${HOUR} aura an hour. Whoever takes it
+      picks their own: the style that beats the other wins ${STAKE}. Up to 3 a day.</p></div>
     ${styles()}
-    <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 AURA FARM</button>
+    <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
 
@@ -108,14 +109,14 @@ function farmScreen(v) {
       : `<p class="small">👀 No VIBES left today. Losing a farm earns one.</p>`;
     return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
-      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win 10,000, if theirs beats yours you lose 10,000, and the
+      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win ${STAKE}, if theirs beats yours you lose ${STAKE}, and the
         same style is a draw.</p>${peek}</div>
       ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 STARE DOWN</button>${back}`;
   }
   if (v.status === "open" || v.status === "expired") {
     return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div>
-      <p class="small">${v.status === "open" ? "1,000 aura an hour until someone takes it." : "Nobody took it before the daily reset."}</p></div>
+      <p class="small">${v.status === "open" ? `${HOUR} aura an hour until someone takes it.` : "Nobody took it before the daily reset."}</p></div>
       ${v.mine ? `<div class="small">Your style (only you can see it)</div>${shown(v.mine)}` : ""}${back}`;
   }
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)

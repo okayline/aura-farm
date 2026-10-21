@@ -100,7 +100,7 @@ test("a whole farm: post a sealed style, peek with VIBES, take: decided at once 
   tick(2 * 3600 + 60);     // stood for 2 hours
   const b = await call("bo", "GET", "/api/board");
   assert.equal(b.farms.length, 1);
-  assert.equal(b.farms[0].aura, 2000);
+  assert.equal(b.farms[0].aura, 20000);
   assert.deepEqual(b.farms[0].record, []);
   assert.equal(JSON.stringify(b).includes('"R"'), false, "the board never shows the style");
 
@@ -121,9 +121,9 @@ test("a whole farm: post a sealed style, peek with VIBES, take: decided at once 
   assert.equal(tk.status, "done");
   assert.deepEqual(tk.styles, ["R", "D"]);
   assert.equal(judge("R", "D"), 1);
-  assert.deepEqual(tk.result.deltas, [-10000, 10000]);
+  assert.deepEqual(tk.result.deltas, [-100000, 100000]);
   assert.equal(tk.result.winner, 1);
-  assert.deepEqual(tk.captions, ["COOKED. -10,000 aura", "AURA FARMED. +10,000 aura"]);
+  assert.deepEqual(tk.captions, ["COOKED. -100,000 aura", "AURA FARMED. +100,000 aura"]);
   assert.equal((await call("cy", "POST", "/api/take", { id: f.id, style: "M" })).status, 400, "already taken");
 
   // losing earns a VIBES: ann had her 1 (+1 for losing), bo spent his (0)
@@ -152,8 +152,8 @@ test("a whole farm: post a sealed style, peek with VIBES, take: decided at once 
 
   const lb = await call("bo", "GET", "/api/leaderboard");
   assert.equal(lb.rows.length, 2);
-  // bo +10,000; ann -10,000 plus 2 full hours standing before bo took it
-  assert.deepEqual(lb.rows.map((r) => r.aura), [10000, -8000]);
+  // bo +100,000; ann -100,000 plus 2 full hours standing (20,000) before bo took it
+  assert.deepEqual(lb.rows.map((r) => r.aura), [100000, -80000]);
 });
 
 test("a draw changes nothing and earns no VIBES; the board record shows only revealed styles", async () => {
@@ -194,8 +194,8 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   const sent = env.REGISTRY.checkpoints;
   assert.deepEqual(sent.map((c) => [c.game, c.entries, c.head]), [["aura-farm", 1, rows[0].hash], ["aura-farm", 2, rows[1].hash]]);
   assert.deepEqual(sent.map((c) => c.detail), [
-    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [10000, -10000] },
-    { day: "2027-01-01", farm: 2, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-10000, 10000] },
+    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [100000, -100000] },
+    { day: "2027-01-01", farm: 2, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-100000, 100000] },
   ]);
   assert.equal(JSON.stringify(sent).includes("players"), false);
   assert.equal(JSON.stringify(sent).includes("ann"), false);
