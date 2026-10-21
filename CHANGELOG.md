@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8 (Oct 20 2026, HST)
+
+- The tabs are renamed: Home (was Farm) and 🌾 The Farm (was Board). Removed: the names "Farm" and "Board" for those tabs.
+
 ## v0.7 (Oct 20 2026, HST)
 
 - Fewer labels: the Farm tab says one short line ("+10,000 Aura per hour while your Farm is up"), and the Board, Today and Ledger tabs, the take screen and your own farm are just their titles. Removed: "beats X" on every style button and the paragraphs of explainer text on every screen.

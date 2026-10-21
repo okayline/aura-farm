@@ -75,7 +75,7 @@ function boardTab(b) {
       ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span class="meme glow">${c.mine ? "FARMING" : "STARE DOWN ›"}</span></button>`).join("");
-  return `<div class="panel"><div class="big glow">The board</div></div>
+  return `<div class="panel"><div class="big glow">The Farm</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }
 
@@ -241,7 +241,7 @@ function draw() {
   const body = view?.you ? youScreen() : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
-  $tabs.innerHTML = [["farms", "🌾 Farm"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
+  $tabs.innerHTML = [["farms", "🏠 Home"], ["board", "🌾 The Farm"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
 }
 
