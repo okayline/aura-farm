@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.1 (not released yet)
+
+- Gen-z slang names: rerolling gives names like "Certified Rat", "Delulu Bean" or "Unhinged Sweat". Removed: the calm two-word names (like "Quiet Heron"); names you already have stay until you reroll.
+
 ## v0.3 (Oct 20 2026, HST)
 
 - Play against the plan: when you post a challenge you also plan your move for each round. Whoever takes it plays the whole duel straight away, one round at a time, and you never have to come back. Removed: waiting for the other player each round, "your move" on challenges you posted, and the page checking back every 10 seconds.

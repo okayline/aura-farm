@@ -1,16 +1,17 @@
 // Random player names: two words, like Dawn Baton, irl-dungeon and scoundrel.exe (copied from scoundrel.exe src/names.js,
 // which copied irl-dungeon). Names can't be typed: every player gets one when they are made, and can reroll it any time.
+// gen-z slang (ryan, Oct 21: "could we get gen-z slang name generator? haha")
 const ADJECTIVES = [
-  "Quiet", "Amber", "Early", "Gentle", "Bright", "Sleepy", "Golden", "Misty", "Rosy", "Brisk",
-  "Hushed", "Warm", "Pale", "Slow", "Steady", "Wandering", "Soft", "Silver", "Crisp", "Drowsy",
-  "Humble", "Eager", "Lucky", "Patient", "Little", "Cheerful", "Faint", "Glowing", "Distant", "Tender",
-  "Rested", "Windy", "Dewy", "Calm", "Merry", "Shy", "Nimble", "Sunny", "Mellow", "Dappled",
+  "Rizzed", "Unbothered", "Sigma", "Based", "Bussin", "Mewing", "Goated", "Lowkey", "Highkey", "Delulu",
+  "Sus", "Feral", "Cracked", "Unhinged", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Mid",
+  "Cooked", "Glazed", "Aura", "Drippy", "Yappy", "Valid", "Petty", "Salty", "Extra", "Bougie",
+  "Cozy", "Certified", "Silly", "Sleepy", "Crunchy", "Rare", "Final Boss", "Main", "Side Quest", "Locked In",
 ];
 const NOUNS = [
-  "Heron", "Lantern", "Sparrow", "Kettle", "Meadow", "Thistle", "Harbor", "Wren", "Compass", "Fern",
-  "Moth", "Orchard", "Ferry", "Pebble", "Robin", "Willow", "Teapot", "Comet", "Lark", "Cedar",
-  "Beacon", "Marmot", "Otter", "Clover", "Ember", "Finch", "Tide", "Bramble", "Lamp", "Poppy",
-  "Swallow", "Sundial", "Quill", "Hedgehog", "Trellis", "Rooster", "Weathervane", "Kingfisher", "Pigeon", "Lighthouse",
+  "Gremlin", "Goblin", "NPC", "Rizzler", "Menace", "Icon", "Legend", "Bestie", "Pookie", "Baddie",
+  "Yapper", "Mogger", "Farmer", "Opp", "Stan", "Himbo", "Girlboss", "Goat", "Rat", "Pigeon",
+  "Raccoon", "Possum", "Frog", "Shrimp", "Capybara", "Moai", "Gamer", "Lurker", "Ghost", "Cat",
+  "Gremlin Era", "Side Char", "Main Char", "Villain", "Hater", "Sweat", "Noob", "Sidekick", "Tryhard", "Bean",
 ];
 // only the pairs of 16 characters or fewer, so names fit the header on a phone
 const PAIRS = ADJECTIVES.flatMap((a) => NOUNS.map((n) => `${a} ${n}`)).filter((s) => s.length <= 16);

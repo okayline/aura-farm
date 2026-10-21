@@ -233,6 +233,6 @@ test("names can't be typed: /api/name rerolls a new random two-word name", async
   const r = await call("ann", "POST", "/api/name", { name: "Typed Name" });
   assert.notEqual(r.name, "Typed Name");
   assert.notEqual(r.name, before);
-  assert.match(r.name, /^[A-Z][a-z]+ [A-Z][a-z]+$/);
+  assert.match(r.name, /^\S.{1,14}\S$/);
   assert.equal((await call("ann", "GET", "/api/today")).name, r.name);
 });
