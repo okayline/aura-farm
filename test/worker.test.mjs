@@ -237,6 +237,7 @@ test("save codes and passkeys: load your player on another device, log out only 
   assert.equal((await call("ann", "GET", "/api/account")).passkeys.length, 1);
   assert.equal((await call("ann", "POST", "/api/logout")).status, 200);
   assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).side, -1, "logged out: ann's farm is just someone's again");
+  assert.equal((await call("ann", "POST", "/api/farm", { style: "R" })).status, 401, "logged out: no new player until you log in");
   assert.equal((await call("ann", "POST", "/api/passkey", { action: "login", credential: { id: "key1" } })).status, 200);
   assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).side, 0);
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 1, "logging in never made a second player");

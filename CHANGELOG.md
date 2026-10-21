@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.18 (Oct 21 2026, HST)
+
+- After you log out of this browser, playing asks you to log in with your save code or passkey first, instead of making a new player. A browser that has never played still gets a player the first time it plays. Removed: a new empty player every time you played after logging out.
+
 ## v0.17 (Oct 21 2026, HST)
 
 - A finished farm's page shows its whole ledger entry: the record exactly as sealed, the hash before it and its own hash, so anyone can check it. The registry's Aura Farm entries open this page when tapped, and no longer repeat the record there. Removed: the hash shown alone under "Ledger entry".
