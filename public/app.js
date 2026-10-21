@@ -248,20 +248,33 @@ async function loggedIn(name) {
   note = `Logged in as ${name || "your player"}. Welcome back.`;
 }
 
-let extra = null;   // the board, leaderboard or ledger, fetched for its tab
+let extra = null;   // the board, leaderboard or ledger shown on its tab
+const cache = {};   // each tab's last data: a tab shows it the moment you tap, then fresh data replaces it
+
+// Switch tab at once (with what it showed last time), then fetch it fresh in the background.
+function showTab(t) {
+  tab = t; view = null; err = "";
+  extra = cache[t] ?? null;
+  draw();
+  const path = { duels: "today", board: "board", top: "leaderboard", ledger: "ledger" }[t];
+  api("GET", path).then((d) => {
+    if (t === "duels") me = d; else cache[t] = d;
+    if (tab === t && !view) { extra = cache[t] ?? null; draw(); }
+  }).catch((e) => { err = e.message; draw(); });
+}
+
+// The header (aura, VIBES) and your duels list, refreshed in the background after an action.
+function refreshMe() { api("GET", "today").then((d) => { me = d; draw(); }).catch(() => {}); }
 
 function draw() {
   const body = view?.you ? youScreen() : view ? duelScreen(view)
-    : tab === "duels" ? duelsTab() : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
+    : tab === "duels" ? duelsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["duels", "⚔️ Duels"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
 }
 
 async function loadToday() { me = await api("GET", "today"); }
-async function loadTab() {
-  extra = tab === "board" ? await api("GET", "board") : tab === "top" ? await api("GET", "leaderboard") : tab === "ledger" ? await api("GET", "ledger") : null;
-}
 async function openDuel(id) {
   view = await api("GET", "duel?id=" + id);
   picks = []; plan = [null, null, null];
@@ -270,7 +283,7 @@ async function openDuel(id) {
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-tab],[data-act]");
   if (!t) return;
-  if (t.dataset.tab) { tab = t.dataset.tab; view = null; return run(() => Promise.all([loadToday(), loadTab()])); }
+  if (t.dataset.tab) return showTab(t.dataset.tab);
   const [act, arg] = t.dataset.act.split(":");
   if (act === "pick") {
     const i = Number(arg);
@@ -278,13 +291,13 @@ document.addEventListener("click", (e) => {
     return draw();
   }
   if (act === "plan") { const [, r, m] = t.dataset.act.split(":"); plan[Number(r)] = m; return draw(); }
-  if (act === "back") { view = null; return run(() => Promise.all([loadToday(), loadTab()])); }
+  if (act === "back") return showTab(tab);
   if (act === "open" || act === "look") return run(() => openDuel(Number(arg)));
-  if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; plan = [null, null, null]; await loadToday(); });
-  if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks, plan }); await loadToday(); });
-  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, slots: picks }); await loadToday(); });
-  if (act === "move") return run(async () => { view = await api("POST", "move", { id: view.id, round: view.round, move: arg }); await loadToday(); });
-  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); await loadToday(); });
+  if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; plan = [null, null, null]; refreshMe(); });
+  if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks, plan }); refreshMe(); });
+  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, slots: picks }); refreshMe(); });
+  if (act === "move") return run(async () => { view = await api("POST", "move", { id: view.id, round: view.round, move: arg }); refreshMe(); });
+  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 

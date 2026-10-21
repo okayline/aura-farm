@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.2 (not released yet)
+
+- Snappier: tabs switch the moment you tap, showing what they had last time, then update. After a move, the duel updates first and your aura in the header catches up a moment later. The server makes one trip to the database per screen instead of 3 or 4. Removed: waiting for the server before a tab changed, and re-loading your header on every tab switch.
+
 ## v0.3.1 (not released yet)
 
 - Gen-z slang names: rerolling gives names like "Certified Rat", "Delulu Bean" or "Unhinged Sweat". Removed: the calm two-word names (like "Quiet Heron"); names you already have stay until you reroll.

@@ -127,13 +127,14 @@ async function findPlayer(req, env) {
   const token = readCookie(req);
   if (!token) return null;
   const h = await sha256(token);
-  // "seen" times are written at most every 15 minutes, so an ordinary click is reads only
-  let p = await env.DB.prepare("SELECT id, name, seen_at FROM players WHERE token_hash = ?").bind(h).first();
-  if (!p) {
-    p = await env.DB.prepare("SELECT p.id, p.name, p.seen_at, s.seen_at AS s_seen FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?").bind(h).first();
-    if (!p) return null;
-    if (now() - p.s_seen >= SEEN_EVERY) await env.DB.prepare("UPDATE sessions SET seen_at = ? WHERE token_hash = ?").bind(now(), h).run();
-  }
+  // one trip for both places a token can be; "seen" times are written at most every 15 minutes, so an ordinary click
+  // is reads only
+  const p = await env.DB.prepare(
+    `SELECT id, name, seen_at, NULL AS s_seen FROM players WHERE token_hash = ?1
+     UNION ALL SELECT p.id, p.name, p.seen_at, s.seen_at FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?1
+     LIMIT 1`).bind(h).first();
+  if (!p) return null;
+  if (p.s_seen !== null && now() - p.s_seen >= SEEN_EVERY) await env.DB.prepare("UPDATE sessions SET seen_at = ? WHERE token_hash = ?").bind(now(), h).run();
   if (now() - p.seen_at >= SEEN_EVERY) await env.DB.prepare("UPDATE players SET seen_at = ? WHERE id = ?").bind(now(), p.id).run();
   return giveName(env, { id: p.id, name: p.name });
 }
@@ -199,31 +200,21 @@ function aurasFrom(rows, day) {
 
 const AURA_COLS = "c_id, t_id, status, c_delta, t_delta, posted_at, taken_at";
 
-// One player's aura on a day: one query.
-async function auraOn(env, playerId, day) {
-  const { results } = await env.DB.prepare(
-    `SELECT ${AURA_COLS} FROM duels WHERE day = ?1 AND c_id = ?2 UNION ALL SELECT ${AURA_COLS} FROM duels WHERE day = ?1 AND t_id = ?2`)
-    .bind(day, playerId).all();
-  return aurasFrom(results, day).get(playerId) || 0;
-}
+// One player's aura on a day. The statement goes in a batch with the call's other reads: one trip to the database.
+const auraStmt = (env, playerId, day) => env.DB.prepare(
+  `SELECT ${AURA_COLS} FROM duels WHERE day = ?1 AND c_id = ?2 UNION ALL SELECT ${AURA_COLS} FROM duels WHERE day = ?1 AND t_id = ?2`)
+  .bind(day, playerId);
 
-// Everyone's aura on a day, with names: one query.
-async function aurasOn(env, day) {
-  const { results } = await env.DB.prepare(`SELECT ${AURA_COLS} FROM duels WHERE status IN ('open', 'live', 'done', 'expired') AND day = ?`).bind(day).all();
-  return aurasFrom(results, day);
-}
+// Everyone's aura on a day, with their names (also batched).
+const aurasStmt = (env, day) => env.DB.prepare(
+  `SELECT d.c_id, d.t_id, d.status, d.c_delta, d.t_delta, d.posted_at, d.taken_at, pc.name AS c_name, pt.name AS t_name
+   FROM duels d LEFT JOIN players pc ON pc.id = d.c_id LEFT JOIN players pt ON pt.id = d.t_id
+   WHERE d.status IN ('open', 'live', 'done', 'expired') AND d.day = ?`).bind(day);
+const namesFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_name], [r.t_id, r.t_name]]));
 
-async function namesOf(env, ids) {
-  ids = [...new Set(ids.filter(Boolean))];
-  if (!ids.length) return new Map();
-  const { results } = await env.DB.prepare(`SELECT id, name FROM players WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids).all();
-  return new Map(results.map((r) => [r.id, r.name]));
-}
-
-async function vibesOf(env, playerId, day = utcDay()) {
-  const r = await env.DB.prepare("SELECT balance FROM vibes WHERE player_id = ? AND day = ?").bind(playerId, day).first();
-  return r ? r.balance : A.VIBES_START;
-}
+const vibesStmt = (env, playerId, day = utcDay()) =>
+  env.DB.prepare("SELECT balance FROM vibes WHERE player_id = ? AND day = ?").bind(playerId, day);
+const vibesFrom = (rows) => (rows.length ? rows[0].balance : A.VIBES_START);
 
 // ---------- finishing a duel ----------
 
@@ -338,7 +329,7 @@ async function duelView(env, d, player) {
   const moves = JSON.parse(d.moves);
   const out = {
     id: d.id, day: d.day, status: d.status, side,
-    names: await namesOf(env, [d.c_id, d.t_id]).then((m) => [m.get(d.c_id) ?? null, m.get(d.t_id) ?? null]),
+    names: null,
     // both hands are face up to anyone looking at the duel: what each side could keep
     hands,
     commits: [d.c_commit, d.t_commit],
@@ -352,9 +343,16 @@ async function duelView(env, d, player) {
     out.round = state.round; out.pot = state.pot; out.flipped = state.flipped;
     out.shown = lines.map((l) => l.slice(0, state.flipped));
   }
-  if (d.status === "live" && side === 1) {
+  // names, and the taker's VIBES, in one trip
+  const wantVibes = d.status === "live" && side === 1;
+  const [names, v] = await env.DB.batch([
+    env.DB.prepare("SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t").bind(d.c_id, d.t_id),
+    ...(wantVibes ? [vibesStmt(env, player.id)] : []),
+  ]);
+  out.names = [names.results[0].c ?? null, names.results[0].t ?? null];
+  if (wantVibes) {
     out.reads = JSON.parse(d.t_reads);
-    out.vibes = await vibesOf(env, player.id);
+    out.vibes = vibesFrom(v.results);
   }
   if (d.status === "done") {
     const r = JSON.parse(d.result);
@@ -372,12 +370,13 @@ async function today(req, env) {
   const player = await findPlayer(req, env);
   const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null };
   if (!player) return json(out);
-  out.aura = await auraOn(env, player.id, day);
-  out.vibes = await vibesOf(env, player.id, day);
-  const { results } = await env.DB.prepare(
+  const [a, v, list] = await env.DB.batch([auraStmt(env, player.id, day), vibesStmt(env, player.id, day), env.DB.prepare(
     `SELECT d.*, o.name AS opponent FROM duels d LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
      WHERE (d.c_id = ?1 OR d.t_id = ?1) AND (d.day = ?2 OR d.status = 'live') AND d.status != 'expired'
-     ORDER BY d.id DESC LIMIT 30`).bind(player.id, day).all();
+     ORDER BY d.id DESC LIMIT 30`).bind(player.id, day)]);
+  out.aura = aurasFrom(a.results, day).get(player.id) || 0;
+  out.vibes = vibesFrom(v.results);
+  const results = list.results;
   out.duels = [];
   for (const d of results) {
     const side = sideOf(d, player), row = { id: d.id, status: d.status, side, opponent: d.opponent ?? null };
@@ -434,10 +433,10 @@ async function post(req, env) {
 async function board(req, env) {
   const day = utcDay();
   const player = await findPlayer(req, env);
-  const { results } = await env.DB.prepare(
+  const [list, rows] = await env.DB.batch([env.DB.prepare(
     `SELECT d.id, d.c_id, d.posted_at, p.name FROM duels d JOIN players p ON p.id = d.c_id
-     WHERE d.status = 'open' AND d.day = ? ORDER BY d.posted_at DESC LIMIT 100`).bind(day).all();
-  const auras = results.length ? await aurasOn(env, day) : new Map();
+     WHERE d.status = 'open' AND d.day = ? ORDER BY d.posted_at DESC LIMIT 100`).bind(day), aurasStmt(env, day)]);
+  const results = list.results, auras = aurasFrom(rows.results, day);
   const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, postedAt: r.posted_at, mine: !!player && r.c_id === player.id }));
   return json({ day, challenges: out });
 }
@@ -508,9 +507,9 @@ async function setName(req, env) {
 async function leaderboard(req, env, url) {
   const day = url.searchParams.get("day") || utcDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Oops("Bad day.");
-  const top = [...(await aurasOn(env, day))].sort((a, b) => b[1] - a[1]).slice(0, 100);
-  const names = await namesOf(env, top.map(([id]) => id));   // D1 takes up to 100 bound values
-  const rows = top.map(([id, aura]) => ({ name: names.get(id) ?? null, aura }));
+  const { results } = await aurasStmt(env, day).all();
+  const names = namesFrom(results);
+  const rows = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([id, aura]) => ({ name: names.get(id) ?? null, aura }));
   return json({ day, rows });
 }
 
