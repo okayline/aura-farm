@@ -75,7 +75,7 @@ function boardTab(b) {
       ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span class="meme glow">${c.mine ? "FARMING" : "STARE DOWN ›"}</span></button>`).join("");
-  return `<div class="panel"><div class="big glow">The board</div></div>
+  return `<div class="panel"><div class="big glow">The Farm</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }
 
@@ -114,13 +114,10 @@ function farmScreen(v) {
   }
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
   const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
-  const hand = (i) => (v.styles ? shown(v.styles[i]) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
-  return `
-    <div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[other] || "?")}</b><br><span class="small">${recordLine(v.records[other])}</span></div>
-      <div class="small" style="text-align:right">Farm #${v.id}</div></div>
-    ${hand(other)}
-    <div class="row">${halo("🧍", d > 0 ? 30 : 12)}<div class="grow"><b>you</b></div></div>
-    ${hand(side)}
+  const hand = (i) => (v.styles ? style(v.styles[i], { on: true }) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
+  const face = (name, sub, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i ? " lost" : ""}">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b><div class="small">${sub}</div>${hand(i)}</div>`;
+  return `<div class="small" style="text-align:center">Farm #${v.id}</div>
+    <div class="duel">${face(esc(v.names[other] || "?"), recordLine(v.records[other]), other, 18)}${face("you", recordLine(v.records[side]), side, d > 0 ? 30 : 12)}</div>
     <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${esc(v.captions[side])}</div>${back}`;
 }
 
@@ -241,7 +238,7 @@ function draw() {
   const body = view?.you ? youScreen() : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
-  $tabs.innerHTML = [["farms", "🌾 Farm"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
+  $tabs.innerHTML = [["farms", "🏠 Home"], ["board", "🌾 The Farm"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
 }
 
@@ -259,7 +256,7 @@ document.addEventListener("click", (e) => {
   if (act === "pick") { pick = pick === arg ? null : arg; return draw(); }
   if (act === "back") return showTab(tab);
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
-  if (act === "farm") return run(async () => { view = await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
+  if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); pick = null; refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });

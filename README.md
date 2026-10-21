@@ -9,7 +9,7 @@ of their own, both are revealed at once, and the style that beats the other wins
 - **AURA FARM**: pick a style and tap FARM AURA to put it on the board. While it stands untaken you farm 10,000 aura an hour (up to 3
   farms a day; they expire at midnight UTC: "Your time is up").
 - **Aura**: win +100,000 (AURA FARMED), lose -100,000 (COOKED), a draw changes nothing.
-- **Records**: once a farm is taken, both styles are public. The board shows each poster's latest 10 styles, so the
+- **Records**: once a farm is taken, both styles are public. The Farm tab shows each poster's latest 10 styles, so the
   thing to read is how someone plays.
 - **The ledger**: every finished farm, sealed in a SHA-256 hash chain with both styles' fingerprints. After each one,
   the chain's length and newest fingerprint go to the shared registry (dungeon-items `REGISTRY`) as a checkpoint. Card
