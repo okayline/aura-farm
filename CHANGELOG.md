@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.35 (Oct 21 2026, HST)
+
+- The FLEX screen's Details panel no longer ends with "DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP." Removed: that sentence; the cards above it still show what each beats.
+
 ## v0.34 (Oct 21 2026, HST)
 
 - The Farm lists whoever has been farming the longest at the top. Removed: newest first.
