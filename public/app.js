@@ -117,7 +117,7 @@ function boardTab(b) {
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
-    ${halo(pic(r.name))}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+    ${halo(pic(r.name), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
@@ -372,9 +372,9 @@ async function openFarm(id, step = true) {
   pick = null;
   if (step && location.search !== "?farm=" + id) history.pushState({ farm: id }, "", "?farm=" + id);
 }
-// The address follows the screen: a farm shows ?farm=N, anything else the bare address.
+// The address follows the screen: a farm shows ?farm=N, The Farm / Today / Ledger show ?tab=..., Home the bare address (so a reload stays where you were).
 function syncAddress() {
-  const want = view && !view.you ? "?farm=" + view.id : "";
+  const want = view && !view.you ? "?farm=" + view.id : !view && tab !== "farms" ? "?tab=" + tab : "";
   if (location.search !== want) history.replaceState(null, "", location.pathname + want);
 }
 
@@ -418,6 +418,8 @@ document.addEventListener("click", (e) => {
 // aura.88x31.app/?farm=16 opens that farm (the shared registry links its Aura Farm entries here)
 const linked = Number(new URLSearchParams(location.search).get("farm"));
 run(async () => { await loadToday(); if (linked > 0) await openFarm(linked, false); });
+const wanted = new URLSearchParams(location.search).get("tab");
+if (!(linked > 0) && ["board", "top", "ledger"].includes(wanted)) showTab(wanted);   // a reload comes back to the same tab
 // the browser's back and forward buttons: a ?farm=N step opens that farm, the bare address shows the tab you were on
 addEventListener("popstate", () => {
   const id = Number(new URLSearchParams(location.search).get("farm"));

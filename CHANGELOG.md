@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.37 (Oct 21 2026, HST)
+
+- Reloading The Farm, Today or Ledger now comes back to the same tab: the address shows `?tab=board`, `?tab=top` or `?tab=ledger` (Home stays the plain address). Removed: reloads always landing on Home.
+- On the leaderboard only the top 3 portraits glow: #1 as it was, #2 a little less, #3 less again. Removed: the glow on everyone else.
+
 ## v0.36 (Oct 21 2026, HST)
 
 - Each row in The Farm says how long that farm has been up, under FLEX (or FARMING on your own): "Up for 5 hrs", counting up as time passes (minutes in the first hour). Removed: nothing.
