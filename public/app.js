@@ -74,7 +74,7 @@ function boardTab(b) {
     <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
       ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
-      <span class="meme glow">${c.mine ? "FARMING" : "STARE DOWN ›"}</span></button>`).join("");
+      <span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }
@@ -106,7 +106,7 @@ function farmScreen(v) {
     return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         ${styles()}
-      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 STARE DOWN</button>${back}`;
+      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${back}`;
   }
   if (v.status === "open" || v.status === "expired") {
     return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div></div>
