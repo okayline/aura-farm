@@ -228,3 +228,14 @@ test("the version on the page matches the newest CHANGELOG heading", async () =>
   const log = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
   assert.equal(/^## v(\S+)/m.exec(log)[1], VERSION);
 });
+
+test("names can't be typed: /api/name rerolls a new random two-word name", async () => {
+  const { call } = setup();
+  await call("ann", "POST", "/api/draft");
+  const before = (await call("ann", "GET", "/api/today")).name;
+  const r = await call("ann", "POST", "/api/name", { name: "Typed Name" });
+  assert.notEqual(r.name, "Typed Name");
+  assert.notEqual(r.name, before);
+  assert.match(r.name, /^[A-Z][a-z]+ [A-Z][a-z]+$/);
+  assert.equal((await call("ann", "GET", "/api/today")).name, r.name);
+});

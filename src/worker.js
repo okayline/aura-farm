@@ -13,7 +13,7 @@
 //   POST /api/take  {id, slots}        take a challenge with 3 of your 5
 //   POST /api/move  {id, round, move}  your secret pick for this round: lock | farm | dip
 //   POST /api/vibes {id, slot}         spend 1 VIBES to peek at one of their unflipped cards
-//   POST /api/name  {name}             pick a name
+//   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
 //   GET  /api/leaderboard?day=         a day's players by net aura
 //   GET  /api/ledger?before=&limit=    finished duels, newest first
 //   GET  /api/account                  your save codes, passkeys and devices
@@ -29,8 +29,6 @@ import { giveName } from "./names.js";
 const COOKIE = "af";
 const COOKIE_MAX_AGE = 400 * 86400;
 const SEEN_EVERY = 900;   // 15 minutes
-const NAME_RE = /^[A-Za-z0-9][A-Za-z0-9_.\- ]{0,14}[A-Za-z0-9_.\-]$/;
-const RESERVED = new Set(["admin", "webmaster", "anonymous", "nobody", "system", "aura", "cap", "no cap"]);
 
 export default {
   async fetch(req, env) {
@@ -503,17 +501,9 @@ async function vibes(req, env) {
 
 async function setName(req, env) {
   const { player, cookie } = await needPlayer(req, env);
-  const b = await body(req);
-  const name = typeof b.name === "string" ? b.name.trim().replace(/\s+/g, " ") : "";
-  if (!NAME_RE.test(name)) throw new Oops("Names are 2 to 16 letters, numbers, spaces, dots, dashes or underscores.");
-  if (RESERVED.has(name.toLowerCase())) throw new Oops("That name is taken.");
-  try {
-    await env.DB.prepare("UPDATE players SET name = ?, name_key = ? WHERE id = ?").bind(name, name.toLowerCase(), player.id).run();
-  } catch (e) {
-    if (isUnique(e)) throw new Oops("That name is taken.");
-    throw e;
-  }
-  return withCookie(json({ name }), cookie);
+  const p = await giveName(env, player, { reroll: true });
+  if (p.name === player.name) throw new Oops("Couldn't find a free name. Try again.");
+  return withCookie(json({ name: p.name }), cookie);
 }
 
 async function leaderboard(req, env, url) {

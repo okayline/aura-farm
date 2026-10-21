@@ -1,6 +1,5 @@
 // Random player names: two words, like Dawn Baton, irl-dungeon and scoundrel.exe (copied from scoundrel.exe src/names.js,
-// which copied irl-dungeon). A name is plain text, the same as one a player types, so they can change it any time.
-// Every player gets one when they are made or next seen: nobody is nameless.
+// which copied irl-dungeon). Names can't be typed: every player gets one when they are made, and can reroll it any time.
 const ADJECTIVES = [
   "Quiet", "Amber", "Early", "Gentle", "Bright", "Sleepy", "Golden", "Misty", "Rosy", "Brisk",
   "Hushed", "Warm", "Pale", "Slow", "Steady", "Wandering", "Soft", "Silver", "Crisp", "Drowsy",
@@ -13,7 +12,7 @@ const NOUNS = [
   "Beacon", "Marmot", "Otter", "Clover", "Ember", "Finch", "Tide", "Bramble", "Lamp", "Poppy",
   "Swallow", "Sundial", "Quill", "Hedgehog", "Trellis", "Rooster", "Weathervane", "Kingfisher", "Pigeon", "Lighthouse",
 ];
-// names are at most 16 characters (NAME_RE in worker.js), so only the pairs that fit
+// only the pairs of 16 characters or fewer, so names fit the header on a phone
 const PAIRS = ADJECTIVES.flatMap((a) => NOUNS.map((n) => `${a} ${n}`)).filter((s) => s.length <= 16);
 
 // Give this player a random name nobody has, if they have none (or a different one, with reroll). Returns the player

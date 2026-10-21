@@ -167,7 +167,7 @@ function youScreen() {
   const hasWay = a.codes.length + a.passkeys.length > 0;
   return `<div class="panel"><div class="big glow">${a.name ? esc(a.name) : "You"}</div>
       <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>
-      ${a.player ? `<button class="link" data-act="rename" type="button">change name</button>` : ""}</div>
+      ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
     <div class="list">${ways || `<p class="small">No save codes or passkeys yet.</p>`}</div>
     <div class="row"><button class="chip" data-act="newcode" type="button">🔑 New save code</button>
       ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add a passkey</button>` : ""}</div>
@@ -278,10 +278,8 @@ document.addEventListener("click", (e) => {
   if (act === "move") return run(async () => { view = await api("POST", "move", { id: view.id, round: view.round, move: arg }); await loadToday(); });
   if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); await loadToday(); });
   if (act === "you") { note = ""; return run(openYou); }
-  if (act === "rename") {
-    const name = prompt("Your name (2 to 16 characters):", me?.name || "");
-    if (name) return run(async () => { await api("POST", "name", { name }); await loadToday(); if (view?.you) acct = await api("GET", "account"); });
-  }
+  if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
+
   if (act === "newcode") return run(async () => { newCode = (await api("POST", "codes", { action: "new" })).code; acct = await api("GET", "account"); await loadToday(); });
   if (act === "copycode") return navigator.clipboard?.writeText(newCode).then(() => { note = "Copied."; draw(); }, () => {});
   if (act === "savecode") return downloadCode();
