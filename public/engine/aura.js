@@ -17,7 +17,8 @@ export const STYLES = Object.keys(STYLE);
 
 export const STAKE = 100000;
 export const STAND_PER_HOUR = 10000;
-export const MAX_OPEN = 3;
+export const MAX_OPEN = 3;      // farms one player can have up at once
+export const LIFE = 24 * 3600;  // a farm stays up 24 hours from when it was posted (v0.15; before, until midnight UTC)
 export const RECORD = 10;     // how many of a player's latest styles are shown
 
 export const isStyle = (s) => STYLES.includes(s);

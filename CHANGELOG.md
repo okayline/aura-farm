@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.15 (Oct 21 2026, HST)
+
+- A farm stays up for 24 hours from when you post it, even past midnight. You can have 3 up at once. Your aura still counts by the day: hours a farm stands and wins or losses land on the day they happen. Removed: every farm ending at midnight UTC, and "3 a day".
+
 ## v0.14 (Oct 21 2026, HST)
 
 - Each style card says what it beats, just below it ("beats 😏"), on Home and when you FLEX. Removed: nothing.

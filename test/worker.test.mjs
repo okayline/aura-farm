@@ -162,20 +162,28 @@ test("a draw changes nothing", async () => {
   assert.equal(tk.captions[1], "MUTUAL MOG. +0 aura");
 });
 
-test("at most 3 farms on the board; the daily reset expires them and says so", async () => {
-  const { call, tick } = setup();
+test("at most 3 farms up at once; each stays up 24 hours, across midnight, then expires and says so", async () => {
+  const { call, tick } = setup();   // T0 is 08:00 UTC on Jan 1
   for (let i = 0; i < 3; i++) await call("ann", "POST", "/api/farm", { style: "DRM"[i] });
   assert.equal((await call("ann", "POST", "/api/farm", { style: "D" })).status, 400);
   const open = (await call("bo", "GET", "/api/board")).farms;
   assert.equal(open.length, 3);
-  await call("bo", "POST", "/api/take", { id: open[0].id, style: "D" });
-  tick(16 * 3600 + 1);     // past midnight UTC
+  const d0 = (await call("bo", "POST", "/api/take", { id: open[0].id, style: "D" })).result.deltas[0];
+  tick(16 * 3600 + 1);     // 00:00:01 on Jan 2: past midnight UTC, the other two are still up
+  assert.equal((await call("bo", "GET", "/api/board")).farms.length, 2);
+  const d1 = (await call("bo", "POST", "/api/take", { id: open[1].id, style: "D" })).result.deltas[0];
+  tick(8 * 3600);          // 08:00:01 on Jan 2: 24 hours since ann posted
   assert.equal((await call("bo", "GET", "/api/board")).farms.length, 0);
-  assert.equal((await call("ann", "GET", `/api/farm?id=${open[0].id}`)).status, "done");
-  assert.equal((await call("ann", "GET", `/api/farm?id=${open[1].id}`)).status, "expired");
-  assert.equal((await call("bo", "POST", "/api/take", { id: open[1].id, style: "D" })).status, 400);
-  // ann's two untaken farms show as expired for a day, so she can see her time was up
-  assert.equal((await call("ann", "GET", "/api/today")).farms.filter((x) => x.status === "expired").length, 2);
+  assert.equal((await call("ann", "GET", `/api/farm?id=${open[2].id}`)).status, "expired");
+  assert.equal((await call("bo", "POST", "/api/take", { id: open[2].id, style: "D" })).status, 400);
+  // ann's untaken farm shows as expired, so she can see her time was up
+  assert.equal((await call("ann", "GET", "/api/today")).farms.filter((x) => x.status === "expired").length, 1);
+  // aura counts on the day it happened: Jan 1 has the first take and 16 hours standing (08:00-24:00);
+  // Jan 2 has the second take and 8 hours standing (00:00-08:00, the farm taken at 00:00:01 adds no full hour)
+  const name = (await call("ann", "GET", "/api/today")).name;
+  const aura = async (day) => (await call("ann", "GET", "/api/leaderboard?day=" + day)).rows.find((r) => r.name === name).aura;
+  assert.equal(await aura("2027-01-01"), d0 + 160000);
+  assert.equal(await aura("2027-01-02"), d1 + 80000);
 });
 
 test("each finished farm sends the registry a checkpoint of the ledger: public facts, never a player", async () => {
