@@ -149,9 +149,9 @@ function youScreen() {
       <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>
       ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
     <div class="list">${ways || `<p class="small">No save codes or passkeys yet.</p>`}</div>
-    <div class="row" style="flex-wrap:wrap"><button class="chip" data-act="newcode" type="button">🔑 New save code</button>
-      ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add a passkey</button>
-      <button class="chip" data-act="loadkey" type="button">👆 Log in with a passkey</button>` : ""}</div>
+    <div class="row keys"><button class="chip" data-act="newcode" type="button">🔑 New code</button>
+      ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add passkey</button>
+      <button class="chip" data-act="loadkey" type="button">👆 Use passkey</button>` : ""}</div>
     <div class="panel"><div class="small">Log in as another player</div>
       <div class="row" style="margin-top:8px"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
         <button class="chip" data-act="loadcode" type="button">Log in</button>
