@@ -10,7 +10,7 @@ let acct = null, newCode = null, note = "";   // the "you" screen: account, a ju
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
-const STAKE = A.STAKE.toLocaleString("en-US"), HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
+const HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
 
 async function api(method, path, body) {
   const res = await fetch("/api/" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -27,12 +27,12 @@ async function run(fn) {
 
 // ---------- pieces ----------
 
-// A style: its name, a big emoji and what it beats. A button to tap when `tap` is set (`on` marks the one picked),
+// A style: its name and a big emoji. A button to tap when `tap` is set (`on` marks the one picked),
 // otherwise just shown.
 function style(s, { tap = false, on = false } = {}) {
   const tag = tap ? "button" : "div", attrs = tap ? ` data-act="pick:${s}" type="button"` : "";
   return `<${tag} class="card${on ? " on" : ""}" style="--c: ${COLOR[s]}"${attrs} aria-label="${A.STYLE[s]}">
-    <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span><span class="s">beats ${A.EMOJI[A.BEATS[s]]}</span></${tag}>`;
+    <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span></${tag}>`;
 }
 const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>`;
 const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
@@ -51,7 +51,7 @@ function header() {
   return `<header>
     <div class="title">AURA FARMING SIMULATOR<small>NO CAP BATTLE EDITION 2027</small></div>
     <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button><br>
-      ${me?.aura != null ? `<b>${num(me.aura)}</b> aura today<br>👀 VIBES ${me.vibes}` : "stand there. look cool."}</div>
+      ${me?.aura != null ? `<b>${num(me.aura)}</b> aura today` : "stand there. look cool."}</div>
   </header>`;
 }
 
@@ -59,12 +59,11 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming" : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} aura an hour until someone takes it` : "nobody took it"}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} an hour` : ""}</span></span>
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">AURA FARM</div>
-      <p class="small">Pick a style and put it on the board, sealed. While it stands untaken you farm ${HOUR} aura an hour. Whoever takes it
-      picks their own: the style that beats the other wins ${STAKE}. Up to 3 a day.</p></div>
+      <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
     ${styles()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
@@ -76,14 +75,14 @@ function boardTab(b) {
       ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span class="meme glow">${c.mine ? "FARMING" : "STARE DOWN ›"}</span></button>`).join("");
-  return `<div class="panel"><div class="big glow">The board</div><p class="small">Open farms. Their style is sealed, but every style a player has played is public: read their record.</p></div>
+  return `<div class="panel"><div class="big glow">The board</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
     <span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
-  return `<div class="panel"><div class="big glow">Most aura today</div><p class="small">Net aura: wins, losses and farming. Resets at midnight UTC.</p></div>
+  return `<div class="panel"><div class="big glow">Most aura today</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
 
@@ -97,27 +96,21 @@ function ledgerTab(l) {
     return `<div class="item entry"><span class="grow"><span class="meme glow">${title}</span><br>
       <span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span></div>`;
   }).join("");
-  return `<div class="panel"><div class="big glow">The ledger</div><p class="small">Every finished farm, sealed in a hash chain. Each style is sealed by a fingerprint when it goes up, and revealed when the farm is taken.</p></div>
+  return `<div class="panel"><div class="big glow">The ledger</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
   if (v.status === "open" && v.side !== 0) {
-    const peek = v.peek ? `<p class="small">👀 It's not ${A.label(v.peek)}.</p>`
-      : v.vibes > 0 ? `<button class="chip" data-act="peek" type="button">👀 Peek: one style it isn't (VIBES ${v.vibes})</button>`
-      : `<p class="small">👀 No VIBES left today. Losing a farm earns one.</p>`;
     return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
-      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win ${STAKE}, if theirs beats yours you lose ${STAKE}, and the
-        same style is a draw.</p>${peek}</div>
-      ${styles()}
+        ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 STARE DOWN</button>${back}`;
   }
   if (v.status === "open" || v.status === "expired") {
-    return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div>
-      <p class="small">${v.status === "open" ? `${HOUR} aura an hour until someone takes it.` : "Nobody took it before the daily reset."}</p></div>
-      ${v.mine ? `<div class="small">Your style (only you can see it)</div>${shown(v.mine)}` : ""}${back}`;
+    return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div></div>
+      ${v.mine ? `${shown(v.mine)}` : ""}${back}`;
   }
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
   const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
@@ -156,12 +149,13 @@ function youScreen() {
       <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>
       ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
     <div class="list">${ways || `<p class="small">No save codes or passkeys yet.</p>`}</div>
-    <div class="row"><button class="chip" data-act="newcode" type="button">🔑 New save code</button>
-      ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add a passkey</button>` : ""}</div>
+    <div class="row keys"><button class="chip" data-act="newcode" type="button">🔑 New code</button>
+      ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add passkey</button>
+      <button class="chip" data-act="loadkey" type="button">👆 Use passkey</button>` : ""}</div>
     <div class="panel"><div class="small">Log in as another player</div>
       <div class="row" style="margin-top:8px"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
-        <button class="chip" data-act="loadcode" type="button">Log in</button></div>
-      ${pkSupported() ? `<button class="link" data-act="loadkey" type="button" style="margin-top:8px">or log in with a passkey</button>` : ""}</div>
+        <button class="chip" data-act="loadcode" type="button">Log in</button>
+</div></div>
     ${a.player && hasWay ? `<button class="link" data-act="logout" type="button">log out of this browser</button>` : ""}
     <p class="small" style="text-align:center">${esc(note)}</p>
     <button class="link" data-act="back" type="button">back</button>`;
@@ -240,7 +234,7 @@ function showTab(t) {
   }).catch((e) => { err = e.message; draw(); });
 }
 
-// The header (aura, VIBES) and your farms list, refreshed in the background after an action.
+// The header (aura) and your farms list, refreshed in the background after an action.
 function refreshMe() { api("GET", "today").then((d) => { me = d; draw(); }).catch(() => {}); }
 
 function draw() {
@@ -267,7 +261,6 @@ document.addEventListener("click", (e) => {
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
   if (act === "farm") return run(async () => { view = await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); pick = null; refreshMe(); });
-  if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id }); refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 
