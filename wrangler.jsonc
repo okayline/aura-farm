@@ -1,0 +1,28 @@
+{
+  // AURA FARMING SIMULATOR. The Worker's name must match the one in the Cloudflare dashboard.
+  "name": "aura-farm",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  // The site's files (index.html etc). /api/* goes to the Worker code first.
+  "assets": {
+    "directory": "public",
+    "run_worker_first": ["/api/*"]
+  },
+  "routes": [
+    { "pattern": "aura.88x31.app", "custom_domain": true }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "aura-db",
+      // from: npx wrangler d1 create aura-db
+      "database_id": "not created yet"
+    }
+  ],
+  "vars": {
+    // requests to any *.workers.dev address are sent here instead
+    "CANONICAL_HOST": "aura.88x31.app"
+  }
+  // Secret (not in this file): DAILY_SECRET, the key behind every duel's deal.
+  //   npx wrangler secret put DAILY_SECRET
+}
