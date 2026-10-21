@@ -361,10 +361,11 @@ async function take(req, env) {
   if (d.c_id === player?.id) throw new Oops("You can't take your own farm.");
   const style = posed(b.style, "a style"), salt = randomHex(), commit = await commitment(style, salt);
   const t = now();
-  const owed = !player ? { left: 0 } : await env.DB.prepare(
-    `SELECT (SELECT COUNT(*) FROM farms WHERE c_id = ?1 AND posted_at > ?2) * ?3 - (SELECT COUNT(*) FROM farms WHERE t_id = ?1 AND taken_at > ?2) AS left`)
-    .bind(player.id, t - A.LIFE, A.FLEX_PER_FARM).first();
-  if (owed.left <= 0) throw new Oops("Put a farm up to FLEX: each farm you put up earns you a FLEX.", 429);
+  // each farm you have up lets you FLEX once an hour: no farm up, or as many FLEXes in the last hour as farms up, is a no
+  const up = !player ? 0 : (await env.DB.prepare("SELECT COUNT(*) AS n FROM farms WHERE c_id = ? AND status = 'open' AND posted_at > ?").bind(player.id, t - A.LIFE).first()).n * A.FLEX_PER_FARM;
+  const { results: recent } = !player ? { results: [] } : await env.DB.prepare("SELECT taken_at FROM farms WHERE t_id = ? AND taken_at > ? ORDER BY taken_at").bind(player.id, t - A.FLEX_WINDOW).all();
+  if (!up) throw new Oops("Put a farm up to FLEX: each farm you have up lets you FLEX once an hour.", 429);
+  if (recent.length >= up) throw new Oops(`Each farm you have up lets you FLEX once an hour. Next one in ${Math.ceil((recent[recent.length - up].taken_at + A.FLEX_WINDOW - t) / 60)} min.`, 429);
   const r = A.farm(d.c_style, style, Math.floor((t - d.posted_at) / 3600));
   const record = JSON.stringify({
     kind: "farm", rules: A.RULES, day: d.day, farm: d.id, players: [d.c_id, player.id],

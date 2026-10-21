@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.45 (Oct 21 2026, HST)
+
+- Each farm you have up lets you FLEX once an hour: with 1 farm up that is 1 FLEX an hour, with 3 farms up it is 3 an hour. Too soon, and FLEX says how many minutes until the next. Removed: one FLEX per farm over 24 hours, which was the same as a daily limit.
+
 ## v0.44 (Oct 21 2026, HST)
 
 - You get one FLEX for every farm you put up, good for 24 hours from when you posted it. Nothing counts down while you wait, and FLEXing doesn't take your farm down. With none left, FLEX says to put a farm up. Removed: the limit of 3 FLEXes every 30 minutes.
