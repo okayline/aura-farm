@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.36 (Oct 21 2026, HST)
+
+- Each row in The Farm says how long that farm has been up, under FLEX (or FARMING on your own): "Up for 5 hrs", counting up as time passes (minutes in the first hour). Removed: nothing.
+
 ## v0.35 (Oct 21 2026, HST)
 
 - The FLEX screen's Details panel no longer ends with "DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP." Removed: that sentence; the cards above it still show what each beats.

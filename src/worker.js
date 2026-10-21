@@ -341,7 +341,7 @@ async function board(req, env) {
      WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
   const results = list.results, auras = aurasFrom(rows.results, day);
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
-  const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, mine: !!player && r.c_id === player.id }));
+  const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
   return json({ day, farms: out });
 }
 

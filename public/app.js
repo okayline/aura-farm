@@ -36,6 +36,8 @@ const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Ma
 // what a farm has earned by standing so far: 10,000 for each whole hour since it went up (this farm on its own; farms up together earn once between them)
 const earnText = (since) => "+" + (Math.floor(Math.min(Date.now() - since, A.LIFE * 1000) / 3600000) * A.STAND_PER_HOUR).toLocaleString("en-US") + " aura";
 const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(end - A.LIFE * 1000)}</span>`;
+// how long a farm has been up, in the words of The Farm's rows: "Up for 5 hrs" (minutes for the first hour)
+const upText = (since) => { const m = Math.floor((Date.now() - since) / 60000); return "Up for " + (m < 60 ? Math.max(m, 0) + " min" : Math.floor(m / 60) + (m < 120 ? " hr" : " hrs")); };
 const leftText = (end) => (end - Date.now() <= 0 ? "time's up" : clock(end - Date.now()) + " left");
 const endOf = (x, from = x) => from._t + x.left * 1000;
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
@@ -46,6 +48,7 @@ setInterval(() => {
   for (const n of document.querySelectorAll("[data-end]")) { n.textContent = leftText(+n.dataset.end); if (+n.dataset.end <= Date.now()) over = true; }
   for (const n of document.querySelectorAll("[data-since]")) n.textContent = clock(Date.now() - +n.dataset.since);
   for (const n of document.querySelectorAll("[data-earn]")) n.textContent = earnText(+n.dataset.earn);
+  for (const n of document.querySelectorAll("[data-upfor]")) n.textContent = upText(+n.dataset.upfor);
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
   if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
@@ -107,7 +110,7 @@ function boardTab(b) {
     <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
       ${halo(pic(c.name))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
-      <span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span></button>`).join("");
+      <span style="text-align:right"><span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }

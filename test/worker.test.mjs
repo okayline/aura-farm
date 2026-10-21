@@ -180,6 +180,7 @@ test("The Farm lists whoever has been farming the longest first", async () => {
   tick(3600); await call("cy", "POST", "/api/farm", { style: "M" });
   const rows = (await call("dee", "GET", "/api/board")).farms;
   assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map((r) => r.up), [7200, 3600, 0], "each row says how long it has stood (seconds)");
   assert.deepEqual([rows[1].postedAt - rows[0].postedAt, rows[2].postedAt - rows[1].postedAt], [3600, 3600], "the oldest farm is first, the newest last");
 });
 
