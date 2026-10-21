@@ -4,7 +4,7 @@ Stand there. Look cool. Bluff.
 
 An async bluffing card game. Post a challenge: you're dealt 5 cards and lock in 3, in order. Someone steps up with 3
 of their own 5. Both hands are face up; the 3 each side kept are secret. When you post, you also plan a move for each
-round: **🔒 LOCK IN**, **🗿 FARM** (double the pot) or **💨 DIP** (fold). Whoever takes it plays straight away, one round
+round: **🔒 LOCK IN**, **🌾 FARM** (double the pot) or **💨 DIP** (fold). Whoever takes it plays straight away, one round
 at a time: their pick and your planned move flip together with the round's cards. After 3 rounds, whoever won
 more rounds wins the pot.
 
