@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.11 (Oct 21 2026, HST)
+
+- A standing farm says "+10,000 an hour". Removed: "10,000 an hour" without the plus.
+- "On The Registry" opens The Registry at this farm's own entry. Removed: the link to the top of The Registry.
+
 ## v0.10 (Oct 20 2026, HST)
 
 - Home says "(your name)'s AURA FARM". Removed: the plain "AURA FARM" heading (still shown before you have a name).
