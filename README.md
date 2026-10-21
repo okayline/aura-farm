@@ -7,12 +7,13 @@ of their own, both are revealed at once, and the style that beats the other wins
 
 - **Styles**: 💎 DRIP > 😏 RIZZ > 🗿 MOG > 💎 DRIP. The same style is a draw (MUTUAL MOG).
 - **AURA FARM**: pick a style and tap FARM AURA to put it on the board. While it stands untaken you farm 10,000 aura in the first hour and 1,000 more each hour after (up to 3
-  farms up at once; each stays up 24 hours, then expires: "Your time is up").
+  farms up at once, and FARM AURA is greyed out while you have 3; each stays up 24 hours, then expires: "Your time is up").
 - **Aura**: win +100,000 (AURA FARMED), lose -100,000 (COOKED), a draw changes nothing. The 100,000 goes up 10,000 for each whole hour the farm stood before it was taken (220,000 at 12 hours).
 - **Records**: once a farm is taken, both styles are public. The Farm tab shows each poster's latest 10 styles, so the
   thing to read is how someone plays.
 - **FLEX**: take a farm with your style. Their card flips over, the winning emoji does its thing to the other one, and
-  the farm's line ("MOG couldn't handle the RIZZ.") and result stamp in (`public/reveal.js`).
+  the farm's line ("MOG couldn't handle the RIZZ.") and result stamp in (`public/reveal.js`). Phones with Reduce Motion on get
+  a fade-only version: their card fades over, the loser fades to grey, and the line and result fade in.
 - **The ledger**: every finished farm, sealed in a SHA-256 hash chain with both styles' fingerprints and the farm's line.
   After each one, the chain's length and newest fingerprint go to the shared registry (dungeon-items `REGISTRY`) as a
   checkpoint, with the line. Card
