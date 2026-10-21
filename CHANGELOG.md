@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.31 (Oct 21 2026, HST)
+
+- Three explainer sentences are gone: "Nobody has taken it yet. It comes down on its own when the time is up." and "Farms up at the same time earn once, not twice." on your open farm's page, and the "Sealed with this fingerprint…" sentence there and in the FLEX screen's panel. The fingerprints themselves stay. Removed: those sentences.
+
 ## v0.30 (Oct 21 2026, HST)
 
 - The details panels start rolled up and open when you tap them: the one under FLEX, your open farm's details, and a finished farm's Results. A panel you open stays open while that screen refreshes, and starts rolled up again the next time you open a farm. Removed: the panels always being open.

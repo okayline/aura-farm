@@ -168,7 +168,7 @@ function openFarmPage(v, back) {
     <div class="panel" style="text-align:center">
       <div class="row" style="justify-content:center">${halo(pic(me?.name), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
       <div class="time glow">${leftSpan(end)}</div>${barOf(end)}
-      <p class="small">Nobody has taken it yet. It comes down on its own when the time is up.</p></div>
+      </div>
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
     <div class="small" style="text-align:center;margin-top:10px">${esc(A.STYLE[s])} ${A.EMOJI[s]} beats ${esc(A.STYLE[A.BEATS[s]])} ${A.EMOJI[A.BEATS[s]]} and loses to ${esc(A.STYLE[loses])} ${A.EMOJI[loses]}.</div>
     ${rolled("open", "Details", `
@@ -176,8 +176,6 @@ function openFarmPage(v, back) {
       ${kv("Earning", `+${HOUR} an hour`)}${kv("At most", "+" + ((A.LIFE / 3600) * A.STAND_PER_HOUR).toLocaleString("en-US") + " if nobody takes it")}
       ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
       ${kv("Your record", recordLine(v.records[0]))}
-      <p class="small">Farms up at the same time earn once, not twice.</p>
-      <p class="small">Sealed with this fingerprint of your style, so you can't change it. It is the only thing anyone else can see until someone takes it:</p>
       <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px")}${back}`;
 }
 
@@ -190,7 +188,6 @@ function takeInfo(v) {
     ${kv("If you win", num(A.STAKE) + " aura")}${kv("If you lose", num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}
     ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
     <p class="small">DRIP 💎 beats RIZZ 😏, RIZZ 😏 beats MOG 🗿, MOG 🗿 beats DRIP 💎.</p>
-    <p class="small">Sealed with this fingerprint of their style, so they can't change it after you flex. It is the only thing anyone can see of it until someone takes it:</p>
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 
