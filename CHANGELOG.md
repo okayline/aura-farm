@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.16 (Oct 21 2026, HST)
+
+- Logging in as another player (save code or passkey) first asks "Switch anyway?" if the player you're on has no save code or passkey, because you couldn't get back to it. Removed: switching away from an unsaved player without a word.
+
 ## v0.15 (Oct 21 2026, HST)
 
 - A farm stays up for 24 hours from when you post it, even past midnight. You can have 3 up at once. Your aura still counts by the day: hours a farm stands and wins or losses land on the day they happen. Removed: every farm ending at midnight UTC, and "3 a day".
