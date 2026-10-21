@@ -114,13 +114,10 @@ function farmScreen(v) {
   }
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
   const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
-  const hand = (i) => (v.styles ? shown(v.styles[i]) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
-  return `
-    <div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[other] || "?")}</b><br><span class="small">${recordLine(v.records[other])}</span></div>
-      <div class="small" style="text-align:right">Farm #${v.id}</div></div>
-    ${hand(other)}
-    <div class="row">${halo("🧍", d > 0 ? 30 : 12)}<div class="grow"><b>you</b></div></div>
-    ${hand(side)}
+  const hand = (i) => (v.styles ? style(v.styles[i], { on: true }) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
+  const face = (name, sub, i, glow) => `<div class="face">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b><div class="small">${sub}</div>${hand(i)}</div>`;
+  return `<div class="small" style="text-align:center">Farm #${v.id}</div>
+    <div class="duel">${face(esc(v.names[other] || "?"), recordLine(v.records[other]), other, 18)}${face("you", recordLine(v.records[side]), side, d > 0 ? 30 : 12)}</div>
     <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${esc(v.captions[side])}</div>${back}`;
 }
 
