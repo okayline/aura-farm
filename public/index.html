@@ -21,13 +21,14 @@
     background: radial-gradient(circle at 50% 0%, #2a1650 0%, var(--bg) 60%) fixed, var(--bg);
   }
   .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 90px; display: flex; flex-direction: column; gap: 14px; }
-  .glow { text-shadow: 0 0 8px rgba(176,132,255,.4); }
+  .glow { text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }
+  .big.glow { text-shadow: 0 0 8px rgba(176,132,255,.45); }   /* large white headings: a softer glow */
   .meme { font-family: var(--meme); letter-spacing: .5px; text-transform: uppercase; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .title { font-family: var(--meme); font-size: 19px; line-height: 1.05; text-shadow: 0 0 8px rgba(176,132,255,.6), 0 0 16px rgba(255,111,207,.3); }
-  .title small { display: block; font-size: 11px; color: var(--mute); letter-spacing: 1px; }
+  .title small { display: block; font-size: 11px; color: var(--mute); letter-spacing: 1px; text-shadow: 0 0 8px #b084ff; }
   .me { text-align: right; font-size: 12px; color: var(--mute); }
-  .me b { color: var(--ink); font-size: 15px; text-shadow: 0 0 6px rgba(255,111,207,.5); }
+  .me b { color: var(--ink); font-size: 15px; text-shadow: 0 0 10px #ff6fcf; }
   button { font: inherit; color: var(--ink); cursor: pointer; }
   .link { background: none; border: 0; padding: 0; color: var(--mute); text-decoration: underline; font-size: 12px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
@@ -43,30 +44,30 @@
           display: flex; flex-direction: column; justify-content: space-between; text-align: left; color: var(--ink); }
   .five .card { height: 84px; padding: 6px; border-radius: 10px; }
   .five .card .e { font-size: 20px; }
-  .card .r { font-weight: 700; font-size: 18px; text-shadow: 0 0 5px color-mix(in srgb, var(--c) 50%, transparent); }
+  .card .r { font-weight: 700; font-size: 18px; text-shadow: 0 0 8px var(--c); }
   .card .e { font-size: 28px; text-align: center; }
-  .card .s { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--c); }
+  .card .s { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--c); text-shadow: 0 0 6px var(--c); }
   .card.back { background: repeating-linear-gradient(45deg, #1b1530 0 8px, #221a3d 8px 16px); align-items: center; justify-content: center; font-size: 26px; color: #8f80b8; box-shadow: none; }
   .card.ghost { opacity: .5; border-style: dashed; }
   .card .pick { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font-weight: 800; display: grid; place-items: center; font-size: 13px; box-shadow: 0 0 12px #fff; }
   .pot { text-align: center; padding: 6px 0; }
   .pot .n { font-family: var(--meme); font-size: 44px; line-height: 1; -webkit-text-stroke: 1px #000; text-shadow: 0 0 10px rgba(255,111,207,.6), 0 0 22px rgba(176,132,255,.35); }
-  .cap { font-family: var(--meme); font-size: 22px; text-align: center; min-height: 28px; text-shadow: 0 0 8px color-mix(in srgb, currentColor 50%, transparent); }
+  .cap { font-family: var(--meme); font-size: 22px; text-align: center; min-height: 28px; text-shadow: 0 0 14px currentColor; }
   .moves { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .mv { height: 54px; border-radius: 14px; font-family: var(--meme); font-size: 16px; white-space: nowrap; letter-spacing: .5px; background: transparent; border: 2px solid var(--line); }
+  .mv { height: 54px; border-radius: 14px; font-family: var(--meme); font-size: 16px; white-space: nowrap; letter-spacing: .5px; background: transparent; border: 2px solid var(--line); text-shadow: 0 0 10px currentColor; }
   .mv.lock { border-color: #5ad1ff; background: #0f1d2a; color: #e8f8ff; }
   .mv.farm { border: 0; background: linear-gradient(135deg, #b084ff, #ff6fcf); box-shadow: 0 0 22px rgba(255,111,207,.5); }
   .mv.dip { color: #d6cfee; }
   .mv:disabled { opacity: .35; cursor: default; }
   .mv.on { outline: 3px solid #fff; opacity: 1; }
-  .go { width: 100%; height: 54px; border-radius: 14px; border: 0; background: linear-gradient(135deg, #b084ff, #ff6fcf); font-family: var(--meme); font-size: 19px; letter-spacing: .5px; box-shadow: 0 0 22px rgba(255,111,207,.45); }
+  .go { width: 100%; height: 54px; border-radius: 14px; border: 0; background: linear-gradient(135deg, #b084ff, #ff6fcf); font-family: var(--meme); font-size: 19px; letter-spacing: .5px; text-shadow: 0 0 6px rgba(255,255,255,.35); box-shadow: 0 0 22px rgba(255,111,207,.45); }
   .go:disabled { opacity: .4; }
   .chip { border: 1px solid var(--line); background: var(--panel2); border-radius: 999px; padding: 6px 10px; font-size: 13px; }
   .list { display: flex; flex-direction: column; gap: 8px; }
   .item { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; width: 100%; text-align: left; }
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 4px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: rgba(11,10,18,.92); border-top: 1px solid var(--line); backdrop-filter: blur(8px); }
   .tab { flex: 1; max-width: 110px; background: none; border: 0; padding: 8px 4px; font-size: 12px; color: var(--dim); border-radius: 10px; }
-  .tab.on { color: var(--ink); font-weight: 700; background: var(--panel2); }
+  .tab.on { color: var(--ink); font-weight: 700; text-shadow: 0 0 10px #b084ff; background: var(--panel2); }
   .err { color: #ffb3b3; text-align: center; font-size: 13px; min-height: 18px; }
   .entry { font-size: 13px; }
   .entry .meme { font-size: 16px; }

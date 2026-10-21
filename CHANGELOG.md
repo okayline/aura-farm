@@ -1,8 +1,11 @@
 # Changelog
 
-## v0.2.2 (not released yet)
+## v0.3 (not released yet)
 
+- Play against the plan: when you post a challenge you also plan your move for each round. Whoever takes it plays the whole duel straight away, one round at a time, and you never have to come back. Removed: waiting for the other player each round, "your move" on challenges you posted, and the page checking back every 10 seconds.
+- Challenges that were open or being played when this went live were cancelled (they had no plan). Nothing was paid out for them.
 - Names are random only: "🎲 reroll name" gives you a new two-word name. Removed: typing your own name.
+- The glow is back the way it was in v0.1, but softer on the big white text (the title, headings, the big button and the pot). Removed: v0.2's toned-down glow on cards, captions and buttons.
 
 ## v0.2.1 (Oct 20 2026, HST)
 

@@ -7,7 +7,7 @@ const COLOR = { D: "var(--D)", H: "var(--H)", S: "var(--S)", C: "var(--C)" };
 const MOVE_WORD = { lock: "🔒 LOCK IN", farm: "🗿 FARM", dip: "💨 DIP" };
 const $app = document.getElementById("app"), $tabs = document.getElementById("tabs");
 
-let tab = "duels", me = null, view = null, picks = [], err = "", timer = null;
+let tab = "duels", me = null, view = null, picks = [], plan = [null, null, null], err = "";
 let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -61,7 +61,7 @@ function duelsTab() {
   const list = (me?.duels || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Standing on the board" : d.status === "draft" ? "Not posted yet" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "live" ? `Round ${d.round} · pot ${num(d.pot)} · ${d.yourMove ? "<b style='color:var(--H)'>your move</b>" : "waiting on them"}`
+      <span class="small">${d.status === "live" ? `Round ${d.round} · pot ${num(d.pot)} · ${d.yourMove ? "<b style='color:var(--H)'>your move</b>" : "they're playing your plan"}`
         : d.status === "done" ? esc(d.caption) : d.status === "open" ? "farming 1,000 aura an hour" : "pick your 3"}</span></span>
       <span>›</span>
     </button>`).join("");
@@ -98,16 +98,23 @@ function ledgerTab(l) {
     <div class="list">${rows || `<p class="small">No duels finished yet.</p>`}</div>`;
 }
 
+// the poster's plan: one move per round, sealed with the cards
+function planPicker() {
+  return `<div class="small">Your plan</div>` + [0, 1, 2].map((r) => `<div class="row"><span class="small" style="width:56px">Round ${r + 1}</span>
+    <div class="moves grow">${A.MOVES.map((m) => `<button class="mv ${m}${plan[r] === m ? " on" : ""}" style="height:40px;font-size:13px" data-act="plan:${r}:${m}" type="button">${MOVE_WORD[m]}</button>`).join("")}</div></div>`).join("");
+}
+
 // picking 3 of 5 in order, for posting or taking
 function pickScreen(v, side, title, action) {
   const mine = v.hands[side], theirs = v.hands[1 - side];
   return `<div class="panel"><div class="big glow">${title}</div>
-      <p class="small">Tap 3 cards in the order you'll flip them. ${side === 0 ? "Whoever takes this gets the other 5." : "They already locked 3 of theirs."}</p></div>
+      <p class="small">Tap 3 cards in the order you'll flip them. ${side === 0 ? "Then plan your move for each round: whoever takes this plays against your plan, and you never have to come back." : "They locked 3 of theirs and a move for each round. You play it now, one round at a time."}</p></div>
     <div class="small">${side === 0 ? "Whoever steps up holds" : esc(v.names[0]) + " holds"}</div>
     <div class="cards five">${theirs.map((c) => card(c, { small: true })).join("")}</div>
     <div class="small">You hold</div>
     <div class="cards five">${mine.map((c, i) => card(c, { small: true, pick: picks.includes(i) ? picks.indexOf(i) + 1 : null, onclick: "pick:" + i })).join("")}</div>
-    <button class="go" data-act="${action}" type="button" ${picks.length === 3 ? "" : "disabled"}>${side === 0 ? "🔒 LOCK IN & POST" : "😤 STARE DOWN"}</button>
+    ${side === 0 ? planPicker() : ""}
+    <button class="go" data-act="${action}" type="button" ${picks.length === 3 && (side === 1 || plan.every(Boolean)) ? "" : "disabled"}>${side === 0 ? "🔒 LOCK IN & POST" : "😤 STARE DOWN"}</button>
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
@@ -119,6 +126,7 @@ function duelScreen(v) {
     return `<div class="panel"><div class="big glow">${v.status === "open" ? "Standing on the board" : "Nobody stepped up"}</div>
       <p class="small">${v.status === "open" ? "Farming 1,000 aura an hour until someone takes it." : "It expired at the daily reset."}</p></div>
       <div class="small">Your lineup</div><div class="cards">${(v.mine || []).map((c) => card(c)).join("")}</div>
+      ${v.plan ? `<div class="small">Your plan: ${v.plan.map((m) => MOVE_WORD[m]).join(" · ")}</div>` : ""}
       <button class="link" data-act="back" type="button">back</button>`;
   }
   const shown = v.shown || [[], []];
@@ -127,11 +135,12 @@ function duelScreen(v) {
     : v.status === "live" && v.vibes > 0 ? card(null, { onclick: "peek:" + i }) : card(null)).join("");
   const mine = [0, 1, 2].map((i) => v.mine ? card(v.mine[i], { ghost: i >= (v.flipped || 0) && v.status !== "done" }) : card(shown[side][i])).join("");
   const done = v.status === "done";
-  const capText = done ? v.captions[side] : v.myMove ? `${MOVE_WORD[v.myMove]}. ${v.theyMoved ? "" : "Waiting on them…"}` : v.theyMoved ? "They picked. Your move." : "";
+  const last = v.moves[v.moves.length - 1];
+  const capText = done ? v.captions[side] : last ? `They ${MOVE_WORD[last[other]]} · you ${MOVE_WORD[last[side]]}` : v.side === 1 ? "Your move." : "";
   const capColor = done ? (v.result.deltas[side] >= 0 ? "#ff6fcf" : "#d6cfee") : "#c9b8ff";
   return `
     <div class="row">${halo("😎", v.pot)}<div class="grow"><b class="glow">${esc(v.names[other] || "?")}</b><br>
-      <span class="small">${v.status === "live" ? (v.theyMoved ? "picked" : "picking…") : ""}</span></div>
+      <span class="small">${v.status === "live" ? (v.side === 1 ? "playing their plan" : "playing against your plan…") : ""}</span></div>
       <div class="small" style="text-align:right">Round ${Math.min(v.round, 3)} / 3<br>Duel #${v.id}</div></div>
     <div class="cards">${theirs}</div>
     <div class="pot"><div class="small">POT</div><div class="n">${num(v.pot)} AURA</div></div>
@@ -139,8 +148,9 @@ function duelScreen(v) {
     <div class="cards">${mine}</div>
     <div class="row">${halo("🧍", v.pot)}<div class="grow"><b>you</b></div>
       ${v.status === "live" ? `<span class="chip">👀 VIBES ${v.vibes}</span>` : ""}</div>
-    ${v.status === "live" && v.side >= 0 ? `<div class="moves">${A.MOVES.map((m) => `<button class="mv ${m}${v.myMove === m ? " on" : ""}" data-act="move:${m}" type="button" ${v.myMove ? "disabled" : ""}>${MOVE_WORD[m]}</button>`).join("")}</div>
-      <p class="small" style="text-align:center">Picks are secret and flip together. Tap a ? to peek with VIBES.</p>` : ""}
+    ${v.status === "live" && v.side === 1 ? `<div class="moves">${A.MOVES.map((m) => `<button class="mv ${m}" data-act="move:${m}" type="button">${MOVE_WORD[m]}</button>`).join("")}</div>
+      <p class="small" style="text-align:center">Your pick flips together with their planned move. Tap a ? to peek with VIBES.</p>` : ""}
+    ${v.plan ? `<p class="small" style="text-align:center">Your plan: ${v.plan.map((m) => MOVE_WORD[m]).join(" · ")}</p>` : ""}
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
@@ -241,23 +251,20 @@ async function loggedIn(name) {
 let extra = null;   // the board, leaderboard or ledger, fetched for its tab
 
 function draw() {
-  clearTimeout(timer);
   const body = view?.you ? youScreen() : view ? duelScreen(view)
     : tab === "duels" ? duelsTab() : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["duels", "⚔️ Duels"], ["board", "🧍 Board"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
-  // a live duel waiting on the other side checks back every 10 seconds
-  if (view && view.status === "live" && (view.myMove || !view.theyMoved)) timer = setTimeout(() => run(() => openDuel(view.id, true)), 10000);
 }
 
 async function loadToday() { me = await api("GET", "today"); }
 async function loadTab() {
   extra = tab === "board" ? await api("GET", "board") : tab === "top" ? await api("GET", "leaderboard") : tab === "ledger" ? await api("GET", "ledger") : null;
 }
-async function openDuel(id, keepPicks = false) {
+async function openDuel(id) {
   view = await api("GET", "duel?id=" + id);
-  if (!keepPicks) picks = [];
+  picks = []; plan = [null, null, null];
 }
 
 document.addEventListener("click", (e) => {
@@ -270,10 +277,11 @@ document.addEventListener("click", (e) => {
     picks = picks.includes(i) ? picks.filter((x) => x !== i) : picks.length < 3 ? [...picks, i] : picks;
     return draw();
   }
+  if (act === "plan") { const [, r, m] = t.dataset.act.split(":"); plan[Number(r)] = m; return draw(); }
   if (act === "back") { view = null; return run(() => Promise.all([loadToday(), loadTab()])); }
   if (act === "open" || act === "look") return run(() => openDuel(Number(arg)));
-  if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; await loadToday(); });
-  if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks }); await loadToday(); });
+  if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; plan = [null, null, null]; await loadToday(); });
+  if (act === "post") return run(async () => { view = await api("POST", "post", { id: view.id, slots: picks, plan }); await loadToday(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, slots: picks }); await loadToday(); });
   if (act === "move") return run(async () => { view = await api("POST", "move", { id: view.id, round: view.round, move: arg }); await loadToday(); });
   if (act === "peek") return run(async () => { view = await api("POST", "vibes", { id: view.id, slot: Number(arg) }); await loadToday(); });

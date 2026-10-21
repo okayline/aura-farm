@@ -3,9 +3,10 @@
 Stand there. Look cool. Bluff.
 
 An async bluffing card game. Post a challenge: you're dealt 5 cards and lock in 3, in order. Someone steps up with 3
-of their own 5. Both hands are face up; the 3 each side kept are secret. Each round you both pick, in secret,
-**🔒 LOCK IN**, **🗿 FARM** (double the pot) or **💨 DIP** (fold), then the round's cards flip. After 3 rounds the
-higher total wins the pot.
+of their own 5. Both hands are face up; the 3 each side kept are secret. When you post, you also plan a move for each
+round: **🔒 LOCK IN**, **🗿 FARM** (double the pot) or **💨 DIP** (fold). Whoever takes it plays straight away, one round
+at a time: their pick and your planned move flip together with the round's cards. After 3 rounds the higher total wins
+the pot.
 
 - **Cards**: a standard deck plus 2 jokers. Suits are styles, ranks are aura (2-4 = 1, 5-7 = 2, 8-10 = 3, J/Q = 4,
   K/A = 5), jokers are **CAPs** (0, but winning while holding one is **NO CAP**: +500,000).

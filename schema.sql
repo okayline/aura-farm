@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS duels (
   c_id        INTEGER NOT NULL REFERENCES players(id),   -- challenger (side 0)
   t_id        INTEGER REFERENCES players(id),            -- taker (side 1)
   c_slots     TEXT,                   -- JSON [2,0,4]
+  c_plan      TEXT,                   -- JSON ["lock","farm","farm"]: the poster's move for each round (v0.3)
   c_salt      TEXT,
   c_commit    TEXT,
   t_slots     TEXT,
@@ -34,10 +35,7 @@ CREATE TABLE IF NOT EXISTS duels (
   t_commit    TEXT,
   moves       TEXT NOT NULL DEFAULT '[]',   -- JSON [["lock","farm"], ...], one pair per finished round
   n           INTEGER NOT NULL DEFAULT 0,   -- length of moves (guards against two requests resolving one round)
-  c_move      TEXT,                   -- this round's secret pick, until both are in
-  t_move      TEXT,
-  c_reads     TEXT NOT NULL DEFAULT '[]',   -- VIBES reads each side made
-  t_reads     TEXT NOT NULL DEFAULT '[]',
+  t_reads     TEXT NOT NULL DEFAULT '[]',   -- the taker's VIBES peeks
   result      TEXT,                   -- JSON, once done
   c_delta     INTEGER,
   t_delta     INTEGER,

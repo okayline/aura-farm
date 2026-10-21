@@ -1,17 +1,21 @@
-// AURA FARMING SIMULATOR Worker: cookie players, the challenge board, async duels with secret moves, VIBES,
-// standing aura, the daily board and the ledger.
+// AURA FARMING SIMULATOR Worker: cookie players, the challenge board, duels against a plan, VIBES, standing aura,
+// the daily board and the ledger.
 //
-// The server deals and keeps every secret: the seed, both lineups and this round's picks. The browser only ever
+// A poster locks in 3 cards and a plan: one move per round, sealed with the cards. Whoever takes the challenge plays
+// it straight away, one round at a time: each pick flips together with the plan's move for that round. The poster
+// never has to come back.
+//
+// The server deals and keeps every secret: the seed, both lineups and the plan. The browser only ever
 // gets what its player is allowed to see (duelView). The rules are public/engine/aura.js, the same file the page loads.
 //
 // API (all JSON):
-//   GET  /api/today                    the day, your name, aura (today and all time), VIBES, your challenges and duels
+//   GET  /api/today                    the day, your name, aura today, VIBES, your challenges and duels
 //   POST /api/draft                    deal a new challenge (or get your undrafted one back): both 5-card hands
-//   POST /api/post  {id, slots}        lock in 3 of your 5 in order and put the challenge on the board
+//   POST /api/post  {id, slots, plan}  lock in 3 of your 5 in order and a move per round, and put it on the board
 //   GET  /api/board                    today's open challenges (who posted and their aura today, never cards)
 //   GET  /api/duel?id=                 one duel, as you are allowed to see it
 //   POST /api/take  {id, slots}        take a challenge with 3 of your 5
-//   POST /api/move  {id, round, move}  your secret pick for this round: lock | farm | dip
+//   POST /api/move  {id, round, move}  the taker's pick for this round (lock | farm | dip): the round plays at once
 //   POST /api/vibes {id, slot}         spend 1 VIBES to peek at one of their unflipped cards
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
 //   GET  /api/leaderboard?day=         a day's players by net aura
@@ -171,7 +175,6 @@ async function cardsOf(env, d) {
 }
 
 const sideOf = (d, player) => (player && d.c_id === player.id ? 0 : player && d.t_id === player.id ? 1 : -1);
-const COL = ["c", "t"];
 
 // ---------- aura totals ----------
 
@@ -236,13 +239,14 @@ async function finish(env, d, moves, state, { dipper = null } = {}) {
     flipped: lines.map((l) => l.slice(0, state.flipped)),
     lineups: showdown ? lines : null,
     salts: showdown ? [d.c_salt, d.t_salt] : null,
+    plan: showdown ? JSON.parse(d.c_plan) : null,   // the poster's plan, covered by their commitment
     moves, pot: state.pot, result: r.how, winner: r.winner, deltas: r.deltas,
     bonuses: r.bonuses, caption: [A.caption(r, 0), A.caption(r, 1)], t,
   });
   for (let i = 0; i < 6; i++) {
     const stmts = [
       env.DB.prepare(
-        `UPDATE duels SET status = 'done', moves = ?, n = ?, c_move = NULL, t_move = NULL, result = ?, c_delta = ?, t_delta = ?, ended_at = ?
+        `UPDATE duels SET status = 'done', moves = ?, n = ?, result = ?, c_delta = ?, t_delta = ?, ended_at = ?
          WHERE id = ? AND status = 'live' AND n = ?`)
         .bind(JSON.stringify(moves), moves.length, JSON.stringify(r), r.deltas[0], r.deltas[1], t, d.id, d.n),
       await chainInsert(env.DB, await head(env.DB), { day: d.day, duelId: d.id, record, t },
@@ -293,25 +297,23 @@ async function checkpoint(env, duelId) {
   } catch (e) { console.error(e); }
 }
 
-// Once both picks of a round are in, play the round. Safe to call twice: the n guard lets one request do it.
-async function resolve(env, id) {
-  const d = await getDuel(env, id);
-  if (d.status !== "live" || !d.c_move || !d.t_move) return;
+// Play one round: the taker's pick against the plan's move for this round. The n guard lets one request do it.
+async function playRound(env, d, takerMove) {
   const { lines } = await cardsOf(env, d);
-  const moves = [...JSON.parse(d.moves), [d.c_move, d.t_move]];
+  const pair = [JSON.parse(d.c_plan)[d.n], takerMove];
+  const moves = [...JSON.parse(d.moves), pair];
   const state = A.play(lines[0], lines[1], moves);
   if (state.over) {
-    const dippers = [d.c_move, d.t_move].map((m) => m === "dip");
-    await finish(env, d, moves, state, { dipper: dippers[0] && !dippers[1] ? 0 : dippers[1] && !dippers[0] ? 1 : null });
-    return;
+    const dips = pair.map((m) => m === "dip");
+    return finish(env, d, moves, state, { dipper: dips[0] && !dips[1] ? 0 : dips[1] && !dips[0] ? 1 : null });
   }
-  await env.DB.prepare(
-    "UPDATE duels SET moves = ?, n = ?, c_move = NULL, t_move = NULL WHERE id = ? AND status = 'live' AND n = ?")
+  const r = await env.DB.prepare("UPDATE duels SET moves = ?, n = ? WHERE id = ? AND status = 'live' AND n = ?")
     .bind(JSON.stringify(moves), moves.length, d.id, d.n).run();
+  if (!r.meta.changes) throw new Oops("That round is already over. Refresh.");
 }
 
-// The daily reset: a live duel from an earlier day ends now, a missing pick counting as a DIP (no VIBES for it);
-// drafts and open challenges from an earlier day expire.
+// The daily reset: a live duel from an earlier day (its taker left halfway) ends now, the taker's missing pick
+// counting as a DIP (no VIBES for it); drafts and open challenges from an earlier day expire.
 let settledDay = null;   // this Worker instance already did today's reset (it runs again after midnight UTC)
 async function settleStale(env) {
   const day = utcDay();
@@ -320,7 +322,7 @@ async function settleStale(env) {
   const { results } = await env.DB.prepare("SELECT * FROM duels WHERE status = 'live' AND day < ? LIMIT 20").bind(day).all();
   for (const d of results) {
     const { lines } = await cardsOf(env, d);
-    const moves = [...JSON.parse(d.moves), [d.c_move || "dip", d.t_move || "dip"]];
+    const moves = [...JSON.parse(d.moves), [JSON.parse(d.c_plan)[d.n], "dip"]];
     const state = A.play(lines[0], lines[1], moves);
     // every unfinished duel has an unfinished round, so a forced DIP always ends it
     await finish(env, d, moves, state);
@@ -344,15 +346,14 @@ async function duelView(env, d, player) {
     deadline: dayEnd(d.day),
   };
   if (side >= 0) out.mine = lines[side];
+  if (side === 0 && d.c_plan) out.plan = JSON.parse(d.c_plan);
   if (d.status === "live" || d.status === "done") {
     const state = A.play(lines[0], lines[1], moves);
     out.round = state.round; out.pot = state.pot; out.flipped = state.flipped;
     out.shown = lines.map((l) => l.slice(0, state.flipped));
   }
-  if (d.status === "live" && side >= 0) {
-    out.myMove = d[COL[side] + "_move"];
-    out.theyMoved = !!d[COL[1 - side] + "_move"];
-    out.reads = JSON.parse(d[COL[side] + "_reads"]);
+  if (d.status === "live" && side === 1) {
+    out.reads = JSON.parse(d.t_reads);
     out.vibes = await vibesOf(env, player.id);
   }
   if (d.status === "done") {
@@ -383,7 +384,7 @@ async function today(req, env) {
     if (d.status === "live") {
       const { lines } = await cardsOf(env, d);
       const st = A.play(lines[0], lines[1], JSON.parse(d.moves));
-      Object.assign(row, { round: st.round, pot: st.pot, yourMove: !d[COL[side] + "_move"] });
+      Object.assign(row, { round: st.round, pot: st.pot, yourMove: side === 1 });
     }
     if (d.status === "done") row.caption = A.caption(JSON.parse(d.result), side);
     out.duels.push(row);
@@ -404,12 +405,13 @@ async function draft(req, env) {
   return withCookie(json(await duelView(env, d, player)), cookie);
 }
 
-async function lockIn(env, d, side, slots) {
+// A lineup's commitment covers its cards in order and, for the poster, the plan (src/ledger.js commitment).
+async function lockIn(env, d, side, slots, plan = null) {
   const { hands } = await cardsOf(env, d);
   const cards = A.lineupCards(hands[side], slots);
   if (!cards) throw new Oops("Pick 3 different cards from your hand, in the order you'll flip them.");
   const salt = randomHex();
-  return { slots: JSON.stringify(slots), salt, commit: await commitment(cards, salt) };
+  return { slots: JSON.stringify(slots), salt, commit: await commitment(cards, salt, plan) };
 }
 
 async function post(req, env) {
@@ -417,11 +419,14 @@ async function post(req, env) {
   const b = await body(req);
   const d = await getDuel(env, b.id);
   if (d.c_id !== player.id || d.status !== "draft") throw new Oops("That isn't a challenge you can post.");
-  const L = await lockIn(env, d, 0, b.slots);
+  if (!Array.isArray(b.plan) || b.plan.length !== A.ROUNDS || !b.plan.every((m) => A.MOVES.includes(m))) {
+    throw new Oops("Pick a move for each of the 3 rounds: LOCK IN, FARM or DIP.");
+  }
+  const L = await lockIn(env, d, 0, b.slots, b.plan);
   const r = await env.DB.prepare(
-    `UPDATE duels SET status = 'open', c_slots = ?, c_salt = ?, c_commit = ?, posted_at = ?
+    `UPDATE duels SET status = 'open', c_slots = ?, c_plan = ?, c_salt = ?, c_commit = ?, posted_at = ?
      WHERE id = ? AND status = 'draft' AND (SELECT COUNT(*) FROM duels WHERE c_id = ? AND day = ? AND status = 'open') < ?`)
-    .bind(L.slots, L.salt, L.commit, now(), d.id, player.id, d.day, A.MAX_OPEN).run();
+    .bind(L.slots, JSON.stringify(b.plan), L.salt, L.commit, now(), d.id, player.id, d.day, A.MAX_OPEN).run();
   if (!r.meta.changes) throw new Oops(`You already have ${A.MAX_OPEN} challenges on the board.`);
   return json(await duelView(env, await getDuel(env, d.id), player));
 }
@@ -463,14 +468,9 @@ async function move(req, env) {
   const b = await body(req);
   if (!A.MOVES.includes(b.move)) throw new Oops("Pick LOCK IN, FARM or DIP.");
   const d = await getDuel(env, b.id);
-  const side = sideOf(d, player);
-  if (side < 0 || d.status !== "live") throw new Oops("That duel isn't live.");
+  if (d.status !== "live" || sideOf(d, player) !== 1) throw new Oops("That isn't a duel you're playing.");
   if (b.round !== d.n + 1) throw new Oops("That round is already over. Refresh.");
-  const col = COL[side] + "_move";
-  const r = await env.DB.prepare(`UPDATE duels SET ${col} = ? WHERE id = ? AND status = 'live' AND n = ? AND ${col} IS NULL`)
-    .bind(b.move, d.id, d.n).run();
-  if (!r.meta.changes) throw new Oops("You already picked this round.");
-  await resolve(env, d.id);
+  await playRound(env, d, b.move);
   return json(await duelView(env, await getDuel(env, d.id), player));
 }
 
@@ -478,16 +478,15 @@ async function vibes(req, env) {
   const player = await mustPlayer(req, env);
   const b = await body(req);
   const d = await getDuel(env, b.id);
-  const side = sideOf(d, player);
-  if (side < 0 || d.status !== "live") throw new Oops("That duel isn't live.");
+  if (d.status !== "live" || sideOf(d, player) !== 1) throw new Oops("That isn't a duel you're playing.");
   const { lines } = await cardsOf(env, d);
-  const theirs = lines[1 - side], flipped = d.n;
-  const reads = JSON.parse(d[COL[side] + "_reads"]);
+  const theirs = lines[0], flipped = d.n;
+  const reads = JSON.parse(d.t_reads);
   if (!Number.isInteger(b.slot) || b.slot < flipped || b.slot >= A.ROUNDS) throw new Oops("Peek at a card that hasn't flipped.");
   if (reads.some((x) => x.slot === b.slot)) throw new Oops("You already peeked at that one.");
   const read = { slot: b.slot, card: theirs[b.slot] };
   const day = utcDay();
-  const col = COL[side] + "_reads";
+  const col = "t_reads";
   const res = await env.DB.batch([
     env.DB.prepare(`INSERT INTO vibes (player_id, day, balance) VALUES (?, ?, ?) ON CONFLICT (player_id, day) DO NOTHING`)
       .bind(player.id, day, A.VIBES_START),
