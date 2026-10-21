@@ -129,7 +129,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(tk.result.winner, 1);
   assert.deepEqual(tk.captions, ["COOKED. -120,000 aura", "AURA FARMED. +120,000 aura"]);
   assert.equal(f.id, 1);
-  assert.equal(tk.line, "Too much DRIP. RIZZ slipped.");
+  assert.equal(tk.line, "RIZZ tried. DRIP shined.");
   assert.equal(tk.takenAt - tk.postedAt, 2 * 3600 + 60, "the farm's own page knows when it was put up and taken: it stood for the 2 hours and a minute above");
   assert.equal(tk.left, null, "a finished farm has no time left");
   const raw = env.DB.raw.prepare("SELECT id, record, prev_hash, hash FROM ledger WHERE farm_id = 1").get();
@@ -154,7 +154,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(rec.rules, 5);
   assert.deepEqual(rec.styles, ["R", "D"]);
   assert.equal(rec.players.includes(null), false);
-  assert.equal(rec.line, "Too much DRIP. RIZZ slipped.", "the line is sealed with the farm");
+  assert.equal(rec.line, "RIZZ tried. DRIP shined.", "the line is sealed with the farm");
   for (const sd of [0, 1]) assert.equal(sha(rec.styles[sd] + "|" + rec.salts[sd]), rec.commits[sd]);
   assert.equal(JSON.stringify(rec).includes("ann"), false, "records hold ids, never names");
 
@@ -226,7 +226,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   const sent = env.REGISTRY.checkpoints;
   assert.deepEqual(sent.map((c) => [c.game, c.entries, c.head]), [["aura-farm", 1, rows[0].hash], ["aura-farm", 2, rows[1].hash]]);
   assert.deepEqual(sent.map((c) => c.detail), [
-    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [100000, -100000], line: "Too much DRIP. RIZZ slipped." },
+    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [100000, -100000], line: "RIZZ tried. DRIP shined." },
     { day: "2027-01-01", farm: 3, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-100000, 100000], line: "The DRIP couldn't survive the MOG." },
   ]);
   assert.equal(JSON.stringify(sent).includes("players"), false);

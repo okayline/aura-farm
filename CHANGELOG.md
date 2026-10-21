@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.46 (Oct 21 2026, HST)
+
+- When DRIP beats RIZZ, the line is one of 3 instead of 8. Removed: the water jokes (drowned, slipped, too wet, rinsed, soaked). Farms already taken keep the line they were sealed with.
+
 ## v0.45 (Oct 21 2026, HST)
 
 - Each farm you have up lets you FLEX once an hour: with 1 farm up that is 1 FLEX an hour, with 3 farms up it is 3 an hour. Too soon, and FLEX says how many minutes until the next. Removed: one FLEX per farm over 24 hours, which was the same as a daily limit.
