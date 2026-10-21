@@ -6,6 +6,7 @@ const COLOR = { D: "var(--D)", R: "var(--H)", M: "var(--S)" };
 const $app = document.getElementById("app"), $tabs = document.getElementById("tabs");
 
 let tab = "farms", me = null, view = null, pick = null, err = "";
+let flexedAt = 0;   // when you last tapped FLEX: the finished farm plays its reveal once, right after
 let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -115,9 +116,13 @@ function farmScreen(v) {
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
   const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
   const hand = (i) => (v.styles ? style(v.styles[i], { on: true }) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
-  const face = (name, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i ? " lost" : ""}">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b>${hand(i)}</div>`;
+  // right after you FLEX, their card starts face down and flips over (index.html, "the reveal"). A redraw
+  // during it (the header refreshing) picks the animations up where they were, through --t.
+  const t = Date.now() - flexedAt, reveal = v.styles && t < 2500;
+  const flip = (i) => (reveal && i === other ? `<div class="slot"><div class="card back">?</div>${hand(i)}</div>` : hand(i));
+  const face = (name, i, glow) => `<div class="face${v.result.winner == null ? "" : v.result.winner === i ? " won" : " lost"}">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
-    <div class="duel">${face(esc(v.names[other] || "?"), other, 18)}
+    <div class="duel${reveal ? ` reveal" style="--t:${-t}ms` : ""}">${face(esc(v.names[other] || "?"), other, 18)}
       <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${esc(v.captions[side])}</div>
       ${face("you", side, d > 0 ? 30 : 12)}</div>${back}`;
 }
@@ -258,7 +263,7 @@ document.addEventListener("click", (e) => {
   if (act === "back") return showTab(tab);
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
   if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
-  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); pick = null; refreshMe(); });
+  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexedAt = Date.now(); pick = null; refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 

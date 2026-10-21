@@ -48,6 +48,25 @@
   .face { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
   .face .card { width: 170px; }
   .face.lost { filter: grayscale(1); opacity: .6; }
+  /* the reveal, right after you FLEX: their card flips from face down, the loser drains, the line drops in */
+  .slot { position: relative; perspective: 700px; }
+  .slot .card { backface-visibility: hidden; }
+  .card.back { position: absolute; inset: 0; z-index: 1; --c: var(--S); display: grid; place-items: center; place-content: center; font-family: var(--meme); font-size: 46px;
+               text-shadow: 0 0 14px var(--S), 0 0 26px var(--H); background: repeating-linear-gradient(45deg, #1d1533 0 10px, #241a40 10px 20px); }
+  .reveal .slot { animation: wobble .6s ease-in-out calc(var(--t) + .1s) both; }
+  .reveal .card.back { animation: backflip .5s ease-in calc(var(--t) + .8s) both; }
+  .reveal .slot .card:not(.back) { animation: frontflip .5s ease-out calc(var(--t) + .8s) both; }
+  .reveal .face.won .card.on { animation: winpulse .9s ease calc(var(--t) + 1.5s) both; }
+  .reveal .face.won .slot .card.on { animation: frontflip .5s ease-out calc(var(--t) + .8s) both, winpulse .9s ease calc(var(--t) + 1.5s) both; }
+  .reveal .face.lost { animation: drain .6s ease calc(var(--t) + 1.5s) both; }
+  .reveal .cap { animation: drop .45s cubic-bezier(.2,1.6,.4,1) calc(var(--t) + 2s) both; }
+  @keyframes wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+  @keyframes backflip { from { transform: rotateY(0); } to { transform: rotateY(180deg); } }
+  @keyframes frontflip { from { transform: rotateY(-180deg); } to { transform: rotateY(0); } }
+  @keyframes winpulse { 0%, 100% { box-shadow: 0 0 26px var(--c); } 40% { box-shadow: 0 0 60px 12px var(--c); } }
+  @keyframes drain { from { filter: grayscale(0); opacity: 1; } to { filter: grayscale(1); opacity: .6; } }
+  @keyframes drop { from { transform: translateY(-24px) scale(1.3); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .reveal * { animation: none !important; } .reveal .card.back { display: none; } }
   .cap { font-family: var(--meme); font-size: 22px; text-align: center; min-height: 28px; text-shadow: 0 0 14px currentColor; }
   .go { width: 100%; height: 54px; border-radius: 14px; border: 0; background: linear-gradient(135deg, #b084ff, #ff6fcf); font-family: var(--meme); font-size: 19px; letter-spacing: .5px; text-shadow: 0 0 6px rgba(255,255,255,.35); box-shadow: 0 0 22px rgba(255,111,207,.45); }
   .go:disabled { opacity: .4; }
