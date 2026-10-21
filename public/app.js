@@ -106,9 +106,11 @@ function ledgerTab(l) {
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
-// A finished farm's seal: its ledger entry and fingerprint, and the shared registry that keeps a checkpoint of it.
-const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;margin-top:3em">📜 Ledger entry #${v.ledger.entry}<br><code>${esc(v.ledger.hash)}</code><br>
-  <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>` : "");
+// A finished farm's seal: its whole ledger entry (the record exactly as hashed, the previous entry's hash and its own),
+// and the shared registry that keeps a checkpoint of it.
+const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;margin-top:3em">📜 Ledger entry #${v.ledger.entry}<br>
+  <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
+  <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;

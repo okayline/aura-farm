@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.23 (Oct 21 2026, HST)
+
+- A finished farm's page shows its whole ledger entry: the record exactly as sealed, the hash before it and its own hash, so anyone can check it. Removed: the hash shown alone under "Ledger entry".
+
 ## v0.22 (Oct 21 2026, HST)
 
 - More random names: 22 new first words and 17 new last words (like "Clutch Raider", "Fanum Zaddy", "Gagged Ick"). Removed: the old last words "Bean", "Cat", "Rat", "Pigeon", "Raccoon", "Possum", "Frog", "Shrimp" and "Capybara" (all the animals).
