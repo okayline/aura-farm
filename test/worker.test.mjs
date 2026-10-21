@@ -319,26 +319,27 @@ test("only 3 new guests an hour from one address: the 4th is refused, and the ne
   assert.ok((await call("d", "POST", "/api/farm", { style: "D" })).id);
 });
 
-test("one FLEX per farm you put up, good for 24 hours: no farm, no FLEX; each farm earns one", async () => {
+test("each farm you have up lets you FLEX once an hour: no farm, no FLEX; N farms up, N an hour; the wait is told", async () => {
   const { env, call, tick } = setup();
   const a = (await call("a", "POST", "/api/farm", { style: "D" })).id, b = (await call("a", "POST", "/api/farm", { style: "D" })).id;
-  const c = (await call("b", "POST", "/api/farm", { style: "D" })).id;
+  const c = (await call("a", "POST", "/api/farm", { style: "D" })).id, d = (await call("b", "POST", "/api/farm", { style: "D" })).id;
   const take = (id) => call("x", "POST", "/api/take", { id, style: "R" });
-  const r0 = await take(a);                                   // x has put up nothing
+  const r0 = await take(a);                                   // x has no farm up
   assert.equal(r0.status, 429);
   assert.match(r0.error, /Put a farm up to FLEX/);
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 2, "refusing x made no player");
-  assert.ok((await call("x", "POST", "/api/farm", { style: "D" })).id);   // x puts one up: one FLEX
+  assert.ok((await call("x", "POST", "/api/farm", { style: "D" })).id);   // 1 farm up: 1 FLEX an hour
   assert.equal((await take(a)).status, "done");
-  assert.equal((await take(b)).status, 429);                  // used it; the farm still being up changes nothing
-  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);   // a second farm: a second FLEX
+  tick(600);
+  const r1 = await take(b);
+  assert.equal(r1.status, 429);
+  assert.match(r1.error, /once an hour\. Next one in 50 min/);    // taken at T0, now T0+600 s: 3600 - 600 = 50 min
+  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);   // 2 farms up: 2 FLEXes in the hour
   assert.equal((await take(b)).status, "done");
-  assert.equal((await take(c)).status, 429);
-  tick(24 * 3600 + 1);                                        // a day on: the old farms, and the FLEXes they paid for, are past 24 hours
-  const d = (await call("b", "POST", "/api/farm", { style: "D" })).id;
-  assert.equal((await take(d)).status, 429);                  // x's old farms earn nothing now
-  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);
-  assert.equal((await take(d)).status, "done");               // a new farm, a new FLEX
+  assert.equal((await take(c)).status, 429);                  // 2 FLEXes in the last hour, 2 farms up
+  tick(3600 - 600 + 1);                                       // the first FLEX is now over an hour old: one is free again
+  assert.equal((await take(c)).status, "done");
+  assert.equal((await take(d)).status, 429);
 });
 
 test("the version on the page matches the newest CHANGELOG heading", async () => {
