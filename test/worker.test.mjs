@@ -120,6 +120,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal((await call("ann", "POST", "/api/take", { id: f.id, style: "D" })).status, 400, "not your own farm");
   assert.equal((await call("bo", "POST", "/api/take", { id: f.id, style: "?" })).status, 400);
 
+  await call("bo", "POST", "/api/farm", { style: "M" });   // a FLEX needs a farm put up
   const tk = await call("bo", "POST", "/api/take", { id: f.id, style: "D" });   // DRIP beats RIZZ: bo wins
   assert.equal(tk.status, "done");
   assert.deepEqual(tk.styles, ["R", "D"]);
@@ -167,6 +168,7 @@ test("a draw changes nothing", async () => {
   const { call, tick } = setup();
   const f = await call("ann", "POST", "/api/farm", { style: "M" });
   tick(3600);
+  await call("bo", "POST", "/api/farm", { style: "D" });
   const tk = await call("bo", "POST", "/api/take", { id: f.id, style: "M" });
   assert.equal(tk.result.winner, null);
   assert.deepEqual(tk.result.deltas, [0, 0]);
@@ -190,12 +192,14 @@ test("at most 3 farms up at once; each stays up 24 hours, across midnight, then 
   assert.equal((await call("ann", "POST", "/api/farm", { style: "D" })).status, 400);
   const open = (await call("bo", "GET", "/api/board")).farms;
   assert.equal(open.length, 3);
+  for (let i = 0; i < 3; i++) await call("bo", "POST", "/api/farm", { style: "D" });   // bo's own three farms earn three FLEXes
+  const others = async () => (await call("bo", "GET", "/api/board")).farms.filter((x) => !x.mine);
   const d0 = (await call("bo", "POST", "/api/take", { id: open[0].id, style: "D" })).result.deltas[0];
   tick(16 * 3600 + 1);     // 00:00:01 on Jan 2: past midnight UTC, the other two are still up
-  assert.equal((await call("bo", "GET", "/api/board")).farms.length, 2);
+  assert.equal((await others()).length, 2);
   const d1 = (await call("bo", "POST", "/api/take", { id: open[1].id, style: "D" })).result.deltas[0];
   tick(8 * 3600);          // 08:00:01 on Jan 2: 24 hours since ann posted
-  assert.equal((await call("bo", "GET", "/api/board")).farms.length, 0);
+  assert.equal((await others()).length, 0);
   assert.equal((await call("ann", "GET", `/api/farm?id=${open[2].id}`)).status, "expired");
   assert.equal((await call("bo", "POST", "/api/take", { id: open[2].id, style: "D" })).status, 400);
   // ann's untaken farm shows as expired, so she can see her time was up
@@ -215,6 +219,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   const { env, call } = setup();
   for (let i = 0; i < 2; i++) {
     const f = await call("ann", "POST", "/api/farm", { style: "D" });
+    await call("bo", "POST", "/api/farm", { style: "D" });   // each FLEX needs a farm put up (so ann's second farm is #3)
     await call("bo", "POST", "/api/take", { id: f.id, style: i ? "M" : "R" });   // DRIP beats RIZZ; MOG beats DRIP
   }
   const rows = env.DB.raw.prepare("SELECT * FROM ledger ORDER BY id").all();
@@ -222,7 +227,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   assert.deepEqual(sent.map((c) => [c.game, c.entries, c.head]), [["aura-farm", 1, rows[0].hash], ["aura-farm", 2, rows[1].hash]]);
   assert.deepEqual(sent.map((c) => c.detail), [
     { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [100000, -100000], line: "Too much DRIP. RIZZ slipped." },
-    { day: "2027-01-01", farm: 2, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-100000, 100000], line: "MOG didn't blink. DRIP did." },
+    { day: "2027-01-01", farm: 3, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-100000, 100000], line: "The DRIP couldn't survive the MOG." },
   ]);
   assert.equal(JSON.stringify(sent).includes("players"), false);
   assert.equal(JSON.stringify(sent).includes("ann"), false);
@@ -314,17 +319,26 @@ test("only 3 new guests an hour from one address: the 4th is refused, and the ne
   assert.ok((await call("d", "POST", "/api/farm", { style: "D" })).id);
 });
 
-test("3 FLEXes in any 30 minutes: the 4th is refused with the wait, and the oldest dropping out frees one", async () => {
-  const { call, tick } = setup();
-  const ids = [];
-  for (const who of ["f1", "f1", "f1"]) ids.push((await call(who, "POST", "/api/farm", { style: "D" })).id);
-  const f4 = (await call("f2", "POST", "/api/farm", { style: "D" })).id;
-  for (const id of ids) { assert.equal((await call("x", "POST", "/api/take", { id, style: "R" })).status, "done"); tick(60); }
-  const r = await call("x", "POST", "/api/take", { id: f4, style: "R" });
-  assert.equal(r.status, 429);
-  assert.match(r.error, /3 times every 30 minutes\. Next one in 27 min/);   // first took at T0, now T0+180s: 1800-180 = 1620 s = 27 min
-  tick(1620);
-  assert.equal((await call("x", "POST", "/api/take", { id: f4, style: "R" })).status, "done");
+test("one FLEX per farm you put up, good for 24 hours: no farm, no FLEX; each farm earns one", async () => {
+  const { env, call, tick } = setup();
+  const a = (await call("a", "POST", "/api/farm", { style: "D" })).id, b = (await call("a", "POST", "/api/farm", { style: "D" })).id;
+  const c = (await call("b", "POST", "/api/farm", { style: "D" })).id;
+  const take = (id) => call("x", "POST", "/api/take", { id, style: "R" });
+  const r0 = await take(a);                                   // x has put up nothing
+  assert.equal(r0.status, 429);
+  assert.match(r0.error, /Put a farm up to FLEX/);
+  assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 2, "refusing x made no player");
+  assert.ok((await call("x", "POST", "/api/farm", { style: "D" })).id);   // x puts one up: one FLEX
+  assert.equal((await take(a)).status, "done");
+  assert.equal((await take(b)).status, 429);                  // used it; the farm still being up changes nothing
+  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);   // a second farm: a second FLEX
+  assert.equal((await take(b)).status, "done");
+  assert.equal((await take(c)).status, 429);
+  tick(24 * 3600 + 1);                                        // a day on: the old farms, and the FLEXes they paid for, are past 24 hours
+  const d = (await call("b", "POST", "/api/farm", { style: "D" })).id;
+  assert.equal((await take(d)).status, 429);                  // x's old farms earn nothing now
+  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);
+  assert.equal((await take(d)).status, "done");               // a new farm, a new FLEX
 });
 
 test("the version on the page matches the newest CHANGELOG heading", async () => {
