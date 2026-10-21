@@ -64,7 +64,7 @@ function farmsTab() {
       <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} an hour` : ""}</span></span>
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
-  return `<div class="panel"><div class="big glow">AURA FARM</div>
+  return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
     ${styles()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
