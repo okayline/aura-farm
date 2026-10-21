@@ -4,6 +4,7 @@
 
 - A farm that has stood longer is worth more when it is taken: the winner gets, and the loser loses, 100,000 plus 10,000 for every whole hour it stood (110,000 after 1 hour, 220,000 after 12, 330,000 after 23). The FLEX screen's "If you win" and "If you lose" count up as the hours pass. Removed: the flat 100,000.
 - A farm earns more the longer it stands: 10,000 in its first hour, 11,000 in its second, 12,000 in its third, and so on (186,000 after 12 hours, 516,000 after 24). "Earning", "Earned so far", "At most" and the hourly line on your Farming rows follow it. Farms up together still earn once, from the oldest. Removed: the flat 10,000 an hour.
+- Your open farm's Details also say what you win or lose if it is taken now, and that earning goes up 1,000 and win/lose 10,000 every hour. The FLEX screen's Details say the win/lose goes up 10,000 every hour. Removed: nothing.
 ## v0.37 (Oct 21 2026, HST)
 
 - Reloading The Farm, Today or Ledger now comes back to the same tab: the address shows `?tab=board`, `?tab=top` or `?tab=ledger` (Home stays the plain address). Removed: reloads always landing on Home.
