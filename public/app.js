@@ -61,7 +61,7 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming" : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} an hour` : ""}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour` : ""}</span></span>
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
@@ -105,7 +105,7 @@ function ledgerTab(l) {
 
 // A finished farm's seal: its ledger entry and fingerprint, and the shared registry that keeps a checkpoint of it.
 const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center">📜 Ledger entry #${v.ledger.entry}<br><code>${esc(v.ledger.hash)}</code><br>
-  <a class="link" href="https://88x31.app/registry" target="_blank" rel="noopener">On The Registry ›</a></div>` : "");
+  <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>` : "");
 
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
