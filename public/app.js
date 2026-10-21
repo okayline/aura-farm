@@ -13,7 +13,6 @@ let ask = null;   // an in-game "are you sure?" on the you screen: { act, arg, t
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
-const HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
 
 async function api(method, path, body) {
   const res = await fetch("/api/" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -33,8 +32,15 @@ async function run(fn) {
 // A farm sends the seconds it has left; the page turns that into a moment on its own clock when the answer arrives (_t),
 // writes it into the page, and a timer redraws just those words, so nothing else on the screen is touched.
 const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m >= 1 ? `${m}m` : "under a minute"; };
-// what a farm has earned by standing so far: 10,000 for each whole hour since it went up (this farm on its own; farms up together earn once between them)
-const earnText = (since) => "+" + (Math.floor(Math.min(Date.now() - since, A.LIFE * 1000) / 3600000) * A.STAND_PER_HOUR).toLocaleString("en-US") + " aura";
+// whole hours a farm has stood since it went up (ms)
+const hoursUp = (since) => Math.floor(Math.min(Math.max(Date.now() - since, 0), A.LIFE * 1000) / 3600000);
+// what a farm has earned by standing so far: 10,000 for its first hour, 11,000 for its second, and so on (this farm on its own; farms up together earn from the oldest)
+const earnText = (since) => "+" + A.earned(hoursUp(since)).toLocaleString("en-US") + " aura";
+// what a farm earns per hour right now, and what it moves if it is taken now
+const rateText = (since) => "+" + A.rate(hoursUp(since)).toLocaleString("en-US") + " an hour";
+const rateSpan = (since) => `<span data-rate="${since}">${rateText(since)}</span>`;
+const stakeText = (since, sign) => num(sign * A.stake(hoursUp(since))) + " aura";
+const stakeSpan = (since, sign) => `<span data-stake="${since}" data-sign="${sign}">${stakeText(since, sign)}</span>`;
 const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(end - A.LIFE * 1000)}</span>`;
 // how long a farm has been up, in the words of The Farm's rows: "Up for 5 hrs" (minutes for the first hour)
 const upText = (since) => { const m = Math.floor((Date.now() - since) / 60000); return "Up for " + (m < 60 ? Math.max(m, 0) + " min" : Math.floor(m / 60) + (m < 120 ? " hr" : " hrs")); };
@@ -48,6 +54,8 @@ setInterval(() => {
   for (const n of document.querySelectorAll("[data-end]")) { n.textContent = leftText(+n.dataset.end); if (+n.dataset.end <= Date.now()) over = true; }
   for (const n of document.querySelectorAll("[data-since]")) n.textContent = clock(Date.now() - +n.dataset.since);
   for (const n of document.querySelectorAll("[data-earn]")) n.textContent = earnText(+n.dataset.earn);
+  for (const n of document.querySelectorAll("[data-rate]")) n.textContent = rateText(+n.dataset.rate);
+  for (const n of document.querySelectorAll("[data-stake]")) n.textContent = stakeText(+n.dataset.stake, +n.dataset.sign);
   for (const n of document.querySelectorAll("[data-upfor]")) n.textContent = upText(+n.dataset.upfor);
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
@@ -95,11 +103,11 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item home" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${d.left != null ? rateSpan(endOf(d, me) - A.LIFE * 1000) + " · " + leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
-      <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
+      <p class="small">+10,000 Aura in the first hour, then 1,000 more each hour while your Farm is up</p></div>
     ${styles()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
@@ -180,7 +188,7 @@ function openFarmPage(v, back) {
     <div class="small" style="text-align:center;margin-top:10px">${esc(A.STYLE[s])} ${A.EMOJI[s]} beats ${esc(A.STYLE[A.BEATS[s]])} ${A.EMOJI[A.BEATS[s]]} and loses to ${esc(A.STYLE[loses])} ${A.EMOJI[loses]}.</div>
     ${rolled("open", "Details", `
       ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Earned so far", earnSpan(end))}
-      ${kv("Earning", `+${HOUR} an hour`)}${kv("At most", "+" + ((A.LIFE / 3600) * A.STAND_PER_HOUR).toLocaleString("en-US") + " if nobody takes it")}
+      ${kv("Earning", rateSpan(end - A.LIFE * 1000))}${kv("At most", "+" + A.earned(A.LIFE / 3600).toLocaleString("en-US") + " if nobody takes it")}
       ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
       ${kv("Your record", recordLine(v.records[0]))}
       <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px")}${back}`;
@@ -192,7 +200,7 @@ function takeInfo(v) {
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}
-    ${kv("If you win", num(A.STAKE) + " aura")}${kv("If you lose", num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}
+    ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " aura")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}
     ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }

@@ -168,7 +168,7 @@ const posed = (s, what) => { if (!A.isStyle(s)) throw new Oops(`Pick ${what}: DR
 // Aura on a UTC day, from the farms that were up that day (each: c_id, t_id, status, c_delta, t_delta, posted_at,
 // taken_at). A farm can span midnight, so each thing counts on the day it happened: a win or loss on the day the farm
 // was taken, and standing for the hours it stood within the day (from posting until taken or its 24 hours ran out),
-// counted once however many stood at the same time. Returns a Map of player id -> aura.
+// earning from the oldest one standing at any moment (A.standing). Returns a Map of player id -> aura.
 function aurasFrom(rows, day) {
   const from = dayStart(day), end = Math.min(now(), dayEnd(day)), sum = new Map(), spans = new Map();
   const add = (id, n) => sum.set(id, (sum.get(id) || 0) + n);
@@ -180,7 +180,7 @@ function aurasFrom(rows, day) {
     const f = Math.max(r.posted_at, from), t = Math.min(r.taken_at ?? farmEnd(r), end);
     if (t <= f) continue;
     if (!spans.has(r.c_id)) spans.set(r.c_id, []);
-    spans.get(r.c_id).push([f, t]);
+    spans.get(r.c_id).push([f, t, r.posted_at]);
     add(r.c_id, 0);
   }
   for (const [id, sp] of spans) add(id, A.standing(sp));
@@ -359,7 +359,7 @@ async function take(req, env) {
   if (d.status !== "open" || farmEnd(d) <= now()) throw new Oops("Someone already took that one, or it expired.");
   if (d.c_id === player.id) throw new Oops("You can't take your own farm.");
   const style = posed(b.style, "a style"), salt = randomHex(), commit = await commitment(style, salt);
-  const r = A.farm(d.c_style, style), t = now();
+  const t = now(), r = A.farm(d.c_style, style, Math.floor((t - d.posted_at) / 3600));
   const record = JSON.stringify({
     kind: "farm", rules: A.RULES, day: d.day, farm: d.id, players: [d.c_id, player.id],
     commits: [d.c_commit, commit], styles: [d.c_style, style], salts: [d.c_salt, salt],

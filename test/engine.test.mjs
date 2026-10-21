@@ -45,8 +45,34 @@ test("a record is a player's latest 10 styles, newest first", () => {
   assert.deepEqual(A.record([{ id: 3, style: "M" }, { id: 9, style: "D" }]), ["D", "M"]);
 });
 
-test("standing aura: 10,000 a full hour, overlapping farms count once", () => {
-  assert.equal(A.standing([[0, 5400]]), 10000);
-  assert.equal(A.standing([[0, 7200], [3600, 10800]]), 30000);
-  assert.equal(A.standing([[0, 3600], [7200, 10800]]), 20000);
+test("a farm moves 100,000 plus 10,000 for each whole hour it stood", () => {
+  assert.deepEqual(A.farm("D", "R", 1), { winner: 0, how: "win", deltas: [110000, -110000] });
+  assert.deepEqual(A.farm("D", "M", 12), { winner: 1, how: "win", deltas: [-220000, 220000] });
+  assert.deepEqual(A.farm("R", "D", 23), { winner: 1, how: "win", deltas: [-330000, 330000] });
+  assert.deepEqual(A.farm("M", "M", 12), { winner: null, how: "tie", deltas: [0, 0] });
+  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +220,000 aura");
+  assert.throws(() => A.farm("D", "R", 1.5));
+  assert.throws(() => A.farm("D", "R", -1));
 });
+
+test("a farm earns 10,000 in its first hour and 1,000 more each hour after", () => {
+  // hand-added: 10,000 + 11,000 + 12,000 + ...
+  assert.equal(A.earned(0), 0);
+  assert.equal(A.earned(1), 10000);
+  assert.equal(A.earned(2), 21000);
+  assert.equal(A.earned(3), 33000);
+  assert.equal(A.earned(12), 186000);
+  assert.equal(A.earned(24), 516000);
+  assert.equal(A.rate(0), 10000);
+  assert.equal(A.rate(23), 33000);
+});
+
+test("standing aura: by the farm's age, the oldest farm up earns, a partial hour waits", () => {
+  assert.equal(A.standing([[0, 5400, 0]]), 10000);                          // 1.5 hours: one whole hour
+  assert.equal(A.standing([[0, 7200, 0]]), 21000);
+  assert.equal(A.standing([[0, 3600, 0], [7200, 10800, 7200]]), 20000);     // two farms an hour apart, 10,000 each
+  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 32000);     // the younger one carries on from its own age: 21,000 then its 2nd hour, 11,000
+  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 21000);      // a younger farm inside an older one adds nothing
+  assert.equal(A.standing([[3600, 7200, 0]]), 11000);                       // the 2nd hour of a farm put up at 0, counted from 3600
+});
+
