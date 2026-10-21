@@ -187,7 +187,7 @@ function openFarmPage(v, back) {
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
     <div class="small" style="text-align:center;margin-top:10px">${esc(A.STYLE[s])} ${A.EMOJI[s]} beats ${esc(A.STYLE[A.BEATS[s]])} ${A.EMOJI[A.BEATS[s]]} and loses to ${esc(A.STYLE[loses])} ${A.EMOJI[loses]}.</div>
     ${rolled("open", "Details", `
-      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Earned so far", earnSpan(end))}
+      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Farmed so far", earnSpan(end))}
       ${kv("Earning", rateSpan(end - A.LIFE * 1000))}${kv("At most", "+" + A.earned(A.LIFE / 3600).toLocaleString("en-US") + " if nobody takes it")}
       ${kv("If you win", stakeSpan(end - A.LIFE * 1000, 1))}${kv("If you lose", stakeSpan(end - A.LIFE * 1000, -1))}${kv("Goes up", `Earning +${A.STAND_STEP.toLocaleString("en-US")} and win/lose +${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour`)}
       ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
@@ -200,7 +200,7 @@ function takeInfo(v) {
   const end = v.left != null ? endOf(v) : null, open = (me?.farms || []).filter((f) => f.status === "open").length;
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
-    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("Aura farmed so far", earnSpan(end)) : ""}
     ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " aura")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
     ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.41 (Oct 21 2026, HST)
+
+- The FLEX screen's Details now have "Aura farmed so far": the total the farm has earned while it has been up, counting up as the hours pass. Your open farm's "Earned so far" is now "Farmed so far". Removed: the label "Earned so far".
+
 ## v0.40 (Oct 21 2026, HST)
 
 - Phones with Reduce Motion on now get the fight too, in a calm version: their card fades over (no flip), then the loser fades to grey, and the line, AURA FARMED. and the amount fade in one beat apart. No flipping, flying emoji, shaking or stamping. Removed: jumping straight to the finished screen for those phones.
