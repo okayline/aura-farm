@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.34 (Oct 21 2026, HST)
+
+- The Farm lists whoever has been farming the longest at the top. Removed: newest first.
+
 ## v0.33 (Oct 21 2026, HST)
 
 - The farm panels on the home screen ("Farming", "vs. Sleepy Mogger") are a size bigger: more room inside, larger name and a larger line under it. The other lists (The Farm, Today, Ledger) are as they were. Removed: the smaller size on the home screen.

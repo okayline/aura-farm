@@ -338,7 +338,7 @@ async function board(req, env) {
   const player = await findPlayer(req, env);
   const [list, rows] = await env.DB.batch([env.DB.prepare(
     `SELECT d.id, d.c_id, d.posted_at, p.name FROM farms d JOIN players p ON p.id = d.c_id
-     WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at DESC LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
+     WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
   const results = list.results, auras = aurasFrom(rows.results, day);
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
   const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, mine: !!player && r.c_id === player.id }));
