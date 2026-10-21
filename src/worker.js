@@ -360,7 +360,10 @@ async function take(req, env) {
   if (d.status !== "open" || farmEnd(d) <= now()) throw new Oops("Someone already took that one, or it expired.");
   if (d.c_id === player.id) throw new Oops("You can't take your own farm.");
   const style = posed(b.style, "a style"), salt = randomHex(), commit = await commitment(style, salt);
-  const t = now(), r = A.farm(d.c_style, style, Math.floor((t - d.posted_at) / 3600));
+  const t = now();
+  const { results: recent } = await env.DB.prepare("SELECT taken_at FROM farms WHERE t_id = ? AND taken_at > ? ORDER BY taken_at").bind(player.id, t - A.FLEX_WINDOW).all();
+  if (recent.length >= A.MAX_FLEX) throw new Oops(`You can FLEX ${A.MAX_FLEX} times every ${A.FLEX_WINDOW / 60} minutes. Next one in ${Math.ceil((recent[recent.length - A.MAX_FLEX].taken_at + A.FLEX_WINDOW - t) / 60)} min.`, 429);
+  const r = A.farm(d.c_style, style, Math.floor((t - d.posted_at) / 3600));
   const record = JSON.stringify({
     kind: "farm", rules: A.RULES, day: d.day, farm: d.id, players: [d.c_id, player.id],
     commits: [d.c_commit, commit], styles: [d.c_style, style], salts: [d.c_salt, salt],

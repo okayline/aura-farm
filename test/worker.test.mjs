@@ -314,6 +314,19 @@ test("only 3 new guests an hour from one address: the 4th is refused, and the ne
   assert.ok((await call("d", "POST", "/api/farm", { style: "D" })).id);
 });
 
+test("3 FLEXes in any 30 minutes: the 4th is refused with the wait, and the oldest dropping out frees one", async () => {
+  const { call, tick } = setup();
+  const ids = [];
+  for (const who of ["f1", "f1", "f1"]) ids.push((await call(who, "POST", "/api/farm", { style: "D" })).id);
+  const f4 = (await call("f2", "POST", "/api/farm", { style: "D" })).id;
+  for (const id of ids) { assert.equal((await call("x", "POST", "/api/take", { id, style: "R" })).status, "done"); tick(60); }
+  const r = await call("x", "POST", "/api/take", { id: f4, style: "R" });
+  assert.equal(r.status, 429);
+  assert.match(r.error, /3 times every 30 minutes\. Next one in 27 min/);   // first took at T0, now T0+180s: 1800-180 = 1620 s = 27 min
+  tick(1620);
+  assert.equal((await call("x", "POST", "/api/take", { id: f4, style: "R" })).status, "done");
+});
+
 test("the version on the page matches the newest CHANGELOG heading", async () => {
   const { VERSION } = await import("../public/engine/version.js");
   const log = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");

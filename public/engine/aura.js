@@ -21,6 +21,8 @@ export const STAKE_PER_HOUR = 10000;  // and this much more for each whole hour 
 export const STAND_PER_HOUR = 10000;  // what a farm earns in its first hour
 export const STAND_STEP = 1000;       // each hour pays this much more than the one before
 export const MAX_OPEN = 3;      // farms one player can have up at once
+export const MAX_FLEX = 3;      // FLEXes (farms taken) one player can make in any FLEX_WINDOW
+export const FLEX_WINDOW = 30 * 60;
 export const LIFE = 24 * 3600;  // a farm stays up 24 hours from when it was posted (v0.15; before, until midnight UTC)
 export const RECORD = 10;     // how many of a player's latest styles are shown
 
