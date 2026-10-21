@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.32 (Oct 21 2026, HST)
+
+- Your open farm's Details has "Earned so far": 10,000 for each whole hour it has stood, updating as the hours pass. It counts that farm on its own, so farms up together show the same amount while your total counts the time once. Removed: nothing.
+
 ## v0.31 (Oct 21 2026, HST)
 
 - Three explainer sentences are gone: "Nobody has taken it yet. It comes down on its own when the time is up." and "Farms up at the same time earn once, not twice." on your open farm's page, and the "Sealed with this fingerprint…" sentence there and in the FLEX screen's panel. The fingerprints themselves stay. Removed: those sentences.

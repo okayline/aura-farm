@@ -33,6 +33,9 @@ async function run(fn) {
 // A farm sends the seconds it has left; the page turns that into a moment on its own clock when the answer arrives (_t),
 // writes it into the page, and a timer redraws just those words, so nothing else on the screen is touched.
 const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m >= 1 ? `${m}m` : "under a minute"; };
+// what a farm has earned by standing so far: 10,000 for each whole hour since it went up (this farm on its own; farms up together earn once between them)
+const earnText = (since) => "+" + (Math.floor(Math.min(Date.now() - since, A.LIFE * 1000) / 3600000) * A.STAND_PER_HOUR).toLocaleString("en-US") + " aura";
+const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(end - A.LIFE * 1000)}</span>`;
 const leftText = (end) => (end - Date.now() <= 0 ? "time's up" : clock(end - Date.now()) + " left");
 const endOf = (x, from = x) => from._t + x.left * 1000;
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
@@ -42,6 +45,7 @@ setInterval(() => {
   let over = false;
   for (const n of document.querySelectorAll("[data-end]")) { n.textContent = leftText(+n.dataset.end); if (+n.dataset.end <= Date.now()) over = true; }
   for (const n of document.querySelectorAll("[data-since]")) n.textContent = clock(Date.now() - +n.dataset.since);
+  for (const n of document.querySelectorAll("[data-earn]")) n.textContent = earnText(+n.dataset.earn);
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
   if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
@@ -172,7 +176,7 @@ function openFarmPage(v, back) {
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
     <div class="small" style="text-align:center;margin-top:10px">${esc(A.STYLE[s])} ${A.EMOJI[s]} beats ${esc(A.STYLE[A.BEATS[s]])} ${A.EMOJI[A.BEATS[s]]} and loses to ${esc(A.STYLE[loses])} ${A.EMOJI[loses]}.</div>
     ${rolled("open", "Details", `
-      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}
+      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Earned so far", earnSpan(end))}
       ${kv("Earning", `+${HOUR} an hour`)}${kv("At most", "+" + ((A.LIFE / 3600) * A.STAND_PER_HOUR).toLocaleString("en-US") + " if nobody takes it")}
       ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
       ${kv("Your record", recordLine(v.records[0]))}
