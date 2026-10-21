@@ -6,12 +6,18 @@ const ADJECTIVES = [
   "Sus", "Feral", "Cracked", "Unhinged", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Mid",
   "Cooked", "Glazed", "Aura", "Drippy", "Yappy", "Valid", "Petty", "Salty", "Extra", "Bougie",
   "Cozy", "Certified", "Silly", "Sleepy", "Crunchy", "Rare", "Final Boss", "Main", "Side Quest", "Locked In",
+  "Bet", "Fanum", "Gyatt", "Vibing", "Toxic", "Snatched", "Ratioed", "Respectfully", "Touch Grass",
+  "Caught In 4K", "Hot Mess", "Zesty", "Dank", "Wavy", "Lit", "Fire", "Shook", "Basic",
+  "Rizzy", "Hella", "Gagged", "Pressed", "Tilted", "Sneaky", "Ate", "Spicy", "Yeet", "Clutch",
 ];
 const NOUNS = [
   "Gremlin", "Goblin", "NPC", "Rizzler", "Menace", "Icon", "Legend", "Bestie", "Pookie", "Baddie",
   "Yapper", "Mogger", "Farmer", "Opp", "Stan", "Himbo", "Girlboss", "Goat", "Rat", "Pigeon",
   "Raccoon", "Possum", "Frog", "Shrimp", "Capybara", "Moai", "Gamer", "Lurker", "Ghost", "Cat",
   "Gremlin Era", "Side Char", "Main Char", "Villain", "Hater", "Sweat", "Noob", "Sidekick", "Tryhard", "Bean",
+  "Enjoyer", "Andy", "Simp", "Fiend", "Vibes", "Vibe Check", "Arc", "Era", "Boss", "Ally",
+  "Gator", "Axolotl", "Hamster", "Duck", "Otter", "Goose", "Moth", "Toad", "Crab", "Sloth",
+  "Raider", "Zaddy", "Ick", "Bandit", "Rascal", "Ratio", "Cheugy", "Kid", "Plot Armor", "Besties",
 ];
 // only the pairs of 16 characters or fewer, so names fit the header on a phone
 const PAIRS = ADJECTIVES.flatMap((a) => NOUNS.map((n) => `${a} ${n}`)).filter((s) => s.length <= 16);
