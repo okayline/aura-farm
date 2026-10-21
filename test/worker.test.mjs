@@ -173,6 +173,17 @@ test("a draw changes nothing", async () => {
   assert.equal(tk.captions[1], "MUTUAL MOG. +0 aura");
 });
 
+test("The Farm lists whoever has been farming the longest first", async () => {
+  const { call, tick } = setup();
+  await call("ann", "POST", "/api/farm", { style: "D" });
+  tick(3600); await call("bo", "POST", "/api/farm", { style: "R" });
+  tick(3600); await call("cy", "POST", "/api/farm", { style: "M" });
+  const rows = (await call("dee", "GET", "/api/board")).farms;
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map((r) => r.up), [7200, 3600, 0], "each row says how long it has stood (seconds)");
+  assert.deepEqual([rows[1].postedAt - rows[0].postedAt, rows[2].postedAt - rows[1].postedAt], [3600, 3600], "the oldest farm is first, the newest last");
+});
+
 test("at most 3 farms up at once; each stays up 24 hours, across midnight, then expires and says so", async () => {
   const { call, tick } = setup();   // T0 is 08:00 UTC on Jan 1
   for (let i = 0; i < 3; i++) await call("ann", "POST", "/api/farm", { style: "DRM"[i] });
