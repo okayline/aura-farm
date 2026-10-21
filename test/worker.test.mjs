@@ -129,6 +129,11 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.deepEqual(tk.captions, ["COOKED. -100,000 aura", "AURA FARMED. +100,000 aura"]);
   assert.equal(f.id, 1);
   assert.equal(tk.line, "Too much DRIP. RIZZ slipped.");
+  // the past-games cards (a done row on each player's list): both styles with theirs first, who won, their aura, when
+  const annRow = (await call("ann", "GET", "/api/today")).farms.find((x) => x.id === f.id), boRow = (await call("bo", "GET", "/api/today")).farms.find((x) => x.id === f.id);
+  assert.deepEqual([annRow.styles, annRow.won, annRow.delta], [["R", "D"], false, -100000], "ann lost with RIZZ to DRIP");
+  assert.deepEqual([boRow.styles, boRow.won, boRow.delta], [["D", "R"], true, 100000], "bo won with DRIP over RIZZ");
+  assert.equal(typeof boRow.at, "number");
   const raw = env.DB.raw.prepare("SELECT id, record, prev_hash, hash FROM ledger WHERE farm_id = 1").get();
   assert.deepEqual(tk.ledger, { entry: raw.id, record: raw.record, prev: raw.prev_hash, hash: raw.hash }, "the farm shows its whole ledger entry");
   assert.equal(sha(tk.ledger.prev + "|" + tk.ledger.record), tk.ledger.hash, "and anyone can check its hash from what it shows");   // DRIP beat RIZZ on farm 1: that matchup's line 1 % 8 = 1 (counting from 0)

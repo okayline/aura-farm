@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.26 (Oct 21 2026, HST)
+
+- A past game's card on your list says more: WON, LOST or TIE on the right with both styles ("😏 vs 🗿", yours first), and a small line under the caption with the farm number, the styles by name and when it was taken. Removed: the lone emoji on the right.
+
 ## v0.25 (Oct 21 2026, HST)
 
 - A farm that is up shows how long it has left ("21h 40m left"), under "Farming" on your list and on its own page. The server sends the seconds left, so a wrong clock on the phone can't change it, and only those words update (about every 20 seconds), so nothing else on the screen is redrawn. When the time runs out the page shows it. Removed: no time shown anywhere.

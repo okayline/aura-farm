@@ -300,7 +300,7 @@ async function today(req, env) {
   const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null };
   if (!player) return json(out);
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
-    `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, o.name AS opponent FROM farms d
+    `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, d.taken_at, o.name AS opponent FROM farms d
      LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
      WHERE (d.c_id = ?1 OR d.t_id = ?1) AND ((d.status = 'open' AND d.posted_at > ?2) OR (d.status = 'done' AND d.taken_at >= ?3)
        OR (d.status != 'done' AND d.posted_at > ?4))
@@ -310,7 +310,13 @@ async function today(req, env) {
     // a farm past its 24 hours that the minute-by-minute expiry hasn't reached yet already reads as expired
     const status = d.status === "open" && farmEnd(d) <= now() ? "expired" : d.status;
     const side = sideOf(d, player), row = { id: d.id, status, side, opponent: d.opponent ?? null };
-    if (d.status === "done") { const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style; }
+    if (d.status === "done") {
+      const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style;
+      // for the past-games card: both styles (yours first; public once it's done), whether you won (null: a tie), your aura, and when it was taken
+      row.styles = d.c_style ? (side === 0 ? [d.c_style, d.t_style] : [d.t_style, d.c_style]) : null;
+      row.won = r.winner == null ? null : r.winner === side;
+      row.delta = r.deltas?.[side] ?? 0; row.at = d.taken_at;
+    }
     else if (side === 0) row.style = d.c_style;   // your own farm's sealed style, shown only to you
     if (status === "open" && d.posted_at != null) row.left = Math.max(0, farmEnd(d) - now());   // seconds until it comes down
     return row;

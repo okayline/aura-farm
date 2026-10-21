@@ -80,12 +80,17 @@ function header() {
   </header>`;
 }
 
+// the small line on a past game's card: its number, the styles by name, and when it was taken
+const pastLine = (d) => [`Farm #${d.id}`, d.styles ? d.styles.map((s) => A.STYLE[s]).join(" vs ") : null,
+  d.at ? new Date(d.at * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null].filter(Boolean).join(" · ");
+
 function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
-      <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span>
+      ${d.status === "done" ? `<br><span class="small dim">${pastLine(d)}</span>` : ""}</span>
+      ${d.status === "done" ? `<span class="res ${d.won === true ? "won" : d.won === false ? "lost" : ""}">${d.won === true ? "WON" : d.won === false ? "LOST" : "TIE"}<br><span class="small">${d.styles ? d.styles.map(emo).join(" vs ") : emo(d.style)}</span></span>` : "<span>›</span>"}
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
