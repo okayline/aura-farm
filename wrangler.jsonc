@@ -16,7 +16,7 @@
       "binding": "DB",
       "database_name": "aura-db",
       // from: npx wrangler d1 create aura-db
-      "database_id": "not created yet"
+      "database_id": "d859ef38-1c68-45e3-a271-4e303daa9952"
     }
   ],
   "vars": {
