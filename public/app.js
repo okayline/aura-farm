@@ -177,6 +177,11 @@ function youScreen() {
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
+// Before logging in as another player: this browser's player with no save code or passkey would be left behind for
+// good (the cookie is its only key), so ask first. Log out already refuses in that case.
+const leaveOk = () => !acct?.player || acct.codes.length + acct.passkeys.length > 0 ||
+  confirm(`${acct.name || "This player"} has no save code or passkey. If you switch, you won't be able to get back to it. Switch anyway?`);
+
 async function openYou() { view = { you: true }; newCode = null; acct = await api("GET", "account"); }
 
 // the save code as a little text file, so it can be kept somewhere safe (from scoundrel.exe)
@@ -306,8 +311,9 @@ document.addEventListener("click", (e) => {
   if (act === "forgetcode" && confirm("Forget this save code? It stops working everywhere.")) return run(async () => { await api("POST", "codes", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Save code forgotten."; });
   if (act === "forgetkey" && confirm("Remove this passkey? It stops working everywhere.")) return run(async () => { await api("POST", "passkey", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Passkey removed."; });
   if (act === "addkey") return run(addPasskey);
-  if (act === "loadkey") return run(loadWithPasskey);
+  if (act === "loadkey") return leaveOk() && run(loadWithPasskey);
   if (act === "loadcode") {
+    if (!leaveOk()) return;
     const code = document.getElementById("code")?.value || "";
     return run(async () => { const d = await api("POST", "load", { code }); await loggedIn(d.name); });
   }
