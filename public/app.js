@@ -104,7 +104,7 @@ function ledgerTab(l) {
 }
 
 // A finished farm's seal: its ledger entry and fingerprint, and the shared registry that keeps a checkpoint of it.
-const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center">📜 Ledger entry #${v.ledger.entry}<br><code>${esc(v.ledger.hash)}</code><br>
+const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;margin-top:3em">📜 Ledger entry #${v.ledger.entry}<br><code>${esc(v.ledger.hash)}</code><br>
   <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>` : "");
 
 function farmScreen(v) {
