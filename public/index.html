@@ -20,7 +20,7 @@
     min-height: 100vh; font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     background: radial-gradient(circle at 50% 0%, #2a1650 0%, var(--bg) 60%) fixed, var(--bg);
   }
-  .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 90px; display: flex; flex-direction: column; gap: 14px; }
+  .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 118px; display: flex; flex-direction: column; gap: 14px; }
   .glow { text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }
   .big.glow { text-shadow: 0 0 8px rgba(176,132,255,.45); }   /* large white headings: a softer glow */
   .meme { font-family: var(--meme); letter-spacing: .5px; text-transform: uppercase; }
@@ -78,7 +78,8 @@
   .list { display: flex; flex-direction: column; gap: 8px; }
   .item { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; width: 100%; text-align: left; }
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 4px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: rgba(11,10,18,.92); border-top: 1px solid var(--line); backdrop-filter: blur(8px); }
-  .tab { flex: 1; max-width: 110px; background: none; border: 0; padding: 8px 4px; font-size: 15px; white-space: nowrap; color: var(--dim); border-radius: 10px; }
+  .tab { flex: 1; max-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 10px 4px 8px; font-size: 16px; white-space: nowrap; color: var(--dim); border-radius: 12px; }
+  .tab .ti { font-size: 28px; line-height: 1; }   /* the emoji above its name */
   .tab.on { color: var(--ink); font-weight: 700; text-shadow: 0 0 10px #b084ff; background: var(--panel2); }
   .err { color: #ffb3b3; text-align: center; font-size: 13px; min-height: 18px; }
   .entry { font-size: 13px; }
