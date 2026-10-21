@@ -98,22 +98,29 @@ function ledgerTab(l) {
     <div class="list">${rows || `<p class="small">No duels finished yet.</p>`}</div>`;
 }
 
-// the poster's plan: one move per round, sealed with the cards
-function planPicker() {
-  return `<div class="small">Your plan</div>` + [0, 1, 2].map((r) => `<div class="row"><span class="small" style="width:56px">Round ${r + 1}</span>
-    <div class="moves grow">${A.MOVES.map((m) => `<button class="mv ${m}${plan[r] === m ? " on" : ""}" style="height:40px;font-size:13px" data-act="plan:${r}:${m}" type="button">${MOVE_WORD[m]}</button>`).join("")}</div></div>`).join("");
+// the poster's plan, one round at a time: that round's card flips, then you pick how you feel about it.
+// Planned rounds stay listed above (tap one to change it). Sealed with the cards when you post.
+const NTH = ["1st", "2nd", "3rd"];
+function planPicker(mine) {
+  if (picks.length < 3) return "";
+  const r = plan.findIndex((m) => !m);   // the next round to plan, -1 when all 3 are planned
+  const done = plan.map((m, i) => (m ? `<button class="item" data-act="replan:${i}" type="button"><span class="grow">Round ${i + 1} · ${esc(A.label(mine[picks[i]]))}</span><b>${MOVE_WORD[m]}</b></button>` : "")).join("");
+  const now = r < 0 ? "" : `<div class="panel"><div class="small">Round ${r + 1} of 3: your ${NTH[r]} card flips. Lock in, farm or dip?</div>
+      <div class="cards" style="margin:10px 0"><div></div>${card(mine[picks[r]])}<div></div></div>
+      <div class="moves">${A.MOVES.map((m) => `<button class="mv ${m}" data-act="plan:${r}:${m}" type="button">${MOVE_WORD[m]}</button>`).join("")}</div></div>`;
+  return `<div class="small">Your plan${plan.some(Boolean) ? " (tap a round to change it)" : ""}</div><div class="list">${done}</div>${now}`;
 }
 
 // picking 3 of 5 in order, for posting or taking
 function pickScreen(v, side, title, action) {
   const mine = v.hands[side], theirs = v.hands[1 - side];
   return `<div class="panel"><div class="big glow">${title}</div>
-      <p class="small">Tap 3 cards in the order you'll flip them. ${side === 0 ? "Then plan your move for each round: whoever takes this plays against your plan, and you never have to come back." : "They locked 3 of theirs and a move for each round. You play it now, one round at a time."}</p></div>
+      <p class="small">Tap 3 cards in the order you'll flip them. ${side === 0 ? "Then plan a move for each card as it flips: whoever takes this plays against your plan, and you never have to come back." : "They locked 3 of theirs and a move for each round. You play it now, one round at a time."}</p></div>
     <div class="small">${side === 0 ? "Whoever steps up holds" : esc(v.names[0]) + " holds"}</div>
     <div class="cards five">${theirs.map((c) => card(c, { small: true })).join("")}</div>
     <div class="small">You hold</div>
     <div class="cards five">${mine.map((c, i) => card(c, { small: true, pick: picks.includes(i) ? picks.indexOf(i) + 1 : null, onclick: "pick:" + i })).join("")}</div>
-    ${side === 0 ? planPicker() : ""}
+    ${side === 0 ? planPicker(mine) : ""}
     <button class="go" data-act="${action}" type="button" ${picks.length === 3 && (side === 1 || plan.every(Boolean)) ? "" : "disabled"}>${side === 0 ? "🔒 LOCK IN & POST" : "😤 STARE DOWN"}</button>
     <button class="link" data-act="back" type="button">back</button>`;
 }
@@ -288,9 +295,11 @@ document.addEventListener("click", (e) => {
   if (act === "pick") {
     const i = Number(arg);
     picks = picks.includes(i) ? picks.filter((x) => x !== i) : picks.length < 3 ? [...picks, i] : picks;
+    if (picks.length < 3) plan = [null, null, null];   // a new lineup gets a new plan
     return draw();
   }
   if (act === "plan") { const [, r, m] = t.dataset.act.split(":"); plan[Number(r)] = m; return draw(); }
+  if (act === "replan") { plan[Number(arg)] = null; return draw(); }
   if (act === "back") return showTab(tab);
   if (act === "open" || act === "look") return run(() => openDuel(Number(arg)));
   if (act === "draft") return run(async () => { view = await api("POST", "draft"); picks = []; plan = [null, null, null]; refreshMe(); });

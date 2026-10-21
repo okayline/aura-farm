@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.3 (not released yet)
+
+- Planning goes one round at a time: your card for that round flips, then you pick LOCK IN, FARM or DIP for it. Planned rounds are listed with their card; tap one to change it. Removed: the three rows of move buttons with no cards beside them.
+
 ## v0.3.2 (not released yet)
 
 - Snappier: tabs switch the moment you tap, showing what they had last time, then update. After a move, the duel updates first and your aura in the header catches up a moment later. The server makes one trip to the database per screen instead of 3 or 4. Removed: waiting for the server before a tab changed, and re-loading your header on every tab switch.
