@@ -36,7 +36,9 @@ function style(s, { tap = false, on = false } = {}) {
   return `<${tag} class="card${on ? " on" : ""}" style="--c: ${COLOR[s]}"${attrs} aria-label="${A.STYLE[s]}">
     <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span></${tag}>`;
 }
-const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>`;
+// the style cards to pick from, each with what it beats written under it ("beats 😏"), read off the rules
+const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>
+  <div class="cards beats">${A.STYLES.map((s) => `<span class="small">beats ${A.EMOJI[A.BEATS[s]]}</span>`).join("")}</div>`;
 const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
 
 // the emoji for a style or a card code from a duel before v0.6 ("D3" is DRIP, "X1" the CAP; older codes show as text)

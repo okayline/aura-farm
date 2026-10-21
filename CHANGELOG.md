@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.14 (Oct 21 2026, HST)
+
+- Each style card says what it beats, just below it ("beats 😏"), on Home and when you FLEX. Removed: nothing.
+
 ## v0.13 (Oct 21 2026, HST)
 
 - Opening a farm puts its address in the bar (aura.88x31.app/?farm=N), so you can copy or share it. Your browser's back button goes back from a farm, and "back" in the game does the same. Removed: the address staying the same whatever you opened.
