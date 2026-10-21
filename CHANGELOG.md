@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.25 (Oct 21 2026, HST)
+
+- A farm that is up shows how long it has left ("21h 40m left"), under "Farming" on your list and on its own page. The server sends the seconds left, so a wrong clock on the phone can't change it, and only those words update (about every 20 seconds), so nothing else on the screen is redrawn. When the time runs out the page shows it. Removed: no time shown anywhere.
+- Your own open farm's page is filled in: a progress bar, when it went up and when it comes down, how long it has been up, +10,000 an hour and the most it can earn (+240,000), your aura today, how many farms you have up, your record, your sealed style with what it beats and loses to, and its public fingerprint. Removed: the bare "Farming" panel and card.
+
 ## v0.24 (Oct 21 2026, HST)
 
 - A finished farm has a blank line above the line ("RIZZ met RIZZ.") and one under the caption ("MUTUAL MOG. +0 aura"). Removed: the tighter spacing there.

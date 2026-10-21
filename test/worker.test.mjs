@@ -100,8 +100,12 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(f.status, "open");
   assert.equal(f.mine, "R", "the poster sees their own sealed style");
   assert.equal((await call("ann", "GET", "/api/today")).farms[0].style, "R", "and on their own Farming row");
+  assert.equal(f.left, 24 * 3600, "a new farm has its whole 24 hours left (seconds)");
+  assert.equal(typeof f.postedAt, "number");
 
   tick(2 * 3600 + 60);     // stood for 2 hours
+  assert.equal((await call("ann", "GET", "/api/today")).farms[0].left, 24 * 3600 - (2 * 3600 + 60), "the Farming row counts down");
+  assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).left, 24 * 3600 - (2 * 3600 + 60), "and so does the farm's own page");
   const b = await call("bo", "GET", "/api/board");
   assert.equal(b.farms.length, 1);
   assert.equal(b.farms[0].aura, 20000);

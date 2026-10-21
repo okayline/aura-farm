@@ -260,7 +260,8 @@ async function settleStale(env) {
 async function farmView(env, d, player) {
   const side = sideOf(d, player);
   if (d.status === "open" && d.posted_at != null && farmEnd(d) <= now()) d = { ...d, status: "expired" };   // its 24 hours are up
-  const out = { id: d.id, day: d.day, status: d.status, side, names: null, commits: [d.c_commit, d.t_commit], deadline: d.posted_at == null ? null : farmEnd(d) };
+  const out = { id: d.id, day: d.day, status: d.status, side, names: null, commits: [d.c_commit, d.t_commit], deadline: d.posted_at == null ? null : farmEnd(d),
+    postedAt: d.posted_at ?? null, left: d.posted_at == null ? null : Math.max(0, farmEnd(d) - now()) };   // left: seconds, so the page's own clock doesn't matter
   // names, the poster's record and the ledger record of a finished farm, in one trip
   const [names, rec] = await env.DB.batch([
     env.DB.prepare(`SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t,
@@ -299,7 +300,7 @@ async function today(req, env) {
   const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null };
   if (!player) return json(out);
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
-    `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, o.name AS opponent FROM farms d
+    `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, o.name AS opponent FROM farms d
      LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
      WHERE (d.c_id = ?1 OR d.t_id = ?1) AND ((d.status = 'open' AND d.posted_at > ?2) OR (d.status = 'done' AND d.taken_at >= ?3)
        OR (d.status != 'done' AND d.posted_at > ?4))
@@ -311,6 +312,7 @@ async function today(req, env) {
     const side = sideOf(d, player), row = { id: d.id, status, side, opponent: d.opponent ?? null };
     if (d.status === "done") { const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style; }
     else if (side === 0) row.style = d.c_style;   // your own farm's sealed style, shown only to you
+    if (status === "open" && d.posted_at != null) row.left = Math.max(0, farmEnd(d) - now());   // seconds until it comes down
     return row;
   });
   return json(out);

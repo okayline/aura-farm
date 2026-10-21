@@ -18,6 +18,7 @@ const HOUR = A.STAND_PER_HOUR.toLocaleString("en-US");
 async function api(method, path, body) {
   const res = await fetch("/api/" + path, { method, headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => ({ error: "The server didn't answer properly." }));
+  if (data && typeof data === "object") data._t = Date.now();   // when it arrived: a farm's `left` seconds count from here
   if (!res.ok) throw new Error(data.error || "Something broke.");
   return data;
 }
@@ -27,6 +28,25 @@ async function run(fn) {
   try { await fn(); } catch (e) { err = e.message; }
   draw();
 }
+
+// ---------- time left ----------
+// A farm sends the seconds it has left; the page turns that into a moment on its own clock when the answer arrives (_t),
+// writes it into the page, and a timer redraws just those words, so nothing else on the screen is touched.
+const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m >= 1 ? `${m}m` : "under a minute"; };
+const leftText = (end) => (end - Date.now() <= 0 ? "time's up" : clock(end - Date.now()) + " left");
+const endOf = (x, from = x) => from._t + x.left * 1000;
+const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
+const upSpan = (end) => `<span data-since="${end - A.LIFE * 1000}">${clock(Date.now() - (end - A.LIFE * 1000))}</span>`;
+const barOf = (end) => `<div class="bar"><i data-bar="${end}" style="width:${Math.min(100, Math.max(0, 100 - ((end - Date.now()) / (A.LIFE * 10)))).toFixed(1)}%"></i></div>`;
+setInterval(() => {
+  let over = false;
+  for (const n of document.querySelectorAll("[data-end]")) { n.textContent = leftText(+n.dataset.end); if (+n.dataset.end <= Date.now()) over = true; }
+  for (const n of document.querySelectorAll("[data-since]")) n.textContent = clock(Date.now() - +n.dataset.since);
+  for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
+  if (!over || revealing()) return;
+  if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
+  else if (!view) refreshMe();
+}, 20000);
 
 // ---------- pieces ----------
 
@@ -64,7 +84,7 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour` : ""}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour · ${d.left != null ? leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
@@ -112,6 +132,30 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
   <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
+// Your own open farm: everything about it that is yours to see. The style is only ever sent to you; the commitment is
+// public (a hash of the style and a secret salt), so showing it gives nothing away.
+function openFarmPage(v, back) {
+  const end = endOf(v), s = v.mine, loses = A.STYLES.find((x) => A.BEATS[x] === s);
+  const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const open = (me?.farms || []).filter((f) => f.status === "open").length;
+  const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
+  return `<div class="small" style="text-align:center">Farm #${v.id}</div>
+    <div class="panel" style="text-align:center">
+      <div class="row" style="justify-content:center">${halo("🧍", 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
+      <div class="time glow">${leftSpan(end)}</div>${barOf(end)}
+      <p class="small">Nobody has taken it yet. It comes down on its own when the time is up.</p></div>
+    <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
+    <div class="small" style="text-align:center;margin-top:10px">${esc(A.STYLE[s])} ${A.EMOJI[s]} beats ${esc(A.STYLE[A.BEATS[s]])} ${A.EMOJI[A.BEATS[s]]} and loses to ${esc(A.STYLE[loses])} ${A.EMOJI[loses]}. Only you can see it.</div>
+    <div class="panel" style="margin-top:12px">
+      ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}
+      ${kv("Earning", `+${HOUR} an hour`)}${kv("At most", "+" + ((A.LIFE / 3600) * A.STAND_PER_HOUR).toLocaleString("en-US") + " if nobody takes it")}
+      ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
+      ${kv("Your record", recordLine(v.records[0]))}
+      <p class="small">Farms up at the same time earn once, not twice.</p>
+      <p class="small">Sealed with this fingerprint of your style, so you can't change it. It is the only thing anyone else can see until someone takes it:</p>
+      <p class="small seal">${esc(v.commits[0])}</p></div>${back}`;
+}
+
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
   if (v.status === "open" && v.side !== 0) {
@@ -120,6 +164,7 @@ function farmScreen(v) {
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${back}`;
   }
+  if (v.status === "open" && v.left != null && v.mine) return openFarmPage(v, back);
   if (v.status === "open" || v.status === "expired") {
     return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div></div>
       ${v.mine ? `${shown(v.mine)}` : ""}${back}`;
