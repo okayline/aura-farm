@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.17 (Oct 21 2026, HST)
+
+- A finished farm's page shows its whole ledger entry: the record exactly as sealed, the hash before it and its own hash, so anyone can check it. The registry's Aura Farm entries open this page when tapped, and no longer repeat the record there. Removed: the hash shown alone under "Ledger entry".
+
 ## v0.16 (Oct 21 2026, HST)
 
 - Logging in as another player (save code or passkey) first asks "Switch anyway?" if the player you're on has no save code or passkey, because you couldn't get back to it. Removed: switching away from an unsaved player without a word.
