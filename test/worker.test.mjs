@@ -120,7 +120,8 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(tk.result.winner, 1);
   assert.deepEqual(tk.captions, ["COOKED. -100,000 aura", "AURA FARMED. +100,000 aura"]);
   assert.equal(f.id, 1);
-  assert.equal(tk.line, "Too much DRIP. RIZZ slipped.");   // DRIP beat RIZZ on farm 1: that matchup's line 1 % 8 = 1 (counting from 0)
+  assert.equal(tk.line, "Too much DRIP. RIZZ slipped.");
+  assert.deepEqual(tk.ledger, { entry: 1, hash: env.DB.raw.prepare("SELECT hash FROM ledger WHERE farm_id = 1").get().hash }, "the farm shows its seal");   // DRIP beat RIZZ on farm 1: that matchup's line 1 % 8 = 1 (counting from 0)
   assert.equal((await call("cy", "POST", "/api/take", { id: f.id, style: "M" })).status, 400, "already taken");
 
   // the record is public once revealed: both players' styles, newest first, on the next farm of either
