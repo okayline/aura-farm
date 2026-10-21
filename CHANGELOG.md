@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9 (Oct 20 2026, HST)
+
+- STARE DOWN is now FLEX. Removed: the words STARE DOWN.
+- After you FLEX, their card starts face down and flips over, then the winning emoji does its thing: DRIP rains diamonds on RIZZ, RIZZ grows and MOG crumbles, MOG leans in and DRIP crumbles, and a draw just sparkles. Then the loser goes black and white and the result stamps in, one piece at a time. Removed: the result just appearing.
+- Every farm has a line that says what happened ("MOG couldn't handle the RIZZ."), eight for each matchup. It's sealed on the ledger with the farm, shown on the Ledger tab, and goes to the shared registry. Removed: nothing; farms from before this have no line.
+- The finished-farm screen puts the result between the two cards, with the aura bigger. Removed: each player's emoji history on that screen, and the result line under the cards.
+- A little more room under the emoji on every style card. Removed: nothing.
+
 ## v0.8 (Oct 20 2026, HST)
 
 - The tabs are renamed: Home (was Farm) and 🌾 The Farm (was Board). Removed: the names "Farm" and "Board" for those tabs.
