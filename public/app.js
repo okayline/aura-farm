@@ -64,7 +64,7 @@ function farmsTab() {
       <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} an hour` : ""}</span></span>
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
-  return `<div class="panel"><div class="big glow">AURA FARM</div>
+  return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>
     ${styles()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
@@ -84,7 +84,7 @@ function boardTab(b) {
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
     <span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
-  return `<div class="panel"><div class="big glow">Most aura today</div></div>
+  return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
 
@@ -95,12 +95,17 @@ function ledgerTab(l) {
       ? [`FARM #${r.farm} · ${esc(r.caption[r.winner ?? 0])}`, r.styles.map(emo).join(" vs ")]
       // a card duel from before v0.6, as it was sealed
       : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
-    return `<div class="item entry"><span class="grow"><span class="meme glow">${title}</span><br>
-      ${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span></div>`;
+    // tap an entry to open its farm, which is the entry's page
+    return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
+      ${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span><span>›</span></button>`;
   }).join("");
   return `<div class="panel"><div class="big glow">The ledger</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
+
+// A finished farm's seal: its ledger entry and fingerprint, and the shared registry that keeps a checkpoint of it.
+const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center">📜 Ledger entry #${v.ledger.entry}<br><code>${esc(v.ledger.hash)}</code><br>
+  <a class="link" href="https://88x31.app/registry" target="_blank" rel="noopener">On The Registry ›</a></div>` : "");
 
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
@@ -115,7 +120,8 @@ function farmScreen(v) {
       ${v.mine ? `${shown(v.mine)}` : ""}${back}`;
   }
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
-  const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
+  // someone who wasn't in it (opened from the Ledger tab or a registry link) sees it from the winner's side, with names
+  const side = v.side >= 0 ? v.side : v.result.winner ?? 1, other = 1 - side, d = v.result.deltas[side];
   const hand = (i) => (v.styles ? style(v.styles[i], { on: true }) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
   // right after you FLEX, their card starts face down (the reveal flips it, and drains the loser when it's time)
   const playing = flexed && !!v.styles;
@@ -127,7 +133,7 @@ function farmScreen(v) {
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="duel">${face(esc(v.names[other] || "?"), other, 18)}
       <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${v.line ? `<div class="why">${sentences(v.line).map((t) => bit(t)).join(" ")}</div>` : ""}${sentences(v.captions[side]).map((t, i, all) => bit(t, i === all.length - 1 && all.length > 1 ? "amt" : "")).join(" ")}</div>
-      ${face("you", side, d > 0 ? 30 : 12)}</div>${back}`;
+      ${face(v.side >= 0 ? "you" : esc(v.names[side] || "?"), side, d > 0 ? 30 : 12)}</div>${seal(v)}${back}`;
 }
 
 // ---------- you: name, save codes and passkeys (kept by the shared Accounts, like the other 88x31 games) ----------
@@ -296,4 +302,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-run(loadToday);
+// aura.88x31.app/?farm=16 opens that farm (the shared registry links its Aura Farm entries here)
+const linked = Number(new URLSearchParams(location.search).get("farm"));
+run(async () => { await loadToday(); if (linked > 0) await openFarm(linked); });
