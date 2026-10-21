@@ -46,9 +46,9 @@ export const LINES = {
   DR: ["RIZZ drowned in DRIP.", "Too much DRIP. RIZZ slipped.", "RIZZ got iced out.", "The DRIP was too wet for the RIZZ.",
        "RIZZ tried. DRIP shined.", "Can't RIZZ through the DRIP.", "RIZZ got rinsed.", "Dripped on. RIZZ is soaked."],
   RM: ["MOG couldn't handle the RIZZ.", "MOG cracked a smile. It's over.", "The RIZZ cracked the MOG.", "MOG blushed. gg, out-RIZZed.",
-       "One look and MOG folded.", "MOG got RIZZed up.", "Stone cold till the RIZZ hit.", "MOG fell for it."],
+       "One RIZZ look and MOG folded.", "MOG got RIZZed up.", "Stone cold MOG til the RIZZ hit.", "MOG fell for the RIZZ."],
   MD: ["DRIP got MOGGED.", "All that DRIP, still got MOGGED.", "MOG didn't blink. DRIP did.", "The DRIP couldn't survive the MOG.",
-       "MOG said nothing. DRIP dried up.", "DRIP got stared down.", "Cold stare. DRIP melted.", "Nice fit. Shame about the MOG."],
+       "MOG said nothing. DRIP dried up.", "DRIP got stared down by the MOG.", "Cold stare. DRIP melted.", "MOGGED down DRIP."],
   tie: ["{S} met {S}. Respect.", "Same {S}. Same Energy.", "Two {S}S. One Love.", "A {Y} standoff.",
         "{S} vs {S}. Nobody moved.", "Mirror match. No notes.", "Two {S}S. Zero blinks.", "{S} recognizes {S}."],
 };
