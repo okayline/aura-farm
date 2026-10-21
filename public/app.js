@@ -1,12 +1,13 @@
 // The page: talks to /api/*, draws the aura-glow screens. The rules come from engine/aura.js (the Worker uses the same file).
 import * as A from "./engine/aura.js";
 import { VERSION } from "./engine/version.js";
+import { reveal, revealing } from "./reveal.js";
 
 const COLOR = { D: "var(--D)", R: "var(--H)", M: "var(--S)" };
 const $app = document.getElementById("app"), $tabs = document.getElementById("tabs");
 
 let tab = "farms", me = null, view = null, pick = null, err = "";
-let flexedAt = 0;   // when you last tapped FLEX: the finished farm plays its reveal once, right after
+let flexed = false;   // you just tapped FLEX: the finished farm plays its reveal (reveal.js) once, right after
 let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -95,7 +96,7 @@ function ledgerTab(l) {
       // a card duel from before v0.6, as it was sealed
       : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
     return `<div class="item entry"><span class="grow"><span class="meme glow">${title}</span><br>
-      <span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span></div>`;
+      ${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span></div>`;
   }).join("");
   return `<div class="panel"><div class="big glow">The ledger</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
@@ -116,14 +117,16 @@ function farmScreen(v) {
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
   const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
   const hand = (i) => (v.styles ? style(v.styles[i], { on: true }) : `<div class="small">${(v.cards?.[i] || []).map(emo).join(" ")}</div>`);
-  // right after you FLEX, their card starts face down and flips over (index.html, "the reveal"). A redraw
-  // during it (the header refreshing) picks the animations up where they were, through --t.
-  const t = Date.now() - flexedAt, reveal = v.styles && t < 2500;
-  const flip = (i) => (reveal && i === other ? `<div class="slot"><div class="card back">?</div>${hand(i)}</div>` : hand(i));
-  const face = (name, i, glow) => `<div class="face${v.result.winner == null ? "" : v.result.winner === i ? " won" : " lost"}">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
+  // right after you FLEX, their card starts face down (the reveal flips it, and drains the loser when it's time)
+  const playing = flexed && !!v.styles;
+  const flip = (i) => (playing && i === other ? `<div class="slot"><div class="card back">?</div>${hand(i)}</div>` : hand(i));
+  const face = (name, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i && !playing ? " lost" : ""}">${halo(i === other ? "😎" : "🧍", glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
+  // the line and the caption, each cut into sentences ("Same DRIP." "Same Energy." "AURA FARMED." "+100,000 aura",
+  // the amount bigger), which the reveal drops in one at a time
+  const sentences = (t) => t.split(/(?<=\.) /), bit = (t, cls = "") => `<span class="bit ${cls}">${esc(t)}</span>`;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
-    <div class="duel${reveal ? ` reveal" style="--t:${-t}ms` : ""}">${face(esc(v.names[other] || "?"), other, 18)}
-      <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${esc(v.captions[side])}</div>
+    <div class="duel">${face(esc(v.names[other] || "?"), other, 18)}
+      <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${v.line ? `<div class="why">${sentences(v.line).map((t) => bit(t)).join(" ")}</div>` : ""}${sentences(v.captions[side]).map((t, i, all) => bit(t, i === all.length - 1 && all.length > 1 ? "amt" : "")).join(" ")}</div>
       ${face("you", side, d > 0 ? 30 : 12)}</div>${back}`;
 }
 
@@ -237,8 +240,16 @@ function showTab(t) {
   }).catch((e) => { err = e.message; draw(); });
 }
 
-// The header (aura) and your farms list, refreshed in the background after an action.
-function refreshMe() { api("GET", "today").then((d) => { me = d; draw(); }).catch(() => {}); }
+// The header (aura) and your farms list, refreshed in the background after an action. During the reveal only the
+// header is redrawn, so the reveal isn't cut short.
+function refreshMe() {
+  api("GET", "today").then((d) => {
+    me = d;
+    if (!revealing()) return draw();
+    const h = $app.querySelector("header");
+    if (h) h.outerHTML = header();
+  }).catch(() => {});
+}
 
 function draw() {
   const body = view?.you ? youScreen() : view ? farmScreen(view)
@@ -246,6 +257,7 @@ function draw() {
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["farms", "🏠 Home"], ["board", "🌾 The Farm"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
+  if (flexed && view?.styles) { flexed = false; reveal($app.querySelector(".duel"), view); }
 }
 
 async function loadToday() { me = await api("GET", "today"); }
@@ -263,7 +275,7 @@ document.addEventListener("click", (e) => {
   if (act === "back") return showTab(tab);
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
   if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
-  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexedAt = Date.now(); pick = null; refreshMe(); });
+  if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexed = true; pick = null; refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 

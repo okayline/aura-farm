@@ -119,6 +119,8 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.deepEqual(tk.result.deltas, [-100000, 100000]);
   assert.equal(tk.result.winner, 1);
   assert.deepEqual(tk.captions, ["COOKED. -100,000 aura", "AURA FARMED. +100,000 aura"]);
+  assert.equal(f.id, 1);
+  assert.equal(tk.line, "Too much DRIP. RIZZ slipped.");   // DRIP beat RIZZ on farm 1: that matchup's line 1 % 8 = 1 (counting from 0)
   assert.equal((await call("cy", "POST", "/api/take", { id: f.id, style: "M" })).status, 400, "already taken");
 
   // the record is public once revealed: both players' styles, newest first, on the next farm of either
@@ -138,6 +140,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(rec.rules, 4);
   assert.deepEqual(rec.styles, ["R", "D"]);
   assert.equal(rec.players.includes(null), false);
+  assert.equal(rec.line, "Too much DRIP. RIZZ slipped.", "the line is sealed with the farm");
   for (const sd of [0, 1]) assert.equal(sha(rec.styles[sd] + "|" + rec.salts[sd]), rec.commits[sd]);
   assert.equal(JSON.stringify(rec).includes("ann"), false, "records hold ids, never names");
 
@@ -183,8 +186,8 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   const sent = env.REGISTRY.checkpoints;
   assert.deepEqual(sent.map((c) => [c.game, c.entries, c.head]), [["aura-farm", 1, rows[0].hash], ["aura-farm", 2, rows[1].hash]]);
   assert.deepEqual(sent.map((c) => c.detail), [
-    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [100000, -100000] },
-    { day: "2027-01-01", farm: 2, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-100000, 100000] },
+    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [100000, -100000], line: "Too much DRIP. RIZZ slipped." },
+    { day: "2027-01-01", farm: 2, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-100000, 100000], line: "MOG didn't blink. DRIP did." },
   ]);
   assert.equal(JSON.stringify(sent).includes("players"), false);
   assert.equal(JSON.stringify(sent).includes("ann"), false);

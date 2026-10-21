@@ -27,6 +27,17 @@ test("captions: a win is AURA FARMED, a loss is COOKED, a draw is MUTUAL MOG", (
   assert.equal(A.caption(A.farm("M", "M"), 1), "MUTUAL MOG. +0 aura");
 });
 
+test("the line: picked by the farm's number from the winning matchup's four; a draw names its style", () => {
+  assert.equal(A.line(["R", "M"], 0), "MOG couldn't handle the RIZZ.");        // RIZZ beats MOG, line 1 of 8
+  assert.equal(A.line(["M", "R"], 11), "MOG blushed. gg, out-RIZZed.");        // same matchup either way round, 11 % 8 = 3
+  assert.equal(A.line(["D", "M"], 9), "All that DRIP, still got MOGGED.");     // MOG beats DRIP, 9 % 8 = 1
+  assert.equal(A.line(["R", "D"], 15), "Dripped on. RIZZ is soaked.");         // DRIP beats RIZZ, the last of 8
+  assert.equal(A.line(["M", "M"], 2), "Two MOGS. One Love.");
+  assert.equal(A.line(["R", "R"], 3), "A RIZZY standoff.");
+  assert.equal(A.line(["D", "D"], 7), "DRIP recognizes DRIP.");
+  for (const list of Object.values(A.LINES)) for (const l of list) assert.match(l.replace(/\{.\}/g, "MOGGY"), /^[A-Za-z0-9 .,'-]{1,40}$/, "the registry takes it");
+});
+
 test("a record is a player's latest 10 styles, newest first", () => {
   // ids 1-12 with styles D R M D R M D R M D R M: the latest 10 are ids 12 down to 3
   const rows = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, style: "DRM"[i % 3] }));
