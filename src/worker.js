@@ -354,15 +354,17 @@ async function farmOf(req, env, url) {
 
 // Taking a farm decides it: the farms row and its ledger entry in one batch.
 async function take(req, env) {
-  const { player, cookie } = await needPlayer(req, env);
+  const player = await findPlayer(req, env);   // not needPlayer: a visitor with no player has no farm up, so they cannot FLEX, and no player is made for them
   const b = await body(req);
   const d = await getFarm(env, b.id);
   if (d.status !== "open" || farmEnd(d) <= now()) throw new Oops("Someone already took that one, or it expired.");
-  if (d.c_id === player.id) throw new Oops("You can't take your own farm.");
+  if (d.c_id === player?.id) throw new Oops("You can't take your own farm.");
   const style = posed(b.style, "a style"), salt = randomHex(), commit = await commitment(style, salt);
   const t = now();
-  const { results: recent } = await env.DB.prepare("SELECT taken_at FROM farms WHERE t_id = ? AND taken_at > ? ORDER BY taken_at").bind(player.id, t - A.FLEX_WINDOW).all();
-  if (recent.length >= A.MAX_FLEX) throw new Oops(`You can FLEX ${A.MAX_FLEX} times every ${A.FLEX_WINDOW / 60} minutes. Next one in ${Math.ceil((recent[recent.length - A.MAX_FLEX].taken_at + A.FLEX_WINDOW - t) / 60)} min.`, 429);
+  const owed = !player ? { left: 0 } : await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM farms WHERE c_id = ?1 AND posted_at > ?2) * ?3 - (SELECT COUNT(*) FROM farms WHERE t_id = ?1 AND taken_at > ?2) AS left`)
+    .bind(player.id, t - A.LIFE, A.FLEX_PER_FARM).first();
+  if (owed.left <= 0) throw new Oops("Put a farm up to FLEX: each farm you put up earns you a FLEX.", 429);
   const r = A.farm(d.c_style, style, Math.floor((t - d.posted_at) / 3600));
   const record = JSON.stringify({
     kind: "farm", rules: A.RULES, day: d.day, farm: d.id, players: [d.c_id, player.id],
@@ -388,7 +390,7 @@ async function take(req, env) {
     }
     if (!res[0].meta.changes) throw new Oops("Someone already took that one.");
     await checkpoint(env, d.id);
-    return withCookie(json(await farmView(env, await getFarm(env, d.id), player)), cookie);
+    return json(await farmView(env, await getFarm(env, d.id), player));
   }
   throw new Error("The ledger is busy. Try again.");
 }

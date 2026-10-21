@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.44 (Oct 21 2026, HST)
+
+- You get one FLEX for every farm you put up, good for 24 hours from when you posted it. Nothing counts down while you wait, and FLEXing doesn't take your farm down. With none left, FLEX says to put a farm up. Removed: the limit of 3 FLEXes every 30 minutes.
+
 ## v0.43 (Oct 21 2026, HST)
 
 - You can FLEX 3 times in any 30 minutes. The 4th says how many minutes until the next one. Stops one player clearing the whole board in one go. Removed: no limit on FLEXes.
