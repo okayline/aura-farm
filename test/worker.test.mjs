@@ -303,6 +303,17 @@ test("an ordinary click writes nothing: 'seen' times are saved at most every 15 
   assert.equal(seen(), first + 900);
 });
 
+test("only 3 new guests an hour from one address: the 4th is refused, and the next hour allows more", async () => {
+  const { call, tick } = setup();
+  for (const who of ["a", "b", "c"]) assert.ok((await call(who, "POST", "/api/farm", { style: "D" })).id);   // a farm comes back; its "status" is the farm's own
+  const r = await call("d", "POST", "/api/farm", { style: "D" });
+  assert.equal(r.status, 429);
+  assert.match(r.error, /Too many new players/);
+  assert.ok((await call("a", "POST", "/api/farm", { style: "R" })).id);   // an existing player is not counted
+  tick(3600);
+  assert.ok((await call("d", "POST", "/api/farm", { style: "D" })).id);
+});
+
 test("the version on the page matches the newest CHANGELOG heading", async () => {
   const { VERSION } = await import("../public/engine/version.js");
   const log = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
