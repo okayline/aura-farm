@@ -2,9 +2,8 @@
 import * as A from "./engine/aura.js";
 import { VERSION } from "./engine/version.js";
 
-const EMOJI = { D: "💎", H: "😏", S: "🗿", C: "🗣️" };
-const COLOR = { D: "var(--D)", H: "var(--H)", S: "var(--S)", C: "var(--C)" };
-const MOVE_WORD = { lock: "🔒 LOCK IN", farm: "🗿 FARM", dip: "💨 DIP" };
+const COLOR = { D: "var(--D)", R: "var(--H)", M: "var(--S)" };
+const MOVE_WORD = { lock: "🔒 LOCK IN", farm: "🌾 FARM", dip: "💨 DIP" };
 const $app = document.getElementById("app"), $tabs = document.getElementById("tabs");
 
 let tab = "duels", me = null, view = null, picks = [], plan = [null, null, null], err = "";
@@ -28,18 +27,18 @@ async function run(fn) {
 
 // ---------- pieces ----------
 
+// A card: its style, big, and what it beats (a CAP loses to everything). No numbers.
 function card(c, { small = false, pick = null, onclick = null, ghost = false } = {}) {
   const tag = onclick ? "button" : "div";
   const attrs = onclick ? ` data-act="${onclick}" type="button"` : "";
   if (!c) return `<${tag} class="card back"${attrs}>?</${tag}>`;
-  if (A.isCap(c)) {
-    return `<${tag} class="card${ghost ? " ghost" : ""}" style="--c: var(--X)"${attrs}><span class="r">🃏</span><span class="e">🤫</span>
-      <span class="s"><span>CAP</span><span>0</span></span>${pick ? `<span class="pick">${pick}</span>` : ""}</${tag}>`;
-  }
-  const s = c[1], rank = c[0] === "T" ? "10" : c[0];
-  return `<${tag} class="card${ghost ? " ghost" : ""}" style="--c: ${COLOR[s]}"${attrs} aria-label="${rank} ${A.STYLE[s]} ${A.aura(c)}">
-    <span class="r">${rank}${small ? "" : " "}${A.SUIT[s]}</span><span class="e">${EMOJI[s]}</span>
-    <span class="s"><span>${A.STYLE[s]}</span><span>${A.aura(c)}</span></span>${pick ? `<span class="pick">${pick}</span>` : ""}</${tag}>`;
+  // a card from before v0.4 (old 54-card deck, e.g. "QH"), on an old duel: shown as its code
+  if (!A.DECK.includes(c)) return `<${tag} class="card"${attrs}><span class="e" style="font-size:18px">${esc(c)}</span></${tag}>`;
+  const cap = A.isCap(c), s = A.style(c);
+  const name = cap ? "CAP" : A.STYLE[s], beats = cap ? "loses to all" : `beats ${A.EMOJI[A.BEATS[s]]}`;
+  return `<${tag} class="card${ghost ? " ghost" : ""}" style="--c: ${cap ? "var(--X)" : COLOR[s]}"${attrs} aria-label="${name}">
+    <span class="r">${small ? "" : name}</span><span class="e">${A.EMOJI[cap ? "X" : s]}</span>
+    <span class="s">${small ? name : beats}</span>${pick ? `<span class="pick">${pick}</span>` : ""}</${tag}>`;
 }
 
 const halo = (emoji, pot) => {
@@ -143,6 +142,10 @@ function duelScreen(v) {
   const mine = [0, 1, 2].map((i) => v.mine ? card(v.mine[i], { ghost: i >= (v.flipped || 0) && v.status !== "done" }) : card(shown[side][i])).join("");
   const done = v.status === "done";
   const last = v.moves[v.moves.length - 1];
+  // rounds won so far, from the cards that flipped
+  const f = v.flipped || 0, won = [0, 0];
+  for (let k = 0; k < f; k++) { const w = A.faceOff(shown[side][k], shown[other][k]); if (w !== null) won[w]++; }
+  const score = f ? `Rounds: you ${won[0]} · them ${won[1]}` : "";
   const capText = done ? v.captions[side] : last ? `They ${MOVE_WORD[last[other]]} · you ${MOVE_WORD[last[side]]}` : v.side === 1 ? "Your move." : "";
   const capColor = done ? (v.result.deltas[side] >= 0 ? "#ff6fcf" : "#d6cfee") : "#c9b8ff";
   return `
@@ -152,6 +155,7 @@ function duelScreen(v) {
     <div class="cards">${theirs}</div>
     <div class="pot"><div class="small">POT</div><div class="n">${num(v.pot)} AURA</div></div>
     <div class="cap" style="color:${capColor}">${esc(capText)}</div>
+    ${score ? `<div class="small" style="text-align:center">${score}</div>` : ""}
     <div class="cards">${mine}</div>
     <div class="row">${halo("🧍", v.pot)}<div class="grow"><b>you</b></div>
       ${v.status === "live" ? `<span class="chip">👀 VIBES ${v.vibes}</span>` : ""}</div>

@@ -224,7 +224,7 @@ async function finish(env, d, moves, state, { dipper = null } = {}) {
   const r = state.result, t = now();
   const showdown = r.how === "showdown" || r.how === "tie";
   const record = JSON.stringify({
-    kind: "duel", day: d.day, duel: d.id, players: [d.c_id, d.t_id],
+    kind: "duel", rules: A.RULES, day: d.day, duel: d.id, players: [d.c_id, d.t_id],
     seed: await duelSeed(env.DAILY_SECRET, d.day, d.id),
     commits: [d.c_commit, d.t_commit],
     flipped: lines.map((l) => l.slice(0, state.flipped)),
@@ -343,10 +343,11 @@ async function duelView(env, d, player) {
     out.round = state.round; out.pot = state.pot; out.flipped = state.flipped;
     out.shown = lines.map((l) => l.slice(0, state.flipped));
   }
-  // names, and the taker's VIBES, in one trip
+  // names, the ledger record of a finished duel, and the taker's VIBES, in one trip
   const wantVibes = d.status === "live" && side === 1;
   const [names, v] = await env.DB.batch([
-    env.DB.prepare("SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t").bind(d.c_id, d.t_id),
+    env.DB.prepare(`SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t,
+      (SELECT record FROM ledger WHERE duel_id = ?3) AS record`).bind(d.c_id, d.t_id, d.id),
     ...(wantVibes ? [vibesStmt(env, player.id)] : []),
   ]);
   out.names = [names.results[0].c ?? null, names.results[0].t ?? null];
@@ -359,6 +360,14 @@ async function duelView(env, d, player) {
     out.result = r;
     if (r.how === "showdown" || r.how === "tie") out.shown = lines;
     out.captions = [A.caption(r, 0), A.caption(r, 1)];
+    // A duel finished under the old 54-card rules (its record has no `rules`): the seed re-deals differently now, so
+    // show the cards exactly as its ledger record has them, and no hands.
+    const rec = names.results[0].record ? JSON.parse(names.results[0].record) : null;
+    if (rec && rec.rules !== A.RULES) {
+      const cards = rec.lineups ?? rec.flipped;
+      Object.assign(out, { hands: null, shown: cards, pot: rec.pot, flipped: rec.flipped[0].length, round: rec.flipped[0].length + 1 });
+      if (side >= 0) out.mine = cards[side];
+    }
   }
   return out;
 }

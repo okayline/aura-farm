@@ -1,43 +1,46 @@
 // AURA FARMING SIMULATOR: NO CAP BATTLE EDITION 2027. The rules, shared by the Worker and the page.
 // Pure functions only: no network, no storage. Every number here is from the design doc.
 //
-// The deck is a standard 54: suits are styles, ranks are aura, the two jokers are CAPs.
-// A duel: each side keeps 3 of its 5 cards in an order. Each round both pick LOCK IN, FARM or DIP in secret,
-// then the round's cards flip. After round 3, the higher total wins the pot.
+// The deck is 20 cards: 6 each of three styles (DRIP > RIZZ > MOG > DRIP) and 2 CAPs. No numbers (v0.4).
+// A duel: each side keeps 3 of its 5 cards in an order. Each round the two cards face off and the style that beats
+// the other wins the round (same style, or two CAPs, is a draw; a CAP loses to any style). Each round both sides
+// play LOCK IN, FARM or DIP, then the round's cards flip. After round 3, whoever won more rounds wins the pot.
 
-export const STYLE = { D: "DRIP", H: "RIZZ", S: "MOG", C: "YAP" };
-export const SUIT = { D: "♦", H: "♥", S: "♠", C: "♣" };
-export const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
-const RANK_AURA = { 2: 1, 3: 1, 4: 1, 5: 2, 6: 2, 7: 2, 8: 3, 9: 3, T: 3, J: 4, Q: 4, K: 5, A: 5 };
+// The rules version, written on every ledger record from v0.4. Records without it used the old 54-card deck
+// (suits as four styles, ranks as aura 1-5): see git history before v0.4 to re-deal them.
+export const RULES = 2;
 
-// DRIP > RIZZ > MOG > YAP > DRIP. Opposites (DRIP/MOG, RIZZ/YAP) and same-style are neutral.
-export const BEATS = { D: "H", H: "S", S: "C", C: "D" };
+export const STYLE = { D: "DRIP", R: "RIZZ", M: "MOG" };
+export const EMOJI = { D: "💎", R: "😏", M: "🗿", X: "🤫" };
+export const BEATS = { D: "R", R: "M", M: "D" };
 
 export const MOVES = ["lock", "farm", "dip"];
 export const START_POT = 10000;
 export const ROUNDS = 3;
-export const BONUS = { noCap: 500000, untouched: 100000, dippedWinner: -100000, crashedOut: -1000000 };
+export const BONUS = { noCap: 500000, dippedWinner: -100000, crashedOut: -1000000 };
 export const STAND_PER_HOUR = 1000;
 export const MAX_OPEN = 3;
 export const VIBES_START = 1, VIBES_MAX = 3;
 
-// Card codes: "QH" (queen of hearts), "TD" (ten of diamonds), "X1"/"X2" (the jokers, CAPs).
-export const DECK = [...Object.keys(STYLE).flatMap((s) => RANKS.map((r) => r + s)), "X1", "X2"];
+// Card codes: "D1".."D6" (DRIP), "R1".."R6" (RIZZ), "M1".."M6" (MOG), "X1"/"X2" (CAPs). The number only tells
+// copies apart: it is not worth anything.
+export const DECK = [...Object.keys(STYLE).flatMap((s) => [1, 2, 3, 4, 5, 6].map((n) => s + n)), "X1", "X2"];
 
 export const isCap = (c) => c[0] === "X";
-export const aura = (c) => (isCap(c) ? 0 : RANK_AURA[c[0]]);
-export const style = (c) => (isCap(c) ? null : c[1]);
-export const beats = (a, b) => !isCap(a) && !isCap(b) && BEATS[style(a)] === style(b);
-export const label = (c) => (isCap(c) ? "🃏 CAP 0" : `${c[0] === "T" ? "10" : c[0]}${SUIT[c[1]]} ${STYLE[c[1]]} ${aura(c)}`);
+export const style = (c) => (isCap(c) ? null : c[0]);
+export const label = (c) => (isCap(c) ? `${EMOJI.X} CAP` : `${EMOJI[c[0]]} ${STYLE[c[0]]}`);
 
-// A card's worth against the card it faces: double when its style beats theirs.
-export const worth = (a, b) => aura(a) * (beats(a, b) ? 2 : 1);
+// Who wins one face-off: 0 (a), 1 (b) or null (a draw). A CAP loses to any style; two CAPs draw.
+export function faceOff(a, b) {
+  if (isCap(a) || isCap(b)) return isCap(a) && isCap(b) ? null : isCap(a) ? 1 : 0;
+  return BEATS[style(a)] === style(b) ? 0 : BEATS[style(b)] === style(a) ? 1 : null;
+}
 
-// Totals after the first n flips of two lineups (arrays of card codes).
+// Rounds won by each side over the first n face-offs of two lineups (arrays of card codes).
 export function totals(a, b, n = ROUNDS) {
-  let x = 0, y = 0;
-  for (let i = 0; i < n; i++) { x += worth(a[i], b[i]); y += worth(b[i], a[i]); }
-  return [x, y];
+  const won = [0, 0];
+  for (let i = 0; i < n; i++) { const w = faceOff(a[i], b[i]); if (w !== null) won[w]++; }
+  return won;
 }
 
 // sfc32, seeded from 128 bits of hex. Small, fast and the same everywhere.
@@ -51,7 +54,7 @@ function rng(hex) {
   };
 }
 
-// A duel's deal from its seed: shuffle the 54, the challenger gets the first 5, the taker the next 5.
+// A duel's deal from its seed: shuffle the 20, the challenger gets the first 5, the taker the next 5.
 export function deal(seedHex) {
   if (!/^[0-9a-f]{32,}$/.test(seedHex)) throw new Error("deal needs a hex seed of 128 bits or more.");
   const r = rng(seedHex), d = [...DECK];
@@ -99,9 +102,6 @@ function done(a, b, { winner, how, pot, flipped, farmed }) {
     const add = (name, side) => { bonuses.push([name, BONUS[name], side]); deltas[side] += BONUS[name]; };
     if (hands[winner].some(isCap)) add("noCap", winner);
     if (how === "dip") {
-      // won without ever flipping your best card
-      const best = Math.max(...hands[winner].map(aura));
-      if (!hands[winner].slice(0, flipped).some((c) => aura(c) === best)) add("untouched", winner);
       // dipped holding the winning hand
       const [x, y] = totals(a, b);
       if ((loser === 0 && x > y) || (loser === 1 && y > x)) add("dippedWinner", loser);
@@ -120,7 +120,6 @@ export function caption(result, side) {
   if (mine.includes("crashedOut")) return `CRASHED OUT. ${amt}`;
   if (mine.includes("noCap")) return `NO CAP. ${amt}`;
   if (mine.includes("dippedWinner")) return `DIPPED HOLDING THE WIN. ${amt}`;
-  if (mine.includes("untouched")) return `NEVER EVEN TRIED. ${amt}`;
   if (result.how === "tie") return "MUTUAL MOG. +0 aura";
   if (result.how === "both_dip") return "BOTH DIPPED. +0 aura";
   if (result.winner === side) return `${result.how === "dip" ? "THEY DIPPED" : "AURA FARMED"}. ${amt}`;

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4 (not released yet)
+
+- Three styles, no numbers: every card is 💎 DRIP, 😏 RIZZ or 🗿 MOG (DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP), plus 2 🤫 CAPs that lose to everything. Each round the two cards face off; win more rounds than them and you win the pot. The duel screen shows rounds won so far. Removed: the 54-card deck, ranks and aura per card, YAP, adding up totals, and the "never even tried" bonus.
+- FARM's emoji is now 🌾, so it isn't mixed up with MOG's 🗿. Removed: 🗿 on the FARM button.
+- Duels finished before this show their cards as they were sealed.
+
 ## v0.3.3 (Oct 20 2026, HST)
 
 - Planning goes one round at a time: your card for that round flips, then you pick LOCK IN, FARM or DIP for it. Planned rounds are listed with their card; tap one to change it. Removed: the three rows of move buttons with no cards beside them.

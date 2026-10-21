@@ -239,3 +239,19 @@ test("names can't be typed: /api/name rerolls a new random two-word name", async
   assert.match(r.name, /^\S.{1,14}\S$/);
   assert.equal((await call("ann", "GET", "/api/today")).name, r.name);
 });
+
+test("a duel finished under the old 54-card rules shows its cards from its ledger record, with no hands", async () => {
+  const { env, call } = setup();
+  await call("ann", "POST", "/api/draft");                 // player 1
+  const rec = { kind: "duel", day: "2027-01-01", duel: 1, players: [1, 2], flipped: [["QH"], ["KS"]], lineups: null, pot: 10000 };
+  env.DB.raw.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (2, 'x', 1, 1)").run();
+  env.DB.raw.prepare(`UPDATE duels SET status = 'done', t_id = 2, c_slots = '[0,1,2]', t_slots = '[0,1,2]', moves = '[["lock","lock"],["lock","dip"]]', n = 2,
+    result = '{"winner":0,"how":"dip","deltas":[10000,-10000],"bonuses":[]}', c_delta = 10000, t_delta = -10000 WHERE id = 1`).run();
+  env.DB.raw.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 1, ?, ?, ?, 1)")
+    .run(JSON.stringify(rec), "0".repeat(64), "a".repeat(64));
+  const v = await call("ann", "GET", "/api/duel?id=1");
+  assert.equal(v.hands, null);
+  assert.deepEqual(v.shown, [["QH"], ["KS"]]);
+  assert.deepEqual(v.mine, ["QH"]);
+  assert.equal(v.flipped, 1);
+});

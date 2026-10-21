@@ -7,11 +7,12 @@
 <meta name="description" content="Stand there. Look cool. Bluff. An async aura battling card game.">
 <meta name="theme-color" content="#0b0a12">
 <style>
-  /* "Aura glow": near-black with purple light; every card glows in its style's colour. Text glows. Literal aura. */
+  /* "Aura glow": near-black with purple light; every card glows in its style's colour (DRIP cyan, RIZZ pink, MOG violet,
+     CAP gold). Text glows. Literal aura. */
   :root {
     --bg: #0b0a12; --panel: #171226; --panel2: #1b1530; --line: #3a2f5c;
     --ink: #f4f1ff; --mute: #c9b8ff; --dim: #a99ccf;
-    --D: #5ad1ff; --H: #ff6fcf; --S: #b084ff; --C: #ff9a3c; --X: #ffd23f;
+    --D: #5ad1ff; --H: #ff6fcf; --S: #b084ff; --X: #ffd23f;
     --meme: Impact, "Arial Black", "Helvetica Neue", sans-serif;
   }
   * { box-sizing: border-box; }
@@ -43,10 +44,10 @@
           box-shadow: 0 0 16px color-mix(in srgb, var(--c, transparent) 60%, transparent); padding: 8px 10px;
           display: flex; flex-direction: column; justify-content: space-between; text-align: left; color: var(--ink); }
   .five .card { height: 84px; padding: 6px; border-radius: 10px; }
-  .five .card .e { font-size: 20px; }
-  .card .r { font-weight: 700; font-size: 18px; text-shadow: 0 0 8px var(--c); }
-  .card .e { font-size: 28px; text-align: center; }
-  .card .s { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--c); text-shadow: 0 0 6px var(--c); }
+  .five .card .e { font-size: 26px; }
+  .card .r { font-family: var(--meme); letter-spacing: .5px; font-size: 16px; color: var(--c); text-shadow: 0 0 8px var(--c); }
+  .card .e { font-size: 40px; text-align: center; }
+  .card .s { display: flex; justify-content: center; font-size: 11px; font-weight: 700; color: var(--c); text-shadow: 0 0 6px var(--c); }
   .card.back { background: repeating-linear-gradient(45deg, #1b1530 0 8px, #221a3d 8px 16px); align-items: center; justify-content: center; font-size: 26px; color: #8f80b8; box-shadow: none; }
   .card.ghost { opacity: .5; border-style: dashed; }
   .card .pick { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font-weight: 800; display: grid; place-items: center; font-size: 13px; box-shadow: 0 0 12px #fff; }
