@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.30 (Oct 21 2026, HST)
+
+- The details panels start rolled up and open when you tap them: the one under FLEX, your open farm's details, and a finished farm's Results. A panel you open stays open while that screen refreshes, and starts rolled up again the next time you open a farm. Removed: the panels always being open.
+- Opening a farm starts at the top of its page (your farm: who is farming and the time left) instead of wherever the list was scrolled to. Removed: the page keeping the list's scroll position.
+
 ## v0.29 (Oct 21 2026, HST)
 
 - The FLEX screen has a panel under the FLEX button with what is public about the farm: its number, who put it up, when it went up and comes down, the time left and how long it has stood, what you win or lose (or nothing on the same style), your aura today and farms up, which style beats which, and the sealed fingerprint of their style. Removed: nothing; the screen ended at the FLEX button.

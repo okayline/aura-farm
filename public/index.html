@@ -66,6 +66,12 @@
   .bar { height: 6px; border-radius: 999px; background: var(--panel2); overflow: hidden; }
   .bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #b084ff, #ff6fcf); }
   .detail.wait { visibility: hidden; }
+  details.panel > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; font-weight: 700; letter-spacing: .3px; }
+  details.panel > summary::-webkit-details-marker { display: none; }
+  details.panel > summary::after { content: "▸"; color: var(--mute); }
+  details.panel[open] > summary::after { content: "▾"; }
+  details.panel[open] > summary { margin-bottom: 6px; }
+  details.panel > summary + .kv { border-top: 0; }
   .kv { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; font-size: 13px; border-top: 1px solid var(--line); }
   .kv:first-child { border-top: 0; }
   .kv span:first-child { color: var(--mute); white-space: nowrap; }
