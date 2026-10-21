@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.19 (Oct 21 2026, HST)
+
+- Each browser keeps its own player. Log in as someone else and then log out, and you're back on the player this browser had, instead of a new one. Removed: v0.18's "log in first" after a log out, and the "Switch anyway?" question before logging in (switching no longer loses this browser's player).
+
 ## v0.18 (Oct 21 2026, HST)
 
 - After you log out of this browser, playing asks you to log in with your save code or passkey first, instead of making a new player. A browser that has never played still gets a player the first time it plays. Removed: a new empty player every time you played after logging out.
