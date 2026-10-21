@@ -60,9 +60,9 @@ function header() {
 function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
-      <span class="grow"><b>${d.status === "open" ? "Farming" : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
+      <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
       <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `+${HOUR} an hour` : ""}</span></span>
-      <span>${d.style ? emo(d.style) : ""} ›</span>
+      <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+${HOUR} Aura per hour while your Farm is up</p></div>

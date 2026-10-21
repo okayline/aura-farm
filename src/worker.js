@@ -292,6 +292,7 @@ async function today(req, env) {
   out.farms = list.results.map((d) => {
     const side = sideOf(d, player), row = { id: d.id, status: d.status, side, opponent: d.opponent ?? null };
     if (d.status === "done") { const r = JSON.parse(d.result); row.caption = A.caption(r, side); row.style = side === 0 ? d.c_style : d.t_style; }
+    else if (side === 0) row.style = d.c_style;   // your own farm's sealed style, shown only to you
     return row;
   });
   return json(out);
