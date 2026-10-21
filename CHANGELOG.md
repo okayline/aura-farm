@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.29 (Oct 21 2026, HST)
+
+- The FLEX screen has a panel under the FLEX button with what is public about the farm: its number, who put it up, when it went up and comes down, the time left and how long it has stood, what you win or lose (or nothing on the same style), your aura today and farms up, which style beats which, and the sealed fingerprint of their style. Removed: nothing; the screen ended at the FLEX button.
+
 ## v0.28 (Oct 21 2026, HST)
 
 - The AURA LEADERBOARD shows each player's profile pic beside their name. Removed: the rows with only a rank and a name.

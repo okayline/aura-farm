@@ -177,13 +177,26 @@ function openFarmPage(v, back) {
       <p class="small seal">${esc(v.commits[0])}</p></div>${back}`;
 }
 
+// Under the FLEX button: what is public about a farm you can take. Their style is never in here, only its sealed fingerprint.
+function takeInfo(v) {
+  const end = v.left != null ? endOf(v) : null, open = (me?.farms || []).filter((f) => f.status === "open").length;
+  return `<div class="panel" style="margin-top:12px">
+    ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}
+    ${kv("If you win", num(A.STAKE) + " aura")}${kv("If you lose", num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}
+    ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
+    <p class="small">DRIP 💎 beats RIZZ 😏, RIZZ 😏 beats MOG 🗿, MOG 🗿 beats DRIP 💎.</p>
+    <p class="small">Sealed with this fingerprint of their style, so they can't change it after you flex. It is the only thing anyone can see of it until someone takes it:</p>
+    <p class="small seal">${esc(v.commits[0])}</p></div>`;
+}
+
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
   if (v.status === "open" && v.side !== 0) {
     return `<div class="row">${halo(pic(v.names[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         ${styles()}
-      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${back}`;
+      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
   }
   if (v.status === "open" && v.left != null && v.mine) return openFarmPage(v, back);
   if (v.status === "open" || v.status === "expired") {
