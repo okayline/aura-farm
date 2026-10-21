@@ -1,11 +1,10 @@
 // The ledger: one SHA-256 hash chain, one entry per finished duel. Same design as the other games' ledgers
 // (scoundrel.exe, irl-dungeon, dawn-baton); the chain helpers are copied from scoundrel.exe src/ledger.js.
 //
-//   record = JSON of the duel: both players' ids, the duel's seed (so anyone can re-deal both hands), both
-//            lineup commitments, every round's moves, the pot, the result and its caption. A lineup is revealed
-//            (cards and salt, and the poster's plan, so the commitments can be checked) only when the duel went to
-//            the showdown; after a DIP the cards that never flipped stay secret, but their commitment is still on
-//            the chain.
+//   record = JSON of the duel: both players' ids, the duel's seed (so anyone can re-deal both hands), both lineups
+//            with their salts and commitments, the rounds won, the result and its caption. Every duel is decided the
+//            moment it is taken, so both lineups are always revealed (v0.5). Records from before v0.5 kept a lineup
+//            secret after a DIP, and the poster's commitment there also covered their plan: sha256("cards|plan|salt").
 //   hash   = SHA-256( prev_hash + "|" + record )
 //
 // The first entry chains from GENESIS. Changing any old record breaks its hash and every hash after it.
@@ -20,9 +19,8 @@ export async function sha256(text) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// What a lineup's commitment covers: its cards in order, the poster's plan (one move per round; none for the taker)
-// and its salt: sha256("cards|plan|salt") for the poster, sha256("cards|salt") for the taker.
-export const commitment = (cards, salt, plan = null) => sha256(cards.join(",") + "|" + (plan ? plan.join(",") + "|" : "") + salt);
+// What a lineup's commitment covers: its cards in order and its salt, sha256("cards|salt").
+export const commitment = (cards, salt) => sha256(cards.join(",") + "|" + salt);
 
 export async function head(db) {
   const h = await db.prepare("SELECT hash FROM ledger ORDER BY id DESC LIMIT 1").first();

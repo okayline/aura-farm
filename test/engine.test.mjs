@@ -3,14 +3,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as A from "../public/engine/aura.js";
 
-test("the deck is 20 cards: 6 each of DRIP, RIZZ and MOG, and 2 CAPs", () => {
-  assert.equal(A.DECK.length, 20);
-  assert.equal(new Set(A.DECK).size, 20);
+test("the deck is 19 cards: 6 each of DRIP, RIZZ and MOG, and 1 CAP", () => {
+  assert.equal(A.DECK.length, 19);
+  assert.equal(new Set(A.DECK).size, 19);
   for (const st of "DRM") assert.equal(A.DECK.filter((c) => A.style(c) === st).length, 6, st);
-  assert.equal(A.DECK.filter(A.isCap).length, 2);
+  assert.deepEqual(A.DECK.filter(A.isCap), ["X1"]);
 });
 
-test("DRIP > RIZZ > MOG > DRIP; same style draws; a CAP loses to any style; two CAPs draw", () => {
+test("DRIP > RIZZ > MOG > DRIP; same style draws; the CAP loses to any style", () => {
   assert.equal(A.faceOff("D1", "R1"), 0);
   assert.equal(A.faceOff("R1", "M1"), 0);
   assert.equal(A.faceOff("M1", "D1"), 0);
@@ -18,59 +18,37 @@ test("DRIP > RIZZ > MOG > DRIP; same style draws; a CAP loses to any style; two 
   assert.equal(A.faceOff("D1", "D2"), null);
   assert.equal(A.faceOff("X1", "M1"), 1);
   assert.equal(A.faceOff("M1", "X1"), 0);
-  assert.equal(A.faceOff("X1", "X2"), null);
 });
 
-// RIZZ vs MOG: a. MOG vs DRIP: a. CAP vs RIZZ: b. Rounds won 2 vs 1.
-const A1 = ["R1", "M1", "X1"], B1 = ["M2", "D1", "R2"];
-
-test("totals count rounds won", () => {
-  assert.deepEqual(A.totals(A1, B1), [2, 1]);
-  assert.deepEqual(A.totals(A1, B1, 1), [1, 0]);
+test("win 2-1 holding the CAP: +10,000 and NO CAP +500,000; the loser loses 10,000", () => {
+  // RIZZ vs MOG: a. MOG vs DRIP: a. CAP vs RIZZ: b.
+  const r = A.duel(["R1", "M1", "X1"], ["M2", "D1", "R2"]);
+  assert.deepEqual(r.won, [2, 1]);
+  assert.equal(r.winner, 0);
+  assert.deepEqual(r.deltas, [510000, -10000]);
+  assert.equal(A.caption(r, 0), "NO CAP. +510,000 aura");
+  assert.equal(A.caption(r, 1), "MOGGED. -10,000 aura");
 });
 
-test("showdown: FARM doubles the pot once a round, winner holding a CAP gets NO CAP", () => {
-  const s = A.play(A1, B1, [["lock", "farm"], ["farm", "farm"], ["lock", "lock"]]);
-  assert.equal(s.over, true);
-  assert.equal(s.pot, 40000);
-  assert.equal(s.result.winner, 0);
-  assert.deepEqual(s.result.deltas, [40000 + 500000, -40000]);
-  assert.equal(A.caption(s.result, 0), "NO CAP. +540,000 aura");
-  assert.equal(A.caption(s.result, 1), "MOGGED. -40,000 aura");
+test("TOTAL MOG: winning all 3 face-offs adds 100,000; 2 wins and a draw doesn't", () => {
+  // DRIP vs RIZZ, RIZZ vs MOG, MOG vs DRIP: a, a, a.
+  const r = A.duel(["D1", "R1", "M1"], ["R2", "M2", "D2"]);
+  assert.deepEqual(r.deltas, [110000, -10000]);
+  assert.equal(A.caption(r, 0), "TOTAL MOG. +110,000 aura");
+  // RIZZ vs DRIP: b. DRIP vs MOG: b. MOG vs MOG: draw. The taker wins 2-0.
+  const s = A.duel(["R1", "D1", "M1"], ["D2", "M2", "M3"]);
+  assert.deepEqual(s.won, [0, 2]);
+  assert.deepEqual(s.deltas, [-10000, 10000]);
+  assert.equal(A.caption(s, 1), "AURA FARMED. +10,000 aura");
 });
 
-test("CRASHED OUT: farmed all 3 rounds, then lost to a CAP", () => {
-  // DRIP vs CAP: a. DRIP vs MOG: b. MOG vs RIZZ: b. b wins 2-1 holding a CAP.
-  const s = A.play(["D1", "D2", "M1"], ["X1", "M2", "R1"], [["farm", "lock"], ["farm", "lock"], ["farm", "lock"]]);
-  assert.equal(s.pot, 80000);
-  assert.deepEqual(s.result.deltas, [-80000 - 1000000, 80000 + 500000]);
-  assert.equal(A.caption(s.result, 0), "CRASHED OUT. -1,080,000 aura");
-});
-
-test("a DIP pays the pot from before this round's FARM", () => {
-  const s = A.play(A1, B1, [["lock", "lock"], ["farm", "dip"]]);
-  assert.equal(s.result.how, "dip");
-  assert.equal(s.pot, 10000);
-  // side 0 wins 10,000 + NO CAP (it holds X1); side 1 would have lost anyway, so no penalty
-  assert.deepEqual(s.result.deltas, [10000 + 500000, -10000]);
-});
-
-test("dipping holding the winning hand costs 100,000", () => {
-  // side 0 = B1, side 1 = A1. Side 1 dips in round 1 though it would have won 2-1.
-  const s = A.play(B1, A1, [["lock", "dip"]]);
-  assert.deepEqual(s.result.deltas, [10000, -10000 - 100000]);
-});
-
-test("both DIP, and equal rounds won, change nothing", () => {
-  assert.deepEqual(A.play(A1, B1, [["dip", "dip"]]).result.deltas, [0, 0]);
-  const L = [["lock", "lock"], ["lock", "lock"], ["lock", "lock"]];
-  // three same-style draws
-  const t = A.play(["D1", "R1", "M1"], ["D2", "R2", "M2"], L);
-  assert.equal(t.result.how, "tie");
-  assert.deepEqual(t.result.deltas, [0, 0]);
-  assert.equal(A.caption(t.result, 0), "MUTUAL MOG. +0 aura");
+test("equal face-offs won is a MUTUAL MOG: nothing changes", () => {
+  const t = A.duel(["D1", "R1", "M1"], ["D2", "R2", "M2"]);   // three draws
+  assert.equal(t.winner, null);
+  assert.deepEqual(t.deltas, [0, 0]);
+  assert.equal(A.caption(t, 1), "MUTUAL MOG. +0 aura");
   // DRIP vs RIZZ: a. MOG vs RIZZ: b. RIZZ vs RIZZ: draw. 1-1.
-  assert.equal(A.play(["D1", "M1", "R1"], ["R2", "R3", "R4"], L).result.how, "tie");
+  assert.equal(A.duel(["D1", "M1", "R1"], ["R2", "R3", "R4"]).how, "tie");
 });
 
 test("a deal is the same for the same seed, and gives two different 5-card hands", () => {

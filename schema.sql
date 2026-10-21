@@ -13,12 +13,11 @@ CREATE TABLE IF NOT EXISTS players (
 );
 
 -- A duel starts as a challenge. Its two 5-card hands come from its own seed (HMAC of the server secret, its day and
--- its id), so they are never stored. A lineup is 3 slots of a hand in play order, sealed by a commitment
+-- its id), so they are never stored. A lineup is 3 slots of a hand in face-off order, sealed by a commitment
 -- (SHA-256 of the cards and a random salt) when it is locked in.
---   draft   - dealt to the challenger, lineup not locked yet (counts toward their 3)
---   open    - on the board, standing (farms aura), waiting for a taker
---   live    - taken: rounds being played
---   done    - finished, sealed on the ledger
+--   draft   - dealt to the challenger, lineup not locked yet
+--   open    - on the board, standing (farms aura), waiting for a taker (at most 3 per player)
+--   done    - taken: the two lineups faced off at once, sealed on the ledger
 --   expired - the day ended with nobody taking it
 CREATE TABLE IF NOT EXISTS duels (
   id          INTEGER PRIMARY KEY,
@@ -27,15 +26,11 @@ CREATE TABLE IF NOT EXISTS duels (
   c_id        INTEGER NOT NULL REFERENCES players(id),   -- challenger (side 0)
   t_id        INTEGER REFERENCES players(id),            -- taker (side 1)
   c_slots     TEXT,                   -- JSON [2,0,4]
-  c_plan      TEXT,                   -- JSON ["lock","farm","farm"]: the poster's move for each round (v0.3)
   c_salt      TEXT,
   c_commit    TEXT,
   t_slots     TEXT,
   t_salt      TEXT,
   t_commit    TEXT,
-  moves       TEXT NOT NULL DEFAULT '[]',   -- JSON [["lock","farm"], ...], one pair per finished round
-  n           INTEGER NOT NULL DEFAULT 0,   -- length of moves (guards against two requests resolving one round)
-  t_reads     TEXT NOT NULL DEFAULT '[]',   -- the taker's VIBES peeks
   result      TEXT,                   -- JSON, once done
   c_delta     INTEGER,
   t_delta     INTEGER,
@@ -48,12 +43,20 @@ CREATE INDEX IF NOT EXISTS duels_status ON duels (status, day);
 CREATE INDEX IF NOT EXISTS duels_c ON duels (c_id, day);
 CREATE INDEX IF NOT EXISTS duels_t ON duels (t_id, day);
 
--- VIBES: everyone holds 1 at the start of each UTC day, +1 per DIP (up to 3), -1 per read.
+-- VIBES: everyone holds 1 at the start of each UTC day, +1 per duel lost (up to 3), -1 per peek.
 CREATE TABLE IF NOT EXISTS vibes (
   player_id   INTEGER NOT NULL REFERENCES players(id),
   day         TEXT NOT NULL,
   balance     INTEGER NOT NULL,
   PRIMARY KEY (player_id, day)
+);
+
+-- Peeks bought with VIBES before taking a challenge: which of the poster's cards plays in that round (0-2) (v0.5).
+CREATE TABLE IF NOT EXISTS peeks (
+  duel_id     INTEGER NOT NULL REFERENCES duels(id),
+  player_id   INTEGER NOT NULL REFERENCES players(id),
+  slot        INTEGER NOT NULL,
+  PRIMARY KEY (duel_id, player_id, slot)
 );
 
 -- The ledger: one entry per finished duel, a SHA-256 hash chain (src/ledger.js).

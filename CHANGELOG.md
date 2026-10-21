@@ -1,6 +1,13 @@
 # Changelog
 
-## v0.4 (not released yet)
+## v0.5 (Oct 20 2026, HST)
+
+- Cards vs cards: you keep 3 of your 5 in an order, they do the same, and the two lineups face off card by card the moment they take it. Win more face-offs to win 10,000 aura; win all 3 for TOTAL MOG (+100,000); win with the CAP in your 3 for NO CAP (+500,000). The bluff is the order you pick. Removed: LOCK IN, FARM and DIP, planning a move per round, playing round by round, the pot, CRASHED OUT and "dipped holding the win".
+- One CAP in the deck, so 19 cards. Removed: the second CAP.
+- VIBES: before you take a challenge, spend one to see which card they play in a round. You earn one for each duel you lose (up to 3). Removed: peeking during a duel, and earning VIBES by dipping.
+- Challenges that were open or being played when this went live were cancelled (they were dealt from the old deck). Nothing was paid out for them.
+
+## v0.4 (Oct 20 2026, HST)
 
 - Three styles, no numbers: every card is 💎 DRIP, 😏 RIZZ or 🗿 MOG (DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP), plus 2 🤫 CAPs that lose to everything. Each round the two cards face off; win more rounds than them and you win the pot. The duel screen shows rounds won so far. Removed: the 54-card deck, ranks and aura per card, YAP, adding up totals, and the "never even tried" bonus.
 - FARM's emoji is now 🌾, so it isn't mixed up with MOG's 🗿. Removed: 🗿 on the FARM button.
