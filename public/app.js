@@ -263,13 +263,22 @@ function draw() {
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["farms", "🏠 Home"], ["board", "🌾 The Farm"], ["top", "🏆 Today"], ["ledger", "📜 Ledger"]]
     .map(([k, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button">${w}</button>`).join("");
+  syncAddress();
   if (flexed && view?.styles) { flexed = false; reveal($app.querySelector(".duel"), view); }
 }
 
 async function loadToday() { me = await api("GET", "today"); }
-async function openFarm(id) {
+// Opening a farm from a tap puts its address (?farm=N) in the bar as a new history step, so it can be copied, and
+// the browser's back button leaves it. A ?farm=N link, or the browser going back or forward to one, opens it in place.
+async function openFarm(id, step = true) {
   view = await api("GET", "farm?id=" + id);
   pick = null;
+  if (step && location.search !== "?farm=" + id) history.pushState({ farm: id }, "", "?farm=" + id);
+}
+// The address follows the screen: a farm shows ?farm=N, anything else the bare address.
+function syncAddress() {
+  const want = view && !view.you ? "?farm=" + view.id : "";
+  if (location.search !== want) history.replaceState(null, "", location.pathname + want);
 }
 
 document.addEventListener("click", (e) => {
@@ -278,7 +287,8 @@ document.addEventListener("click", (e) => {
   if (t.dataset.tab) return showTab(t.dataset.tab);
   const [act, arg] = t.dataset.act.split(":");
   if (act === "pick") { pick = pick === arg ? null : arg; return draw(); }
-  if (act === "back") return showTab(tab);
+  // back from a farm we stepped into goes back a history step (the same as the browser's back); from a ?farm=N link, home
+  if (act === "back") return history.state?.farm ? history.back() : showTab(tab);
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
   if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexed = true; pick = null; refreshMe(); });
@@ -304,4 +314,9 @@ document.addEventListener("click", (e) => {
 
 // aura.88x31.app/?farm=16 opens that farm (the shared registry links its Aura Farm entries here)
 const linked = Number(new URLSearchParams(location.search).get("farm"));
-run(async () => { await loadToday(); if (linked > 0) await openFarm(linked); });
+run(async () => { await loadToday(); if (linked > 0) await openFarm(linked, false); });
+// the browser's back and forward buttons: a ?farm=N step opens that farm, the bare address shows the tab you were on
+addEventListener("popstate", () => {
+  const id = Number(new URLSearchParams(location.search).get("farm"));
+  if (id > 0) run(() => openFarm(id, false)); else showTab(tab);
+});

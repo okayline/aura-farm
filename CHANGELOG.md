@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.13 (Oct 21 2026, HST)
+
+- Opening a farm puts its address in the bar (aura.88x31.app/?farm=N), so you can copy or share it. Your browser's back button goes back from a farm, and "back" in the game does the same. Removed: the address staying the same whatever you opened.
+
 ## v0.12 (Oct 21 2026, HST)
 
 - Your Farming rows on Home show what each farm is farming (💎, 😏 or 🗿), only to you. Removed: nothing.
