@@ -2,7 +2,8 @@
 
 ## v0.7 (Oct 20 2026, HST)
 
-- A "Who beats who" panel (💎 DRIP beats 😏 RIZZ, 😏 RIZZ beats 🗿 MOG, 🗿 MOG beats 💎 DRIP) on the Farm tab and when you take a farm. Removed: "beats X" on every style button.
+- Fewer labels: the Farm tab says one short line, and the Board, Today and Ledger tabs, the take screen and your own farm are just their titles. Removed: "beats X" on every style button and the paragraphs of explainer text on every screen.
+- The passkey login is a "👆 Passkey" button beside "Log in" instead of a link under it. Removed: the "or log in with a passkey" link.
 - VIBES are gone: no more peeking at a style, and no VIBES counter at the top. Removed: the peek, earning VIBES by losing a farm, and the VIBES tables (migration 005).
 
 ## v0.6 (Oct 20 2026, HST)

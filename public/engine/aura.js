@@ -21,7 +21,6 @@ export const MAX_OPEN = 3;
 export const RECORD = 10;     // how many of a player's latest styles are shown
 
 export const isStyle = (s) => STYLES.includes(s);
-export const label = (s) => `${EMOJI[s]} ${STYLE[s]}`;
 
 // A farm between two styles. Side 0 is the poster, side 1 the taker. The winner gets the stake and the loser loses it;
 // a draw changes nothing. Returns { winner: 0 | 1 | null, how: "win" | "tie", deltas: [a, b] }.

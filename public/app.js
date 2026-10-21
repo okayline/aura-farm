@@ -37,11 +37,6 @@ function style(s, { tap = false, on = false } = {}) {
 const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>`;
 const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
 
-// Who beats who, from the rules file, so the page can't disagree with the game.
-const rules = () => `<div class="panel"><div class="small">Who beats who</div>
-  ${A.STYLES.map((s) => `<div>${A.label(s)} beats ${A.label(A.BEATS[s])}</div>`).join("")}
-  <div class="small" style="margin-top:6px">The same style is a draw.</div></div>`;
-
 // the emoji for a style or a card code from a duel before v0.6 ("D3" is DRIP, "X1" the CAP; older codes show as text)
 const emo = (s) => (s == null ? "❔" : s[0] === "X" ? "🤫" : A.EMOJI[s[0]] ?? s);
 
@@ -64,14 +59,12 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming" : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} aura an hour until someone takes it` : "nobody took it"}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${HOUR} an hour` : ""}</span></span>
       <span>${d.style ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">AURA FARM</div>
-      <p class="small">Pick a style and put it on the board, sealed. While it stands untaken you farm ${HOUR} aura an hour. Whoever takes it
-      picks their own: the style that beats the other wins ${STAKE}. Up to 3 a day.</p></div>
+      <p class="small">Pick a style. Farm aura while it's up.</p></div>
     ${styles()}
-    ${rules()}
     <button class="go" data-act="farm" type="button" ${pick ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
@@ -82,14 +75,14 @@ function boardTab(b) {
       ${halo("😎")}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span class="meme glow">${c.mine ? "FARMING" : "STARE DOWN ›"}</span></button>`).join("");
-  return `<div class="panel"><div class="big glow">The board</div><p class="small">Open farms. Their style is sealed, but every style a player has played is public: read their record.</p></div>
+  return `<div class="panel"><div class="big glow">The board</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
     <span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
-  return `<div class="panel"><div class="big glow">Most aura today</div><p class="small">Net aura: wins, losses and farming. Resets at midnight UTC.</p></div>
+  return `<div class="panel"><div class="big glow">Most aura today</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
 
@@ -103,7 +96,7 @@ function ledgerTab(l) {
     return `<div class="item entry"><span class="grow"><span class="meme glow">${title}</span><br>
       <span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span></div>`;
   }).join("");
-  return `<div class="panel"><div class="big glow">The ledger</div><p class="small">Every finished farm, sealed in a hash chain. Each style is sealed by a fingerprint when it goes up, and revealed when the farm is taken.</p></div>
+  return `<div class="panel"><div class="big glow">The ledger</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
@@ -112,15 +105,12 @@ function farmScreen(v) {
   if (v.status === "open" && v.side !== 0) {
     return `<div class="row">${halo("😎")}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
-      <div class="panel"><p class="small">Their style is sealed. Pick yours: if it beats theirs you win ${STAKE}, and if theirs beats yours you lose ${STAKE}.</p></div>
-      ${rules()}
-      ${styles()}
+        ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 STARE DOWN</button>${back}`;
   }
   if (v.status === "open" || v.status === "expired") {
-    return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div>
-      <p class="small">${v.status === "open" ? `${HOUR} aura an hour until someone takes it.` : "Nobody took it before the daily reset."}</p></div>
-      ${v.mine ? `<div class="small">Your style (only you can see it)</div>${shown(v.mine)}` : ""}${back}`;
+    return `<div class="panel"><div class="big glow">${v.status === "open" ? "Farming" : "Your time is up"}</div></div>
+      ${v.mine ? `${shown(v.mine)}` : ""}${back}`;
   }
   // done: both styles, revealed (a card duel from before v0.6 shows its cards as emoji)
   const side = v.side >= 0 ? v.side : 1, other = 1 - side, d = v.result.deltas[side];
@@ -162,9 +152,9 @@ function youScreen() {
     <div class="row"><button class="chip" data-act="newcode" type="button">🔑 New save code</button>
       ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add a passkey</button>` : ""}</div>
     <div class="panel"><div class="small">Log in as another player</div>
-      <div class="row" style="margin-top:8px"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
-        <button class="chip" data-act="loadcode" type="button">Log in</button></div>
-      ${pkSupported() ? `<button class="link" data-act="loadkey" type="button" style="margin-top:8px">or log in with a passkey</button>` : ""}</div>
+      <div class="row" style="margin-top:8px;flex-wrap:wrap"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
+        <button class="chip" data-act="loadcode" type="button">Log in</button>
+        ${pkSupported() ? `<button class="chip" data-act="loadkey" type="button">👆 Passkey</button>` : ""}</div></div>
     ${a.player && hasWay ? `<button class="link" data-act="logout" type="button">log out of this browser</button>` : ""}
     <p class="small" style="text-align:center">${esc(note)}</p>
     <button class="link" data-act="back" type="button">back</button>`;
