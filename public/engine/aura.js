@@ -39,6 +39,25 @@ export function caption(result, side) {
   return `${result.winner === side ? "AURA FARMED" : "COOKED"}. ${amt}`;
 }
 
+// The line that says what happened, shown above the caption and sealed on the ledger with the farm (v0.9). Eight for
+// each matchup, picked by the farm's number, so a farm always has the same line. A draw names the style both picked.
+// Kept to 40 letters, numbers, spaces and . , ' - so the shared registry takes them.
+export const LINES = {
+  DR: ["RIZZ drowned in DRIP.", "Too much DRIP. RIZZ slipped.", "RIZZ got iced out.", "The DRIP was too wet for the RIZZ.",
+       "RIZZ tried. DRIP shined.", "Can't RIZZ through the DRIP.", "RIZZ got rinsed.", "Dripped on. RIZZ is soaked."],
+  RM: ["MOG couldn't handle the RIZZ.", "MOG cracked a smile. It's over.", "The RIZZ cracked the MOG.", "MOG blushed. gg, out-RIZZed.",
+       "One RIZZ look and MOG folded.", "MOG got RIZZed up.", "Stone cold MOG til the RIZZ hit.", "MOG fell for the RIZZ."],
+  MD: ["DRIP got MOGGED.", "All that DRIP, still got MOGGED.", "MOG didn't blink. DRIP did.", "The DRIP couldn't survive the MOG.",
+       "MOG said nothing. DRIP dried up.", "DRIP got stared down by the MOG.", "Cold stare. DRIP melted.", "MOGGED down DRIP."],
+  tie: ["{S} met {S}. Respect.", "Same {S}. Same Energy.", "Two {S}S. One Love.", "A {Y} standoff.",
+        "{S} vs {S}. Nobody moved.", "Mirror match. No notes.", "Two {S}S. Zero blinks.", "{S} recognizes {S}."],
+};
+const STYLEY = { D: "DRIPPY", R: "RIZZY", M: "MOGGY" };
+export function line([a, b], farmId) {
+  const key = a === b ? "tie" : BEATS[a] === b ? a + b : b + a, list = LINES[key];
+  return list[farmId % list.length].replaceAll("{S}", STYLE[a]).replaceAll("{Y}", STYLEY[a]);
+}
+
 // A player's latest styles, newest first, from their finished farms (rows of { id, style }, any order).
 export const record = (rows) => [...rows].sort((a, b) => b.id - a.id).slice(0, RECORD).map((r) => r.style);
 

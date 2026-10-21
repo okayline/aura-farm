@@ -224,7 +224,7 @@ async function checkpoint(env, farmId) {
     const r = JSON.parse(end.record);
     const detail = {
       day: r.day, farm: r.farm, result: r.result, styles: r.styles.map((s) => A.STYLE[s]),
-      winner: r.winner === 0 ? "poster" : r.winner === 1 ? "taker" : null, aura: r.deltas,
+      winner: r.winner === 0 ? "poster" : r.winner === 1 ? "taker" : null, aura: r.deltas, ...(r.line ? { line: r.line } : {}),
     };
     const res = await env.REGISTRY.checkpoint({ game: "aura-farm", entries: rows.length, head: rows[rows.length - 1].hash, detail });
     if (res && res.error) console.error("The registry refused the checkpoint: " + res.error);
@@ -261,13 +261,14 @@ async function farmView(env, d, player) {
     const r = JSON.parse(d.result);
     out.result = r;
     out.captions = [A.caption(r, 0), A.caption(r, 1)];
+    const sealed = names.results[0].record ? JSON.parse(names.results[0].record) : null;
+    if (sealed?.line) out.line = sealed.line;   // the line sealed with the farm (farms before v0.9 have none)
     // A farm finished under older rules (a card duel): show its cards and captions exactly as its ledger record has them.
     // After a DIP, cards that never flipped were never revealed: those are null.
     if (d.c_style) out.styles = [d.c_style, d.t_style];
     else {
-      const old = names.results[0].record ? JSON.parse(names.results[0].record) : null;
-      const cards = old ? old.lineups ?? old.flipped?.map((l) => [0, 1, 2].map((i) => l[i] ?? null)) : null;
-      Object.assign(out, { cards, captions: old?.caption ?? out.captions });
+      const cards = sealed ? sealed.lineups ?? sealed.flipped?.map((l) => [0, 1, 2].map((i) => l[i] ?? null)) : null;
+      Object.assign(out, { cards, captions: sealed?.caption ?? out.captions });
     }
   }
   return out;
@@ -338,7 +339,7 @@ async function take(req, env) {
     kind: "farm", rules: A.RULES, day: d.day, farm: d.id, players: [d.c_id, player.id],
     commits: [d.c_commit, commit], styles: [d.c_style, style], salts: [d.c_salt, salt],
     result: r.how, winner: r.winner, deltas: r.deltas,
-    caption: [A.caption(r, 0), A.caption(r, 1)], t,
+    caption: [A.caption(r, 0), A.caption(r, 1)], line: A.line([d.c_style, style], d.id), t,
   });
   const sealed = { sql: "EXISTS (SELECT 1 FROM farms WHERE id = ? AND status = 'done' AND t_id = ? AND ended_at = ?)", args: [d.id, player.id, t] };
   for (let i = 0; i < 6; i++) {
