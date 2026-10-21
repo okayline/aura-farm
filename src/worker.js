@@ -134,6 +134,7 @@ async function findPlayer(req, env) {
 async function needPlayer(req, env) {
   const found = await findPlayer(req, env);
   if (found) return { player: found };
+  if (!(await rateLimit(env, req, "new-guest", 3, 3600))) throw new Oops("Too many new players from here. Try again later.", 429);
   const token = newToken(), t = now();
   const r = await env.DB.prepare("INSERT INTO players (token_hash, created_at, seen_at) VALUES (?, ?, ?) RETURNING id, name")
     .bind(await sha256(token), t, t).first();
