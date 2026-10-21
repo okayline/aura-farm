@@ -9,6 +9,7 @@ const $app = document.getElementById("app"), $tabs = document.getElementById("ta
 let tab = "farms", me = null, view = null, pick = null, err = "";
 let flexed = false;   // you just tapped FLEX: the finished farm plays its reveal (reveal.js) once, right after
 let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
+let ask = null;   // an in-game "are you sure?" on the you screen: { act, arg, text } (no browser popups)
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
@@ -170,12 +171,14 @@ function youScreen() {
       <div class="row" style="margin-top:8px"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
         <button class="chip" data-act="loadcode" type="button">Log in</button>
 </div></div>
+    ${ask ? `<div class="panel"><p class="small" style="text-align:center">${esc(ask.text)}</p>
+      <div class="row"><button class="chip" data-act="yes" type="button">Yes</button><button class="chip" data-act="no" type="button">No</button></div></div>` : ""}
     ${a.player && hasWay ? `<button class="link" data-act="logout" type="button">log out of this browser</button>` : ""}
     <p class="small" style="text-align:center">${esc(note)}</p>
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
-async function openYou() { view = { you: true }; newCode = null; acct = await api("GET", "account"); }
+async function openYou() { view = { you: true }; newCode = null; ask = null; acct = await api("GET", "account"); }
 
 // the save code as a little text file, so it can be kept somewhere safe (from scoundrel.exe)
 function downloadCode() {
@@ -301,15 +304,21 @@ document.addEventListener("click", (e) => {
   if (act === "copycode") return navigator.clipboard?.writeText(newCode).then(() => { note = "Copied."; draw(); }, () => {});
   if (act === "savecode") return downloadCode();
   if (act === "codedone") { newCode = null; note = "Save code made."; return draw(); }
-  if (act === "forgetcode" && confirm("Forget this save code? It stops working everywhere.")) return run(async () => { await api("POST", "codes", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Save code forgotten."; });
-  if (act === "forgetkey" && confirm("Remove this passkey? It stops working everywhere.")) return run(async () => { await api("POST", "passkey", { action: "remove", id: Number(arg) }); acct = await api("GET", "account"); note = "Passkey removed."; });
+  if (act === "forgetcode" || act === "forgetkey") {
+    ask = { act, arg, text: act === "forgetcode" ? "Forget this save code? It stops working everywhere." : "Remove this passkey? It stops working everywhere." };
+    note = ""; return draw();
+  }
+  if (act === "no") { ask = null; return draw(); }
+  if (act === "yes" && ask?.act === "forgetcode") return run(async () => { const id = Number(ask.arg); ask = null; await api("POST", "codes", { action: "remove", id }); acct = await api("GET", "account"); note = "Save code forgotten."; });
+  if (act === "yes" && ask?.act === "forgetkey") return run(async () => { const id = Number(ask.arg); ask = null; await api("POST", "passkey", { action: "remove", id }); acct = await api("GET", "account"); note = "Passkey removed."; });
   if (act === "addkey") return run(addPasskey);
   if (act === "loadkey") return run(loadWithPasskey);
   if (act === "loadcode") {
     const code = document.getElementById("code")?.value || "";
     return run(async () => { const d = await api("POST", "load", { code }); await loggedIn(d.name); });
   }
-  if (act === "logout" && confirm("Log out of this browser? Log back in any time with your save code or passkey.")) {
+  if (act === "logout") {
+    ask = null;
     return run(async () => { await api("POST", "logout", {}); await loadToday(); acct = await api("GET", "account"); note = "Logged out."; });
   }
 });

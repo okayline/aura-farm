@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.20 (Oct 21 2026, HST)
+
+- Log out happens on one tap. "Forget" a save code and "remove" a passkey ask "are you sure?" on the page itself, with Yes and No. Removed: the browser pop-ups for all three.
+
 ## v0.15 (Oct 21 2026, HST)
 
 - A farm stays up for 24 hours from when you post it, even past midnight. You can have 3 up at once. Your aura still counts by the day: hours a farm stands and wins or losses land on the day they happen. Removed: every farm ending at midnight UTC, and "3 a day".
