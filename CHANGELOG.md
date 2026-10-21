@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.1 (not released yet)
+## v0.2.1 (Oct 20 2026, HST)
 
 - The version number is now shown at the bottom of every screen. Nothing was removed.
 
