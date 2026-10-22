@@ -25,7 +25,7 @@
 //   POST /api/logout                   this browser forgets its player (needs a save code or passkey first)
 
 import * as A from "../public/engine/aura.js";
-import { sha256, commitment, head, chainInsert, verifyChain, isUnique } from "./ledger.js";
+import { sha256, commitment, head, chainInsert, verifyTip, isUnique } from "./ledger.js";
 import { giveName } from "./names.js";
 
 const COOKIE = "af";
@@ -230,21 +230,22 @@ function recordsFrom(rows) {
 // as REGISTRY) as a checkpoint: its entry count and that entry's fingerprint, which covers every entry before it. The
 // registry is timestamped on Bitcoin, so this ledger is too. Only a chain that checks out is sent, with a few public
 // facts about the farm and never a player. A registry that's away never stops a farm: the next checkpoint covers it.
-// (Copied from scoundrel.exe's checkpoint.)
+// (Copied from scoundrel.exe's checkpoint.) It reads only that entry and the one before it (verifyTip), so it costs the
+// same however long the ledger is. Entries are never deleted, so an entry's id is the entry count up to it.
 async function checkpoint(env, farmId) {
   try {
     if (!env.REGISTRY) return;
     const end = await env.DB.prepare("SELECT id, record FROM ledger WHERE farm_id = ?").bind(farmId).first();
     if (!end) return;
-    const rows = (await env.DB.prepare("SELECT id, record, prev_hash, hash FROM ledger WHERE id <= ? ORDER BY id").bind(end.id).all()).results;
-    const v = await verifyChain(rows);
+    const rows = (await env.DB.prepare("SELECT id, record, prev_hash, hash FROM ledger WHERE id <= ? ORDER BY id DESC LIMIT 2").bind(end.id).all()).results.reverse();
+    const v = await verifyTip(rows);
     if (!v.ok) return console.error("The ledger is broken at entry " + v.at + ": no checkpoint sent.");
     const r = JSON.parse(end.record);
     const detail = {
       day: r.day, farm: r.farm, result: r.result, styles: r.styles.map((s) => A.STYLE[s]),
       winner: r.winner === 0 ? "poster" : r.winner === 1 ? "taker" : null, aura: r.deltas, ...(r.line ? { line: r.line } : {}),
     };
-    const res = await env.REGISTRY.checkpoint({ game: "aura-farm", entries: rows.length, head: rows[rows.length - 1].hash, detail });
+    const res = await env.REGISTRY.checkpoint({ game: "aura-farm", entries: end.id, head: rows[rows.length - 1].hash, detail });
     if (res && res.error) console.error("The registry refused the checkpoint: " + res.error);
   } catch (e) { console.error(e); }
 }

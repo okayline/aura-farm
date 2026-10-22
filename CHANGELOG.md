@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.48 (Oct 21 2026, HST)
+
+- Sending a finished farm to the shared registry reads only that farm's ledger entry and the one before it. Removed: reading and re-checking the whole ledger after every farm, which got slower with every farm (the ledger itself is unchanged).
+
 ## v0.47 (Oct 21 2026, HST)
 
 - Your profile pic shows to the left of your name on your player screen. Tap it to pick any of the 24, and that one shows everywhere your pic does, even after you reroll your name. Removed: a pic always picked from your name, which changed every time you rerolled.
