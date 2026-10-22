@@ -233,7 +233,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   assert.equal(JSON.stringify(sent).includes("ann"), false);
 });
 
-test("migrations 004 and 005 turn a v0.5 card duel into a farm and drop VIBES: the old ledger entry and result stay as sealed", async () => {
+test("migrations 004-006 turn a v0.5 card duel into a farm, drop VIBES and add profile pics: the old ledger entry and result stay as sealed", async () => {
   const old = new DatabaseSync(":memory:");
   old.exec(execSync("git show a35b001:schema.sql", { encoding: "utf8" }));   // v0.5
   old.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (1, 'a', 1, 1), (2, 'b', 1, 1)").run();
@@ -241,7 +241,7 @@ test("migrations 004 and 005 turn a v0.5 card duel into a farm and drop VIBES: t
   old.prepare("INSERT INTO duels (id, day, status, c_id, created_at, posted_at) VALUES (8, '2027-01-01', 'open', 1, 1, 1)").run();
   old.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 7, '{}', ?, ?, 5)")
     .run("0".repeat(64), sha("0".repeat(64) + "|{}"));
-  for (const m of ["004_aura_farm", "005_no_vibes"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
+  for (const m of ["004_aura_farm", "005_no_vibes", "006_pics"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
   assert.deepEqual({ ...old.prepare("SELECT id, kind, farm_id, record FROM ledger").get() }, { id: 1, kind: "duel", farm_id: 7, record: "{}" });
   assert.deepEqual({ ...old.prepare("SELECT status, c_delta, t_delta, c_style FROM farms WHERE id = 7").get() }, { status: "done", c_delta: 110000, t_delta: -10000, c_style: null });
   assert.equal(old.prepare("SELECT status FROM farms WHERE id = 8").get().status, "expired", "an open card duel can't be taken as a farm");
@@ -357,4 +357,21 @@ test("names can't be typed: /api/name rerolls a new random two-word name", async
   assert.notEqual(r.name, before);
   assert.match(r.name, /^\S.{1,14}\S$/);
   assert.equal((await call("ann", "GET", "/api/today")).name, r.name);
+});
+
+test("profile pics: pick one of the 24, it shows wherever the name does and stays when the name is rerolled", async () => {
+  const { env, call, tick } = setup();
+  assert.equal((await call("ann", "POST", "/api/pic", { pic: "💩" })).status, 400, "only the 24 profile pics");
+  assert.equal((await call("ann", "GET", "/api/today")).pic, null, "none picked yet: the page picks from the name");
+  assert.equal((await call("ann", "POST", "/api/pic", { pic: "🦝" })).pic, "🦝");
+  const f = await call("ann", "POST", "/api/farm", { style: "R" });
+  tick(3600);   // an hour standing, so ann is on the day's leaderboard
+  assert.equal((await call("ann", "GET", "/api/today")).pic, "🦝");
+  assert.equal((await call("ann", "GET", "/api/account")).pic, "🦝");
+  assert.equal((await call("bo", "GET", "/api/board")).farms[0].pic, "🦝");
+  assert.deepEqual((await call("bo", "GET", `/api/farm?id=${f.id}`)).pics, ["🦝", null]);
+  assert.equal((await call("bo", "GET", "/api/leaderboard")).rows.find((r) => r.pic === "🦝")?.name, (await call("ann", "GET", "/api/today")).name);
+  assert.equal(env.DB.raw.prepare("SELECT pic FROM players WHERE pic IS NOT NULL").all().length, 1, "saved on ann's player only");
+  await call("ann", "POST", "/api/name");
+  assert.equal((await call("ann", "GET", "/api/today")).pic, "🦝", "a new name keeps the pic");
 });

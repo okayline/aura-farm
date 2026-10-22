@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS players (
   name        TEXT,
   name_key    TEXT UNIQUE,            -- lowercase name, so names are unique ignoring case
   created_at  INTEGER NOT NULL,       -- unix seconds
-  seen_at     INTEGER NOT NULL
+  seen_at     INTEGER NOT NULL,
+  pic         TEXT                    -- profile pic picked from A.PICS (v0.47, migrations/006); NULL: picked from the name
 );
 
 -- A farm is a style on the board, sealed by a commitment (SHA-256 of the style and a random salt). The poster picks

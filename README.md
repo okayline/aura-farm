@@ -38,8 +38,9 @@ Live at aura.88x31.app. Four tabs at the bottom; a reload stays on the tab you w
 - **🏆 Today**: the AURA LEADERBOARD for the day. The top 3 portraits glow.
 - **📜 Ledger**: "Legends of AURA", the hash-chained ledger. Tap an entry to open its farm.
 
-Each player has a profile pic, one of 24 emojis picked from their name, so it is the same on every screen. Names are
-random two-word slang names ("🎲 reroll name"), 16 characters at most.
+Each player has a profile pic, one of 24 emojis, the same on every screen: the one they picked (tap it on the player
+screen), or else one picked from their name. Names are random two-word slang names ("🎲 reroll name"), 16 characters
+at most.
 
 ## Running it
 

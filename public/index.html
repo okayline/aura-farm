@@ -37,6 +37,9 @@
   .small { font-size: 12px; color: var(--mute); }
   .big { font-family: var(--meme); font-size: 22px; }
   .halo { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 24px; background: var(--panel2); transition: box-shadow .4s; }
+  .pics { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }   /* the profile pics to pick from (you screen) */
+  .pics button { min-width: 0; height: 40px; padding: 0; font-size: 22px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); }
+  .pics button.on { border-color: var(--H); box-shadow: 0 0 10px rgba(255,111,207,.6); }
   .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .seal { margin-top: 10px; color: var(--dim); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; word-break: break-all; }   /* a finished farm's ledger entry, in full */
   .cards.beats { text-align: center; margin-top: -4px; }   /* "beats 😏" under each style card */
