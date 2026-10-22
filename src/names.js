@@ -2,13 +2,13 @@
 // which copied irl-dungeon). Names can't be typed: every player gets one when they are made, and can reroll it any time.
 // gen-z slang (ryan, Oct 21: "could we get gen-z slang name generator? haha")
 // v0.47 (ryan, Oct 22: "undo those new words and go back to the original few"): the v0.3.1 words again, without the
-// animals v0.22 removed and without the 23 words ryan picked out (Delulu, Feral, Gremlin, Villain and so on), plus 6 of v0.22's
-// words ryan kept (Gyatt, Lit, Dank, Yeet, Enjoyer, Ratio).
+// animals v0.22 removed and without the 23 words ryan picked out (Delulu, Feral, Gremlin, Villain and so on), plus 7 of v0.22's
+// words ryan kept (Gyatt, Lit, Dank, Yeet, Clutch, Enjoyer, Ratio).
 const ADJECTIVES = [
   "Rizzed", "Unbothered", "Sigma", "Based", "Bussin", "Mewing", "Goated", "Lowkey", "Highkey", "Sus",
   "Cracked", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Cooked", "Glazed", "Aura", "Drippy",
   "Yappy", "Extra", "Bougie", "Cozy", "Certified", "Rare", "Main", "Gyatt", "Lit", "Dank",
-  "Yeet",
+  "Yeet", "Clutch",
 ];
 const NOUNS = [
   "Goblin", "NPC", "Rizzler", "Icon", "Legend", "Bestie", "Baddie", "Yapper", "Mogger", "Farmer",

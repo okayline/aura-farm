@@ -3,7 +3,7 @@
 ## v0.47 (Oct 21 2026, HST)
 
 - Your profile pic shows to the left of your name on your player screen. Tap it to pick any of the 24, and that one shows everywhere your pic does, even after you reroll your name. Removed: a pic always picked from your name, which changed every time you rerolled.
-- Rerolled names use fewer slang words: 31 first words and 23 last words, like "Sigma Goblin", "Cozy Rizzler" or "Dank Enjoyer". Kept from v0.22: "Gyatt", "Lit", "Dank", "Yeet", "Enjoyer" and "Ratio". Removed: the other words added in v0.22 (like "Clutch", "Fanum", "Zaddy", "Simp"), and from the originals "Delulu", "Feral", "Unhinged", "Mid", "Valid", "Petty", "Salty", "Silly", "Sleepy", "Crunchy", "Final Boss", "Side Quest", "Locked In", "Gremlin", "Menace", "Pookie", "Moai", "Gremlin Era", "Side Char", "Main Char", "Villain", "Hater" and "Sweat" (the animals stay gone). Names you already have stay until you reroll.
+- Rerolled names use fewer slang words: 32 first words and 23 last words, like "Sigma Goblin", "Cozy Rizzler" or "Clutch Enjoyer". Kept from v0.22: "Gyatt", "Lit", "Dank", "Yeet", "Clutch", "Enjoyer" and "Ratio". Removed: the other words added in v0.22 (like "Fanum", "Zaddy", "Simp"), and from the originals "Delulu", "Feral", "Unhinged", "Mid", "Valid", "Petty", "Salty", "Silly", "Sleepy", "Crunchy", "Final Boss", "Side Quest", "Locked In", "Gremlin", "Menace", "Pookie", "Moai", "Gremlin Era", "Side Char", "Main Char", "Villain", "Hater" and "Sweat" (the animals stay gone). Names you already have stay until you reroll.
 
 ## v0.46 (Oct 21 2026, HST)
 
