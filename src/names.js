@@ -2,17 +2,15 @@
 // which copied irl-dungeon). Names can't be typed: every player gets one when they are made, and can reroll it any time.
 // gen-z slang (ryan, Oct 21: "could we get gen-z slang name generator? haha")
 // v0.47 (ryan, Oct 22: "undo those new words and go back to the original few"): the v0.3.1 words again, without the
-// animals v0.22 removed.
+// animals v0.22 removed and without the 23 words ryan picked out (Delulu, Feral, Gremlin, Villain and so on).
 const ADJECTIVES = [
-  "Rizzed", "Unbothered", "Sigma", "Based", "Bussin", "Mewing", "Goated", "Lowkey", "Highkey", "Delulu",
-  "Sus", "Feral", "Cracked", "Unhinged", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Mid",
-  "Cooked", "Glazed", "Aura", "Drippy", "Yappy", "Valid", "Petty", "Salty", "Extra", "Bougie",
-  "Cozy", "Certified", "Silly", "Sleepy", "Crunchy", "Rare", "Final Boss", "Main", "Side Quest", "Locked In",
+  "Rizzed", "Unbothered", "Sigma", "Based", "Bussin", "Mewing", "Goated", "Lowkey", "Highkey", "Sus",
+  "Cracked", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Cooked", "Glazed", "Aura", "Drippy",
+  "Yappy", "Extra", "Bougie", "Cozy", "Certified", "Rare", "Main",
 ];
 const NOUNS = [
-  "Gremlin", "Goblin", "NPC", "Rizzler", "Menace", "Icon", "Legend", "Bestie", "Pookie", "Baddie",
-  "Yapper", "Mogger", "Farmer", "Opp", "Stan", "Himbo", "Girlboss", "Goat", "Moai", "Gamer",
-  "Lurker", "Ghost", "Gremlin Era", "Side Char", "Main Char", "Villain", "Hater", "Sweat", "Noob", "Sidekick",
+  "Goblin", "NPC", "Rizzler", "Icon", "Legend", "Bestie", "Baddie", "Yapper", "Mogger", "Farmer",
+  "Opp", "Stan", "Himbo", "Girlboss", "Goat", "Gamer", "Lurker", "Ghost", "Noob", "Sidekick",
   "Tryhard",
 ];
 // only the pairs of 16 characters or fewer, so names fit the header on a phone
