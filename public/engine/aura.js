@@ -28,6 +28,10 @@ export const RECORD = 10;     // how many of a player's latest styles are shown
 
 export const isStyle = (s) => STYLES.includes(s);
 
+// The profile pics a player can pick from (v0.47). Until they pick one, the page picks one of these from their name.
+export const PICS = ["😎", "🤠", "🥸", "😈", "🤡", "👻", "🧌", "🦝", "🐸", "🐢", "🦊", "🐙", "🤖", "👽", "🧙", "🥷", "🧛", "🧑‍🚀", "🤓", "😼", "🦄", "🐲", "🦖", "🧃"];
+export const isPic = (p) => PICS.includes(p);
+
 // What a farm moves after it has stood this many whole hours: 100,000, then 10,000 more for every hour.
 export const stake = (hours) => STAKE + STAKE_PER_HOUR * hours;
 // What a farm has earned by standing this many whole hours: 10,000 for the first, 11,000 for the second, and so on.

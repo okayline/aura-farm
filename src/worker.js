@@ -15,6 +15,7 @@
 //   GET  /api/farm?id=                 one farm, as you are allowed to see it
 //   POST /api/take  {id, style}        take a farm with your style: both are revealed and sealed on the ledger at once
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
+//   POST /api/pic   {pic}              pick your profile pic, one of A.PICS (none picked: the page picks one from the name)
 //   GET  /api/leaderboard?day=         a day's players by net aura
 //   GET  /api/ledger?before=&limit=    finished farms, newest first
 //   GET  /api/account                  your save codes, passkeys and devices
@@ -62,6 +63,7 @@ const ROUTES = {
   "GET /api/farm": farmOf,
   "POST /api/take": take,
   "POST /api/name": setName,
+  "POST /api/pic": setPic,
   "GET /api/leaderboard": leaderboard,
   "GET /api/ledger": ledger,
   "GET /api/account": account,
@@ -121,13 +123,13 @@ async function findPlayer(req, env) {
   // one trip for both places a token can be; "seen" times are written at most every 15 minutes, so an ordinary click
   // is reads only
   const p = await env.DB.prepare(
-    `SELECT id, name, seen_at, NULL AS s_seen FROM players WHERE token_hash = ?1
-     UNION ALL SELECT p.id, p.name, p.seen_at, s.seen_at FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?1
+    `SELECT id, name, pic, seen_at, NULL AS s_seen FROM players WHERE token_hash = ?1
+     UNION ALL SELECT p.id, p.name, p.pic, p.seen_at, s.seen_at FROM sessions s JOIN players p ON p.id = s.player_id WHERE s.token_hash = ?1
      LIMIT 1`).bind(h).first();
   if (!p) return null;
   if (p.s_seen !== null && now() - p.s_seen >= SEEN_EVERY) await env.DB.prepare("UPDATE sessions SET seen_at = ? WHERE token_hash = ?").bind(now(), h).run();
   if (now() - p.seen_at >= SEEN_EVERY) await env.DB.prepare("UPDATE players SET seen_at = ? WHERE id = ?").bind(now(), p.id).run();
-  return giveName(env, { id: p.id, name: p.name });
+  return giveName(env, { id: p.id, name: p.name, pic: p.pic });
 }
 
 // The player behind this request, made on the spot if there isn't one. Returns { player, cookie? }.
@@ -200,10 +202,11 @@ const auraStmt = (env, playerId, day) => env.DB.prepare(
 
 // Everyone's aura on a day, with their names (also batched).
 const aurasStmt = (env, day) => env.DB.prepare(
-  `SELECT d.c_id, d.t_id, d.status, d.c_delta, d.t_delta, d.posted_at, d.taken_at, pc.name AS c_name, pt.name AS t_name
+  `SELECT d.c_id, d.t_id, d.status, d.c_delta, d.t_delta, d.posted_at, d.taken_at, pc.name AS c_name, pt.name AS t_name, pc.pic AS c_pic, pt.pic AS t_pic
    FROM farms d LEFT JOIN players pc ON pc.id = d.c_id LEFT JOIN players pt ON pt.id = d.t_id
    WHERE d.status IN ('open', 'done', 'expired') AND d.day IN (?, ?)`).bind(...daysOf(day));
 const namesFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_name], [r.t_id, r.t_name]]));
+const picsFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_pic], [r.t_id, r.t_pic]]));
 
 // ---------- records ----------
 
@@ -261,16 +264,18 @@ async function settleStale(env) {
 async function farmView(env, d, player) {
   const side = sideOf(d, player);
   if (d.status === "open" && d.posted_at != null && farmEnd(d) <= now()) d = { ...d, status: "expired" };   // its 24 hours are up
-  const out = { id: d.id, day: d.day, status: d.status, side, names: null, commits: [d.c_commit, d.t_commit], deadline: d.posted_at == null ? null : farmEnd(d),
+  const out = { id: d.id, day: d.day, status: d.status, side, names: null, pics: null, commits: [d.c_commit, d.t_commit], deadline: d.posted_at == null ? null : farmEnd(d),
     postedAt: d.posted_at ?? null, takenAt: d.taken_at ?? null, left: d.posted_at == null || d.status !== "open" ? null : Math.max(0, farmEnd(d) - now()) };   // left: seconds, so the page's own clock doesn't matter
-  // names, the poster's record and the ledger record of a finished farm, in one trip
+  // names, pics, the poster's record and the ledger record of a finished farm, in one trip
   const [names, rec] = await env.DB.batch([
     env.DB.prepare(`SELECT (SELECT name FROM players WHERE id = ?1) AS c, (SELECT name FROM players WHERE id = ?2) AS t,
+      (SELECT pic FROM players WHERE id = ?1) AS cp, (SELECT pic FROM players WHERE id = ?2) AS tp,
       (SELECT record FROM ledger WHERE farm_id = ?3) AS record, (SELECT id FROM ledger WHERE farm_id = ?3) AS entry,
       (SELECT hash FROM ledger WHERE farm_id = ?3) AS hash, (SELECT prev_hash FROM ledger WHERE farm_id = ?3) AS prev`).bind(d.c_id, d.t_id, d.id),
     recordsStmt(env, [d.c_id, d.t_id].filter(Boolean)),
   ]);
   out.names = [names.results[0].c ?? null, names.results[0].t ?? null];
+  out.pics = [names.results[0].cp ?? null, names.results[0].tp ?? null];
   const records = recordsFrom(rec.results);
   out.records = [records.get(d.c_id) ?? [], d.t_id ? records.get(d.t_id) ?? [] : []];
   if (side === 0 && d.status === "open") out.mine = d.c_style;          // only the poster sees their own sealed style
@@ -298,7 +303,7 @@ async function farmView(env, d, player) {
 async function today(req, env) {
   const day = utcDay();
   const player = await findPlayer(req, env);
-  const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null };
+  const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null, pic: player?.pic ?? null };
   if (!player) return json(out);
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
     `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, o.name AS opponent FROM farms d
@@ -338,11 +343,11 @@ async function board(req, env) {
   const day = utcDay();
   const player = await findPlayer(req, env);
   const [list, rows] = await env.DB.batch([env.DB.prepare(
-    `SELECT d.id, d.c_id, d.posted_at, p.name FROM farms d JOIN players p ON p.id = d.c_id
+    `SELECT d.id, d.c_id, d.posted_at, p.name, p.pic FROM farms d JOIN players p ON p.id = d.c_id
      WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
   const results = list.results, auras = aurasFrom(rows.results, day);
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
-  const out = results.map((r) => ({ id: r.id, name: r.name, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
+  const out = results.map((r) => ({ id: r.id, name: r.name, pic: r.pic ?? null, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
   return json({ day, farms: out });
 }
 
@@ -403,12 +408,21 @@ async function setName(req, env) {
   return withCookie(json({ name: p.name }), cookie);
 }
 
+// Pick a profile pic from A.PICS. It stays when the name is rerolled.
+async function setPic(req, env) {
+  const { player, cookie } = await needPlayer(req, env);
+  const pic = (await body(req)).pic;
+  if (!A.isPic(pic)) throw new Oops("Pick one of the profile pics.");
+  await env.DB.prepare("UPDATE players SET pic = ? WHERE id = ?").bind(pic, player.id).run();
+  return withCookie(json({ pic }), cookie);
+}
+
 async function leaderboard(req, env, url) {
   const day = url.searchParams.get("day") || utcDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Oops("Bad day.");
   const { results } = await aurasStmt(env, day).all();
-  const names = namesFrom(results);
-  const rows = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([id, aura]) => ({ name: names.get(id) ?? null, aura }));
+  const names = namesFrom(results), pics = picsFrom(results);
+  const rows = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([id, aura]) => ({ name: names.get(id) ?? null, pic: pics.get(id) ?? null, aura }));
   return json({ day, rows });
 }
 
@@ -476,7 +490,7 @@ async function enter(req, env, accountId) {
     }
     playerId = ok(await acc.link(accountId, GAME, playerId)).playerId;
   }
-  const p = await env.DB.prepare("SELECT id, name FROM players WHERE id = ?").bind(playerId).first();
+  const p = await env.DB.prepare("SELECT id, name, pic FROM players WHERE id = ?").bind(playerId).first();
   if (!p) throw new Oops("That player is gone.", 404);
   const player = await giveName(env, p);
   const cookie = [await newSession(env, player.id)];
@@ -486,11 +500,11 @@ async function enter(req, env, accountId) {
 
 async function account(req, env) {
   const player = await findPlayer(req, env);
-  if (!player) return json({ player: false, name: null, codes: [], passkeys: [], devices: 0 });
+  if (!player) return json({ player: false, name: null, pic: null, codes: [], passkeys: [], devices: 0 });
   const id = await accountFor(env, player);
   const ways = id ? ok(await ACC(env).info(id)) : { codes: [], passkeys: [] };
   const devices = 1 + (await env.DB.prepare("SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?").bind(player.id).first()).n;
-  return json({ player: true, name: player.name, codes: ways.codes, passkeys: ways.passkeys, devices });
+  return json({ player: true, name: player.name, pic: player.pic ?? null, codes: ways.codes, passkeys: ways.passkeys, devices });
 }
 
 async function codes(req, env) {

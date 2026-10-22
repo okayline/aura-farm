@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.47 (Oct 21 2026, HST)
+
+- Your profile pic shows to the left of your name on your player screen. Tap it to pick any of the 24, and that one shows everywhere your pic does, even after you reroll your name. Removed: a pic always picked from your name, which changed every time you rerolled.
+- Rerolled names use the original slang words again. Removed: the 22 first words and 19 last words added in v0.22, like "Clutch", "Fanum", "Zaddy" and "Simp" (the animals stay gone). Names you already have stay until you reroll.
+
 ## v0.46 (Oct 21 2026, HST)
 
 - When DRIP beats RIZZ, the line is one of 3 instead of 8. Removed: the water jokes (drowned, slipped, too wet, rinsed, soaked). Farms already taken keep the line they were sealed with.

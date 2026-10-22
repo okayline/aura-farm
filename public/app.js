@@ -10,6 +10,7 @@ let tab = "farms", me = null, view = null, pick = null, err = "";
 let flexed = false;   // you just tapped FLEX: the finished farm plays its reveal (reveal.js) once, right after
 let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
 let ask = null;   // an in-game "are you sure?" on the you screen: { act, arg, text } (no browser popups)
+let picking = false;   // the you screen's profile pics are open to pick from
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (n) => (n >= 0 ? "+" : "-") + Math.abs(n).toLocaleString("en-US");
@@ -83,10 +84,12 @@ const emo = (s) => (s == null ? "❔" : s[0] === "X" ? "🤫" : A.EMOJI[s[0]] ??
 // A player's record: their latest styles, newest first, as emoji.
 const recordLine = (rec) => (rec && rec.length ? rec.map(emo).join(" ") : "no flexes yet");
 
-// A player's profile pic: one of these, chosen from their name, so it looks random but is the same for them everywhere and
-// doesn't change when the page redraws.
-const PICS = ["😎", "🤠", "🥸", "😈", "🤡", "👻", "🧌", "🦝", "🐸", "🐢", "🦊", "🐙", "🤖", "👽", "🧙", "🥷", "🧛", "🧑‍🚀", "🤓", "😼", "🦄", "🐲", "🦖", "🧃"];
-const pic = (name) => { let h = 2166136261; for (const c of String(name ?? "?").toLowerCase()) h = Math.imul(h ^ c.codePointAt(0), 16777619); return PICS[(h >>> 0) % PICS.length]; };
+// A player's profile pic: the one they picked (v0.47), or else one of A.PICS chosen from their name, so it looks random but
+// is the same for them everywhere and doesn't change when the page redraws.
+const pic = (name, picked) => {
+  if (A.isPic(picked)) return picked;
+  let h = 2166136261; for (const c of String(name ?? "?").toLowerCase()) h = Math.imul(h ^ c.codePointAt(0), 16777619); return A.PICS[(h >>> 0) % A.PICS.length];
+};
 const halo = (emoji, glow = 18) => `<div class="halo" style="box-shadow: 0 0 ${glow}px ${Math.round(glow / 4)}px rgba(255,111,207,.55)">${emoji}</div>`;
 
 // ---------- screens ----------
@@ -116,7 +119,7 @@ function farmsTab() {
 function boardTab(b) {
   const rows = (b?.farms || []).map((c) => `
     <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
-      ${halo(pic(c.name))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
+      ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span style="text-align:right"><span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
@@ -125,7 +128,7 @@ function boardTab(b) {
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
-    ${halo(pic(r.name), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+    ${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
 }
@@ -181,7 +184,7 @@ function openFarmPage(v, back) {
   const open = (me?.farms || []).filter((f) => f.status === "open").length;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="panel" style="text-align:center">
-      <div class="row" style="justify-content:center">${halo(pic(me?.name), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
+      <div class="row" style="justify-content:center">${halo(pic(me?.name, me?.pic), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
       <div class="time glow">${leftSpan(end)}</div>${barOf(end)}
       </div>
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
@@ -209,7 +212,7 @@ function takeInfo(v) {
 function farmScreen(v) {
   const back = `<button class="link" data-act="back" type="button">back</button>`;
   if (v.status === "open" && v.side !== 0) {
-    return `<div class="row">${halo(pic(v.names[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
+    return `<div class="row">${halo(pic(v.names[0], v.pics?.[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
@@ -226,7 +229,7 @@ function farmScreen(v) {
   // right after you FLEX, their card starts face down (the reveal flips it, and drains the loser when it's time)
   const playing = flexed && !!v.styles;
   const flip = (i) => (playing && i === other ? `<div class="slot"><div class="card back">?</div>${hand(i)}</div>` : hand(i));
-  const face = (name, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i && !playing ? " lost" : ""}">${halo(pic(v.names[i]), glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
+  const face = (name, i, glow) => `<div class="face${v.result.winner != null && v.result.winner !== i && !playing ? " lost" : ""}">${halo(pic(v.names[i], v.pics?.[i]), glow)}<b class="glow">${name}</b>${flip(i)}</div>`;
   // the line and the caption, each cut into sentences ("Same DRIP." "Same Energy." "AURA FARMED." "+100,000 aura",
   // the amount bigger), which the reveal drops in one at a time
   const sentences = (t) => t.split(/(?<=\.) /), bit = (t, cls = "") => `<span class="bit ${cls}">${esc(t)}</span>`;
@@ -257,8 +260,14 @@ function youScreen() {
       <button class="link" data-act="forgetkey:${k.id}" type="button">remove</button></div>`),
   ].join("");
   const hasWay = a.codes.length + a.passkeys.length > 0;
-  return `<div class="panel"><div class="big glow">${a.name ? esc(a.name) : "You"}</div>
-      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>
+  const mine = pic(a.name, a.pic);
+  // your pic, left of your name: tap it to pick another
+  const head = a.player ? `<div class="row"><button class="halo" data-act="pics" type="button" aria-label="Pick your profile pic" style="border:0;box-shadow: 0 0 22px 5px rgba(255,111,207,.55)">${mine}</button>
+      <div class="big glow">${esc(a.name || "You")}</div></div>` : `<div class="big glow">You</div>`;
+  const pics = a.player && picking ? `<div class="small" style="margin-top:12px">Pick your profile pic</div>
+      <div class="pics">${A.PICS.map((p) => `<button class="${p === mine ? "on" : ""}" data-act="setpic:${p}" type="button">${p}</button>`).join("")}</div>` : "";
+  return `<div class="panel">${head}
+      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>${pics}
       ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
     <div class="list">${ways || `<p class="small">No save codes or passkeys yet.</p>`}</div>
     <div class="row keys"><button class="chip" data-act="newcode" type="button">🔑 New code</button>
@@ -275,7 +284,7 @@ function youScreen() {
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
-async function openYou() { view = { you: true }; newCode = null; ask = null; acct = await api("GET", "account"); }
+async function openYou() { view = { you: true }; newCode = null; ask = null; picking = false; acct = await api("GET", "account"); }
 
 // the save code as a little text file, so it can be kept somewhere safe (from scoundrel.exe)
 function downloadCode() {
@@ -399,6 +408,8 @@ document.addEventListener("click", (e) => {
   if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexed = true; pick = null; refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
+  if (act === "pics") { picking = !picking; return draw(); }
+  if (act === "setpic") return run(async () => { const { pic: p } = await api("POST", "pic", { pic: arg }); acct.pic = p; if (me) me.pic = p; picking = false; note = ""; });
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 
   if (act === "newcode") return run(async () => { newCode = (await api("POST", "codes", { action: "new" })).code; acct = await api("GET", "account"); await loadToday(); });
