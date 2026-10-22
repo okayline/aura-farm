@@ -18,8 +18,7 @@ export const STYLES = Object.keys(STYLE);
 
 export const STAKE = 100000;          // what a farm moves the moment it goes up
 export const STAKE_PER_HOUR = 10000;  // and this much more for each whole hour it stood before it was taken
-export const STAND_PER_HOUR = 10000;  // what a farm earns in its first hour
-export const STAND_STEP = 1000;       // each hour pays this much more than the one before
+export const STAND_PER_HOUR = 10000;  // what a farm earns for each whole hour it stands
 export const MAX_OPEN = 3;      // farms one player can have up at once
 export const FLEX_PER_FARM = 1;  // each farm you have up lets you FLEX this many times in any FLEX_WINDOW
 export const FLEX_WINDOW = 3600;
@@ -34,10 +33,8 @@ export const isPic = (p) => PICS.includes(p);
 
 // What a farm moves after it has stood this many whole hours: 100,000, then 10,000 more for every hour.
 export const stake = (hours) => STAKE + STAKE_PER_HOUR * hours;
-// What a farm has earned by standing this many whole hours: 10,000 for the first, 11,000 for the second, and so on.
-export const earned = (hours) => STAND_PER_HOUR * hours + (STAND_STEP * hours * (hours - 1)) / 2;
-// What it earns per hour while it is in its next hour, after this many whole hours.
-export const rate = (hours) => STAND_PER_HOUR + STAND_STEP * hours;
+// What a farm has earned by standing this many whole hours: a flat 10,000 for each.
+export const earned = (hours) => STAND_PER_HOUR * hours;
 
 // A farm between two styles, taken after it stood this many whole hours. Side 0 is the poster, side 1 the taker. The
 // winner gets the amount and the loser loses the same; a draw changes nothing. Returns { winner: 0 | 1 | null, how: "win" | "tie", deltas: [a, b] }.
@@ -78,7 +75,7 @@ export function line([a, b], farmId) {
 // A player's latest styles, newest first, from their finished farms (rows of { id, style }, any order).
 export const record = (rows) => [...rows].sort((a, b) => b.id - a.id).slice(0, RECORD).map((r) => r.style);
 
-// Standing aura: a farm earns by its own age, 10,000 for its first whole hour, 11,000 for its second, and so on. A player
+// Standing aura: a farm earns 10,000 for each whole hour of its own age. A player
 // earns from one farm at a time, the oldest one standing; when it comes down the next oldest carries on from its own age.
 // spans = [[from, to, posted], ...] in seconds: the part of each farm inside the period being counted, and when it went up.
 // An hour counts when it is finished, so an hour that finishes inside the period is paid inside it.

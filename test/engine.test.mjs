@@ -55,24 +55,21 @@ test("a farm moves 100,000 plus 10,000 for each whole hour it stood", () => {
   assert.throws(() => A.farm("D", "R", -1));
 });
 
-test("a farm earns 10,000 in its first hour and 1,000 more each hour after", () => {
-  // hand-added: 10,000 + 11,000 + 12,000 + ...
+test("a farm earns a flat 10,000 for each whole hour", () => {
   assert.equal(A.earned(0), 0);
   assert.equal(A.earned(1), 10000);
-  assert.equal(A.earned(2), 21000);
-  assert.equal(A.earned(3), 33000);
-  assert.equal(A.earned(12), 186000);
-  assert.equal(A.earned(24), 516000);
-  assert.equal(A.rate(0), 10000);
-  assert.equal(A.rate(23), 33000);
+  assert.equal(A.earned(2), 20000);
+  assert.equal(A.earned(3), 30000);
+  assert.equal(A.earned(12), 120000);
+  assert.equal(A.earned(24), 240000);
 });
 
 test("standing aura: by the farm's age, the oldest farm up earns, a partial hour waits", () => {
   assert.equal(A.standing([[0, 5400, 0]]), 10000);                          // 1.5 hours: one whole hour
-  assert.equal(A.standing([[0, 7200, 0]]), 21000);
+  assert.equal(A.standing([[0, 7200, 0]]), 20000);
   assert.equal(A.standing([[0, 3600, 0], [7200, 10800, 7200]]), 20000);     // two farms an hour apart, 10,000 each
-  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 32000);     // the younger one carries on from its own age: 21,000 then its 2nd hour, 11,000
-  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 21000);      // a younger farm inside an older one adds nothing
-  assert.equal(A.standing([[3600, 7200, 0]]), 11000);                       // the 2nd hour of a farm put up at 0, counted from 3600
+  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 30000);     // the younger one carries on from its own age: 20,000 then its 2nd hour, 10,000
+  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 20000);      // a younger farm inside an older one adds nothing
+  assert.equal(A.standing([[3600, 7200, 0]]), 10000);                       // the 2nd hour of a farm put up at 0, counted from 3600
 });
 
