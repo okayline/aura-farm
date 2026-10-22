@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.49 (Oct 22 2026, HST)
+
+- A farm earns a flat 10,000 aura for every hour it stands. A farm that stands its full 24 hours earns 240,000. Removed: the 1,000 more each hour (11,000, 12,000 and so on) and the 516,000 a full day used to pay. Standing aura is worked out from the farms, so past days' aura counts at the flat rate too.
+
 ## v0.48 (Oct 21 2026, HST)
 
 - Sending a finished farm to the shared registry reads only that farm's ledger entry and the one before it. Removed: reading and re-checking the whole ledger after every farm, which got slower with every farm (the ledger itself is unchanged).

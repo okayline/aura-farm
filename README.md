@@ -6,7 +6,7 @@ An async aura battle. Put a style on the board, sealed, and farm aura while it s
 of their own, both are revealed at once, and the style that beats the other wins.
 
 - **Styles**: 💎 DRIP > 😏 RIZZ > 🗿 MOG > 💎 DRIP. The same style is a draw (MUTUAL MOG).
-- **AURA FARM**: pick a style and tap FARM AURA to put it on the board. While it stands untaken you farm 10,000 aura in the first hour and 1,000 more each hour after (up to 3
+- **AURA FARM**: pick a style and tap FARM AURA to put it on the board. While it stands untaken you farm 10,000 aura every hour (up to 3
   farms up at once, and FARM AURA is greyed out while you have 3; each stays up 24 hours, then expires: "Your time is up").
 - **Aura**: win +100,000 (AURA FARMED), lose -100,000 (COOKED), a draw changes nothing. The 100,000 goes up 10,000 for each whole hour the farm stood before it was taken (220,000 at 12 hours).
 - **Records**: once a farm is taken, both styles are public. The Farm tab shows each poster's latest 10 styles, so the
