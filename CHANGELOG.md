@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.50 (Oct 22 2026, HST)
+
+- The Farm shows one row per player, with how many farms they have up. FLEX on it takes their oldest farm; once that one is taken, the row moves on to their next. Removed: a separate row for each farm, so a player with 3 farms up was listed 3 times.
+
 ## v0.49 (Oct 22 2026, HST)
 
 - A farm earns a flat 10,000 aura for every hour it stands. A farm that stands its full 24 hours earns 240,000. Removed: the 1,000 more each hour (11,000, 12,000 and so on) and the 516,000 a full day used to pay. Standing aura is worked out from the farms, so past days' aura counts at the flat rate too.

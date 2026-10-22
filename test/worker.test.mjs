@@ -190,13 +190,15 @@ test("at most 3 farms up at once; each stays up 24 hours, across midnight, then 
   const { call, tick } = setup();   // T0 is 08:00 UTC on Jan 1
   for (let i = 0; i < 3; i++) await call("ann", "POST", "/api/farm", { style: "DRM"[i] });
   assert.equal((await call("ann", "POST", "/api/farm", { style: "D" })).status, 400);
-  const open = (await call("bo", "GET", "/api/board")).farms;
-  assert.equal(open.length, 3);
+  const board = (await call("bo", "GET", "/api/board")).farms;
+  assert.deepEqual(board.map((r) => r.count), [3], "one row for ann, with her 3 farms");
+  const open = (await call("ann", "GET", "/api/today")).farms.map((f) => ({ id: f.id })).reverse();   // oldest first
+  assert.equal(board[0].id, open[0].id, "her row is her oldest farm");
   for (let i = 0; i < 3; i++) await call("bo", "POST", "/api/farm", { style: "D" });   // bo's own three farms earn three FLEXes
   const others = async () => (await call("bo", "GET", "/api/board")).farms.filter((x) => !x.mine);
   const d0 = (await call("bo", "POST", "/api/take", { id: open[0].id, style: "D" })).result.deltas[0];
   tick(16 * 3600 + 1);     // 00:00:01 on Jan 2: past midnight UTC, the other two are still up
-  assert.equal((await others()).length, 2);
+  assert.deepEqual((await others()).map((r) => [r.id, r.count]), [[open[1].id, 2]], "still one row, now the next oldest");
   const d1 = (await call("bo", "POST", "/api/take", { id: open[1].id, style: "D" })).result.deltas[0];
   tick(8 * 3600);          // 08:00:01 on Jan 2: 24 hours since ann posted
   assert.equal((await others()).length, 0);

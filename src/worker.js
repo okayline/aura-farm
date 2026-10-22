@@ -11,7 +11,7 @@
 // API (all JSON):
 //   GET  /api/today                    the day, your name, aura today, your farms
 //   POST /api/farm  {style}            put a farm on the board with a sealed style (at most 3 up at once, 24 hours each)
-//   GET  /api/board                    the open farms (who posted and their record, never the style)
+//   GET  /api/board                    one row per player with farms up: their oldest farm, how many, their record (never a style)
 //   GET  /api/farm?id=                 one farm, as you are allowed to see it
 //   POST /api/take  {id, style}        take a farm with your style: both are revealed and sealed on the ledger at once
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
@@ -348,8 +348,13 @@ async function board(req, env) {
      WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
   const results = list.results, auras = aurasFrom(rows.results, day);
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
-  const out = results.map((r) => ({ id: r.id, name: r.name, pic: r.pic ?? null, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
-  return json({ day, farms: out });
+  // one row per player (v0.50): their oldest open farm, which FLEX takes, and how many they have up
+  const rowOf = new Map();
+  for (const r of results) {
+    if (rowOf.has(r.c_id)) { rowOf.get(r.c_id).count++; continue; }
+    rowOf.set(r.c_id, { id: r.id, name: r.name, pic: r.pic ?? null, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, count: 1, mine: !!player && r.c_id === player.id });   // up: seconds it has stood, so the page's own clock doesn't matter
+  }
+  return json({ day, farms: [...rowOf.values()] });
 }
 
 async function farmOf(req, env, url) {
