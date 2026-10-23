@@ -1,5 +1,14 @@
 # Working notes for aura-farm
 
+## Rules for every repo
+
+- **Push only when the user says to.** Build and commit locally as asked.
+- **Ask before adding anything that wasn't asked for** (a button, a screen, a message, a page, a feature), even a small one. The owner would rather be asked than remove it later.
+- **Keep testing quick: 2-3 mins at most. Don't test for edge cases.**
+- **No new dependencies** without asking.
+- Times in changelogs are Hawaii time (HST).
+
+
 AURA FARMING SIMULATOR: NO CAP BATTLE EDITION 2027. Design doc: the Claude Doc "AURA FARMING SIMULATOR: NO CAP BATTLE EDITION 2027" (https://claude.ai/artifact/9CGedPpAUHQ6wAD9cxGRfg).
 
 - **Push only when the user says to.** Once the Worker is connected to this repo, a push is a release.
