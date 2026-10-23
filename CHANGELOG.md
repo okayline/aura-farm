@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.53 (Oct 23 2026, HST)
+
+- Each farm you have up lets you FLEX once every 30 minutes: with 1 farm up that is 1 FLEX per 30 minutes, with 3 farms up it is 3. Too soon, and FLEX says how many minutes until the next. Removed: the one-hour wait between FLEXes (v0.46).
+
+## v0.52 (Oct 23 2026, HST)
+
+- On a finished farm's results screen, once the reveal is over, tapping anywhere on the card goes back, the same as the back link. Removed: nothing (the back link stays, and a tap during the reveal still does nothing).
+
+## v0.51 (Oct 23 2026, HST)
+
+- The Farm shows one row for each farm again, so a player with 3 farms up is listed 3 times, and FLEX on a row takes that farm. Removed: the one row per player and its "N farms up" line (v0.50).
+
 ## v0.50 (Oct 22 2026, HST)
 
 - The Farm shows one row per player, with how many farms they have up. FLEX on it takes their oldest farm; once that one is taken, the row moves on to their next. Removed: a separate row for each farm, so a player with 3 farms up was listed 3 times.

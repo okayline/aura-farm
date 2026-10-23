@@ -191,14 +191,13 @@ test("at most 3 farms up at once; each stays up 24 hours, across midnight, then 
   for (let i = 0; i < 3; i++) await call("ann", "POST", "/api/farm", { style: "DRM"[i] });
   assert.equal((await call("ann", "POST", "/api/farm", { style: "D" })).status, 400);
   const board = (await call("bo", "GET", "/api/board")).farms;
-  assert.deepEqual(board.map((r) => r.count), [3], "one row for ann, with her 3 farms");
   const open = (await call("ann", "GET", "/api/today")).farms.map((f) => ({ id: f.id })).reverse();   // oldest first
-  assert.equal(board[0].id, open[0].id, "her row is her oldest farm");
+  assert.deepEqual(board.map((r) => r.id), open.map((f) => f.id), "ann's 3 farms are 3 rows, oldest first");
   for (let i = 0; i < 3; i++) await call("bo", "POST", "/api/farm", { style: "D" });   // bo's own three farms earn three FLEXes
   const others = async () => (await call("bo", "GET", "/api/board")).farms.filter((x) => !x.mine);
   const d0 = (await call("bo", "POST", "/api/take", { id: open[0].id, style: "D" })).result.deltas[0];
   tick(16 * 3600 + 1);     // 00:00:01 on Jan 2: past midnight UTC, the other two are still up
-  assert.deepEqual((await others()).map((r) => [r.id, r.count]), [[open[1].id, 2]], "still one row, now the next oldest");
+  assert.deepEqual((await others()).map((r) => r.id), [open[1].id, open[2].id], "the two farms still up are two rows");
   const d1 = (await call("bo", "POST", "/api/take", { id: open[1].id, style: "D" })).result.deltas[0];
   tick(8 * 3600);          // 08:00:01 on Jan 2: 24 hours since ann posted
   assert.equal((await others()).length, 0);
@@ -321,7 +320,7 @@ test("only 3 new guests an hour from one address: the 4th is refused, and the ne
   assert.ok((await call("d", "POST", "/api/farm", { style: "D" })).id);
 });
 
-test("each farm you have up lets you FLEX once an hour: no farm, no FLEX; N farms up, N an hour; the wait is told", async () => {
+test("each farm you have up lets you FLEX once every 30 minutes: no farm, no FLEX; N farms up, N per 30 minutes; the wait is told", async () => {
   const { env, call, tick } = setup();
   const a = (await call("a", "POST", "/api/farm", { style: "D" })).id, b = (await call("a", "POST", "/api/farm", { style: "D" })).id;
   const c = (await call("a", "POST", "/api/farm", { style: "D" })).id, d = (await call("b", "POST", "/api/farm", { style: "D" })).id;
@@ -330,16 +329,16 @@ test("each farm you have up lets you FLEX once an hour: no farm, no FLEX; N farm
   assert.equal(r0.status, 429);
   assert.match(r0.error, /Put a farm up to FLEX/);
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 2, "refusing x made no player");
-  assert.ok((await call("x", "POST", "/api/farm", { style: "D" })).id);   // 1 farm up: 1 FLEX an hour
+  assert.ok((await call("x", "POST", "/api/farm", { style: "D" })).id);   // 1 farm up: 1 FLEX per 30 minutes
   assert.equal((await take(a)).status, "done");
   tick(600);
   const r1 = await take(b);
   assert.equal(r1.status, 429);
-  assert.match(r1.error, /once an hour\. Next one in 50 min/);    // taken at T0, now T0+600 s: 3600 - 600 = 50 min
-  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);   // 2 farms up: 2 FLEXes in the hour
+  assert.match(r1.error, /once every 30 minutes\. Next one in 20 min/);    // taken at T0, now T0+600 s: 1800 - 600 = 1200 s = 20 min
+  assert.ok((await call("x", "POST", "/api/farm", { style: "R" })).id);   // 2 farms up: 2 FLEXes in 30 minutes
   assert.equal((await take(b)).status, "done");
-  assert.equal((await take(c)).status, 429);                  // 2 FLEXes in the last hour, 2 farms up
-  tick(3600 - 600 + 1);                                       // the first FLEX is now over an hour old: one is free again
+  assert.equal((await take(c)).status, 429);                  // 2 FLEXes in the last 30 minutes, 2 farms up
+  tick(1800 - 600 + 1);                                       // the first FLEX is now over 30 minutes old: one is free again
   assert.equal((await take(c)).status, "done");
   assert.equal((await take(d)).status, 429);
 });

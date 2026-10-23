@@ -117,7 +117,7 @@ function farmsTab() {
 function boardTab(b) {
   const rows = (b?.farms || []).map((c) => `
     <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
-      ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today · ${c.count} ${c.count === 1 ? "farm" : "farms"} up${c.mine ? " · yours" : ""}</span><br>
+      ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${num(c.aura)} aura today${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
       <span style="text-align:right"><span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
@@ -394,14 +394,18 @@ function syncAddress() {
   if (location.search !== want) history.replaceState(null, "", location.pathname + want);
 }
 
+// back from a farm we stepped into goes back a history step (the same as the browser's back); from a ?farm=N link, home
+const goBack = () => (history.state?.farm ? history.back() : showTab(tab));
+
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-tab],[data-act]");
+  // the finished results card: once the reveal is over, a tap anywhere on it goes back
+  if (!t && e.target.closest(".duel") && !revealing()) return goBack();
   if (!t) return;
   if (t.dataset.tab) return showTab(t.dataset.tab);
   const [act, arg] = t.dataset.act.split(":");
   if (act === "pick") { pick = pick === arg ? null : arg; return draw(); }
-  // back from a farm we stepped into goes back a history step (the same as the browser's back); from a ?farm=N link, home
-  if (act === "back") return history.state?.farm ? history.back() : showTab(tab);
+  if (act === "back") return goBack();
   if (act === "open" || act === "look") return run(() => openFarm(Number(arg)));
   if (act === "farm") return run(async () => { await api("POST", "farm", { style: pick }); pick = null; refreshMe(); });
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexed = true; pick = null; refreshMe(); });
