@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.59 (Oct 24 2026, HST)
+
+- Home screen: the "beats (emoji)" line under DRIP, RIZZ and MOG is gone (it stays on the FLEX screen). The line under your Aura Farm now reads "Flex on someone currently Farming to start an AURA Battle!". On a finished farm, a loss ("COOKED. -280,000 aura") is red and a win ("AURA FARMED. +100,000 aura") is blue, the DRIP blue. Removed: the home screen's "beats" line; the pink win color and the pale purple loss color (a draw keeps the pale purple).
+
 ## v0.58 (Oct 24 2026, HST)
 
 - The "vs." between the face-down card and your styles is now "VS." in capitals. Removed: the lowercase "vs." (v0.57).

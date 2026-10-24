@@ -72,8 +72,8 @@ function style(s, { tap = false, on = false, off = false } = {}) {
     <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span></${tag}>`;
 }
 // the style cards to pick from, each with what it beats written under it ("beats 😏"), read off the rules
-const styles = (off = false) => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s && !off, off })).join("")}</div>
-  <div class="cards beats">${A.STYLES.map((s) => `<span class="small">beats ${A.EMOJI[A.BEATS[s]]}</span>`).join("")}</div>`;
+const styles = (off = false, beats = true) => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s && !off, off })).join("")}</div>
+  ${beats ? `<div class="cards beats">${A.STYLES.map((s) => `<span class="small">beats ${A.EMOJI[A.BEATS[s]]}</span>`).join("")}</div>` : ""}`;
 const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
 
 // the emoji for a style or a card code from a duel before v0.6 ("D3" is DRIP, "X1" the CAP; older codes show as text)
@@ -110,8 +110,8 @@ function farmsTab() {
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+10,000 Aura every hour while your Farm is up</p>
-      <p class="small">Flex on someone Farming to AURA Battle!</p></div>
-    ${styles(full)}
+      <p class="small">Flex on someone currently Farming to start an AURA Battle!</p></div>
+    ${styles(full, false)}
     <button class="go" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
@@ -239,7 +239,7 @@ function farmScreen(v) {
   const sentences = (t) => t.split(/(?<=\.) /), bit = (t, cls = "") => `<span class="bit ${cls}">${esc(t)}</span>`;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="duel">${face(esc(v.names[other] || "?"), other, 18)}
-      <div class="cap" style="color:${d > 0 ? "#ff6fcf" : "#d6cfee"}">${v.line ? `<div class="why">${sentences(v.line).map((t) => bit(t)).join(" ")}</div>` : ""}${sentences(v.captions[side]).map((t, i, all) => bit(t, i === all.length - 1 && all.length > 1 ? "amt" : "")).join(" ")}</div>
+      <div class="cap" style="color:${d > 0 ? "var(--D)" : d < 0 ? "#ff4d5e" : "#d6cfee"}">${v.line ? `<div class="why">${sentences(v.line).map((t) => bit(t)).join(" ")}</div>` : ""}${sentences(v.captions[side]).map((t, i, all) => bit(t, i === all.length - 1 && all.length > 1 ? "amt" : "")).join(" ")}</div>
       ${face(v.side >= 0 ? "you" : esc(v.names[side] || "?"), side, d > 0 ? 30 : 12)}</div>${pastDetails(v, playing)}${seal(v)}${back}`;
 }
 
