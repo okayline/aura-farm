@@ -48,6 +48,7 @@
           display: flex; flex-direction: column; justify-content: space-between; text-align: left; color: var(--ink); }
   .card .r { font-family: var(--meme); letter-spacing: .5px; font-size: 16px; color: var(--c); text-shadow: 0 0 8px var(--c); }
   .card .e { font-size: 40px; text-align: center; padding-bottom: 20px; }   /* an empty line under the emoji */
+  .card:disabled { opacity: .4; }   /* all farms up: the styles can't be picked */
   .card.on { outline: 3px solid var(--ink); outline-offset: 2px; box-shadow: 0 0 26px var(--c); }
   .duel { display: flex; flex-direction: column; align-items: center; gap: 18px; margin: 12px 0; }
   .face { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }

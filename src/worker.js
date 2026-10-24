@@ -304,7 +304,7 @@ async function farmView(env, d, player) {
 async function today(req, env) {
   const day = utcDay();
   const player = await findPlayer(req, env);
-  const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null, pic: player?.pic ?? null };
+  const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null, pic: player?.pic ?? null, id: player?.id ?? null };
   if (!player) return json(out);
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
     `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, o.name AS opponent FROM farms d

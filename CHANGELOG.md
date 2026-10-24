@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.58 (Oct 24 2026, HST)
+
+- The "vs." between the face-down card and your styles is now "VS." in capitals. Removed: the lowercase "vs." (v0.57).
+
+## v0.57 (Oct 24 2026, HST)
+
+- On a farm you can FLEX, a centered "vs." now sits between the face-down "?" card and your DRIP, RIZZ and MOG cards, with a blank line above and below it. Removed: nothing.
+
+## v0.56 (Oct 24 2026, HST)
+
+- On a farm you can FLEX, a face-down "?" card now sits between the farmer's name and your DRIP, RIZZ and MOG cards, the same face-down card the battle shows before it flips, so you can see there is a hidden style to beat. Removed: nothing.
+
+## v0.55 (Oct 24 2026, HST)
+
+- On the Legends of AURA ledger, a farm you were in shows your side: COOKED. and the aura you lost if you lost, AURA FARMED. and what you won if you won. Farms you weren't in still show the winner's side. The page now gets your player id from the server (the ledger already holds player ids) to tell which farms are yours. The second line under your Aura Farm now reads "Flex on someone Farming to AURA Battle!". Removed: every ledger entry reading AURA FARMED. whoever lost; the v0.54 wording of that line.
+
+## v0.54 (Oct 24 2026, HST)
+
+- On the main screen, when all your farms are up, DRIP, RIZZ and MOG are dimmed and can't be tapped. Under "+10,000 Aura every hour while your Farm is up" there is a second line: "FLEX on someone who is Farming to battle them". Removed: nothing (the cards could be picked even when no farm could be put up, and still can be on the FLEX screen).
+
 ## v0.53 (Oct 23 2026, HST)
 
 - Each farm you have up lets you FLEX once every 30 minutes: with 1 farm up that is 1 FLEX per 30 minutes, with 3 farms up it is 3. Too soon, and FLEX says how many minutes until the next. Removed: the one-hour wait between FLEXes (v0.46).

@@ -66,13 +66,13 @@ setInterval(() => {
 
 // A style: its name and a big emoji. A button to tap when `tap` is set (`on` marks the one picked),
 // otherwise just shown.
-function style(s, { tap = false, on = false } = {}) {
-  const tag = tap ? "button" : "div", attrs = tap ? ` data-act="pick:${s}" type="button"` : "";
+function style(s, { tap = false, on = false, off = false } = {}) {
+  const tag = tap ? "button" : "div", attrs = tap ? ` data-act="pick:${s}" type="button"${off ? " disabled" : ""}` : "";
   return `<${tag} class="card${on ? " on" : ""}" style="--c: ${COLOR[s]}"${attrs} aria-label="${A.STYLE[s]}">
     <span class="r">${A.STYLE[s]}</span><span class="e">${A.EMOJI[s]}</span></${tag}>`;
 }
 // the style cards to pick from, each with what it beats written under it ("beats 😏"), read off the rules
-const styles = () => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s })).join("")}</div>
+const styles = (off = false) => `<div class="cards">${A.STYLES.map((s) => style(s, { tap: true, on: pick === s && !off, off })).join("")}</div>
   <div class="cards beats">${A.STYLES.map((s) => `<span class="small">beats ${A.EMOJI[A.BEATS[s]]}</span>`).join("")}</div>`;
 const shown = (s) => `<div class="cards">${style(s, { on: true })}</div>`;
 
@@ -101,6 +101,7 @@ function header() {
 }
 
 function farmsTab() {
+  const full = (me?.farms || []).filter((f) => f.status === "open").length >= A.MAX_OPEN;   // all farms up: no more can be put up
   const list = (me?.farms || []).map((d) => `
     <button class="item home" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
@@ -108,9 +109,10 @@ function farmsTab() {
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
-      <p class="small">+10,000 Aura every hour while your Farm is up</p></div>
-    ${styles()}
-    <button class="go" data-act="farm" type="button" ${pick && (me?.farms || []).filter((f) => f.status === "open").length < A.MAX_OPEN ? "" : "disabled"}>🌾 FARM AURA</button>
+      <p class="small">+10,000 Aura every hour while your Farm is up</p>
+      <p class="small">Flex on someone Farming to AURA Battle!</p></div>
+    ${styles(full)}
+    <button class="go" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
 
@@ -134,8 +136,10 @@ function boardOfDay(lb) {
 function ledgerTab(l) {
   const rows = (l?.entries || []).map((e) => {
     const r = e.record;
+    // your own farms read from your side (COOKED. -100,000 aura when you lost); farms you weren't in, from the winner's, as on the farm's page
+    const mine = me?.id != null ? (r.players || []).indexOf(me.id) : -1, shownSide = mine >= 0 ? mine : r.winner ?? 0;
     const [title, line] = r.styles
-      ? [`FARM #${r.farm} · ${esc(r.caption[r.winner ?? 0])}`, r.styles.map(emo).join(" vs ")]
+      ? [`FARM #${r.farm} · ${esc(r.caption[shownSide])}`, r.styles.map(emo).join(" vs ")]
       // a card duel from before v0.6, as it was sealed
       : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
     // tap an entry to open its farm, which is the entry's page
@@ -212,6 +216,8 @@ function farmScreen(v) {
   if (v.status === "open" && v.side !== 0) {
     return `<div class="row">${halo(pic(v.names[0], v.pics?.[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
+        <div class="duel"><div class="face"><div class="slot"><div class="card back">?</div><div class="card" style="visibility:hidden"></div></div></div></div>
+        <div style="text-align:center;margin:1em 0">VS.</div>
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
   }
