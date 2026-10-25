@@ -61,11 +61,11 @@ const flexInfo = () => {
   return { up: f.up, ...A.flexState(f.up, f.ago.map((a) => me._t / 1000 - a), Date.now() / 1000) };
 };
 const flexReady = () => { const f = flexInfo(); return !f || f.ready > 0; };
-const flexText = () => {
+const flexText = () => {   // what follows the 😤 on the button
   const f = flexInfo();
-  if (!f) return "";
-  if (!f.up) return " · put a farm up";
-  return f.ready ? ` · ${f.ready} ready` : ` · next in ${Math.ceil(f.wait / 60)}m`;   // whole minutes, rounded up like the Worker's "Next one in N min" (the page's countdowns tick every 20 seconds)
+  if (!f) return "FLEX";
+  if (!f.up) return "NO FLEX - put a farm up";
+  return f.ready ? `FLEX · ${f.ready} ready` : `NO FLEX · next in ${Math.ceil(f.wait / 60)}m`;   // whole minutes, rounded up like the Worker's "Next one in N min" (the page's countdowns tick every 20 seconds)
 };
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
 const upSpan = (end) => `<span data-since="${end - A.LIFE * 1000}">${clock(Date.now() - (end - A.LIFE * 1000))}</span>`;
@@ -248,7 +248,7 @@ function farmScreen(v) {
         <div class="duel"><div class="face"><div class="slot"><div class="card back">?</div><div class="card" style="visibility:hidden"></div></div></div></div>
         <div class="big glow stakeline" style="--n:${14 + stakeWord.length}"><b>${onTheLine(v)}</b> ${stakeWord}</div>
         ${styles()}
-      <button class="go" data-act="take" type="button" ${pick && flexReady() ? "" : "disabled"}>😤 FLEX<span data-flex>${flexText()}</span></button>${takeInfo(v)}${back}`;
+      <button class="go" data-act="take" type="button" ${pick && flexReady() ? "" : "disabled"}>😤 <span data-flex>${flexText()}</span></button>${takeInfo(v)}${back}`;
   }
   if (v.status === "open" && v.left != null && v.mine) return openFarmPage(v, back);
   if (v.status === "open" || v.status === "expired") {

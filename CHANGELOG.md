@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.89 (Oct 24 2026, HST)
+
+- The FLEX button says "😤 NO FLEX · next in 20m" when none is ready, and "😤 NO FLEX - put a farm up" when you have no farm up. With FLEXes ready it still says "😤 FLEX · 2 ready". Removed: the old "FLEX · next in 20m" and "FLEX · put a farm up" wording.
+
 ## v0.88 (Oct 24 2026, HST)
 
 - The FLEX button now shows how many FLEXes you have: "😤 FLEX · 2 ready". When you have none ready it is greyed out and says when the next one comes back ("😤 FLEX · next in 20m"), and with no farm up it says "😤 FLEX · put a farm up". A greyed button can't be tapped, so you no longer get the "Each farm you have up lets you FLEX once every 30 minutes" message from it. The rule itself is the same (each farm up lets you FLEX once in any 30 minutes). Removed: nothing; the error message still exists on the server but this button no longer reaches it.
