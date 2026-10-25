@@ -226,8 +226,7 @@ function farmScreen(v) {
     return `<div class="row">${halo(pic(v.names[0], v.pics?.[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         <div class="duel"><div class="face"><div class="slot"><div class="card back">?</div><div class="card" style="visibility:hidden"></div></div></div></div>
-        <div class="big glow" style="text-align:center;font-size:26px;margin:20px 0 0">${onTheLine(v)} on the line!</div>
-        <div style="text-align:center;margin:1em 0">VS.</div>
+        <div class="big glow stakeline">${onTheLine(v)} on the line!</div>
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
   }
