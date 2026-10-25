@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.87 (Oct 24 2026, HST)
+
+- In the Results panel of a finished farm, three changes: a new "At stake" line (the amount that was riding when it was taken, like "+100,000 AURA", shown even for a tie), "Stood for" now shows seconds ("6m 57s"), and a new "Time left when taken" line ("23h 53m 3s left"). Removed: the seconds-less "Stood for" ("6m").
+
 ## v0.86 (Oct 24 2026, HST)
 
 - In the Details panel under FLEX, the "Goes up" text is now purple, like the numbers around it.

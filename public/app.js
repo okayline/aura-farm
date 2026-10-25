@@ -33,6 +33,8 @@ async function run(fn) {
 // A farm sends the seconds it has left; the page turns that into a moment on its own clock when the answer arrives (_t),
 // writes it into the page, and a timer redraws just those words, so nothing else on the screen is touched.
 const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : m >= 1 ? `${m}m` : "under a minute"; };
+// the same with seconds ("6m 57s", "16h 50m 9s"), for the finished farm's Results
+const clockSec = (ms) => { const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return h ? `${h}h ${m}m ${sec}s` : m ? `${m}m ${sec}s` : `${sec}s`; };
 // whole hours a farm has stood since it went up (ms)
 const hoursUp = (since) => Math.floor(Math.min(Math.max(Date.now() - since, 0), A.LIFE * 1000) / 3600000);
 // what a farm has earned by standing so far: 10,000 for each whole hour (this farm on its own; farms up together earn from the oldest)
@@ -187,7 +189,8 @@ function pastDetails(v, playing) {
   const proof = rec && v.styles ? [0, 1].map((i) => `<p class="small seal">${esc(v.names[i] || "?")} sealed ${esc(v.commits[i])}<br>then showed ${esc(v.styles[i])}|${esc(rec.salts?.[i] ?? "")}</p>`).join("") : "";
   return rolled("past", "Results", `
     ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]))}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]))}
-    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clock((v.takenAt - v.postedAt) * 1000)) : ""}
+    ${v.postedAt && v.takenAt ? kv("At stake", num(A.stake(Math.floor((v.takenAt - v.postedAt) / 3600))) + " AURA") : ""}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clockSec((v.takenAt - v.postedAt) * 1000)) : ""}${v.deadline && v.takenAt ? kv("Time left when taken", clockSec((v.deadline - v.takenAt) * 1000) + " left") : ""}
     ${rec ? kv("Rules", "version " + rec.rules) : ""}
     ${proof}`, `detail${playing ? " wait" : ""}`, "margin-top:30px");
 }
