@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.65 (Oct 24 2026, HST)
+
+- The second line under your AURA FARM on Home now reads "Flex on someone's Farm to start an AURA Battle!". Removed: "Flex on someone currently Farming to start an AURA Battle!" (v0.59).
+
 ## v0.64 (Oct 24 2026, HST)
 
 - On your Home screen, each farm you have up says how much it has farmed so far, above its "+10,000 an hour" line: "+130,000 AURA farmed so far" for a farm that has stood 13 hours. It counts up as the hours pass, the same number as "Farmed so far" on that farm's own page (10,000 for each whole hour, for that farm on its own). Removed: nothing.

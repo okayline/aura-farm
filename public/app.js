@@ -110,7 +110,7 @@ function farmsTab() {
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
       <p class="small">+10,000 AURA every hour while your Farm is up</p>
-      <p class="small">Flex on someone currently Farming to start an AURA Battle!</p></div>
+      <p class="small">Flex on someone's Farm to start an AURA Battle!</p></div>
     ${styles(full, false)}
     <button class="go" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
