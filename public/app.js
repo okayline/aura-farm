@@ -160,9 +160,9 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
 const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-// the ledger panels' date and time, in the viewer's own time zone: "Oct 24, 2026 - 17:14:09" (24-hour, with seconds)
+// the ledger panels' time and date, in the viewer's own time zone: "17:14:09 on Oct 24, 2026" (24-hour, with seconds)
 const atSec = (sec) => { const d = new Date(sec * 1000);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " - " + d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }); };
+  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
 const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
 // A panel that starts rolled up and opens when tapped. It stays as you left it while the same screen redraws, and starts rolled up again on the next one.
 const openBoxes = new Set();

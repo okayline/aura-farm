@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.73 (Oct 24 2026, HST)
+
+- On the About tab's ledger, each panel's time and date now read "05:10:43 on Oct 21, 2026 - (the farm's line)": the time first (24-hour, with seconds), then the date with the year. Removed: the old order, "Oct 21, 2026 - 05:10:43".
+
 ## v0.72 (Oct 24 2026, HST)
 
 - On your Home screen, each farm card no longer says "+10,000 an hour". It reads "+140,000 AURA farmed so far" and, under it, the time left ("9h 46m left"). Removed: "+10,000 an hour ·" from that line (the farm's own page still says what it earns).
