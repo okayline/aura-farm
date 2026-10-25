@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.90 (Oct 24 2026, HST)
+
+- Every battle now moves five times as much AURA: the winner gets, and the loser loses, 500,000 (was 100,000) plus 50,000 (was 10,000) for each whole hour the farm stood, so a farm that stood 12 hours moves 1,100,000 and one that stood 23 hours moves 1,650,000. Farming earnings are unchanged (10,000 an hour). Farms taken before this change keep the amounts they were sealed with, and new entries are sealed as rules version 6. Removed: the old 100,000 and 10,000 amounts.
+
 ## v0.89 (Oct 24 2026, HST)
 
 - The FLEX button says "😤 NO FLEX · next in 20m" when none is ready, and "😤 NO FLEX - put a farm up" when you have no farm up. With FLEXes ready it still says "😤 FLEX · 2 ready". Removed: the old "FLEX · next in 20m" and "FLEX · put a farm up" wording.

@@ -6,18 +6,19 @@
 // and the style that beats the other wins. The same style is a draw. Once revealed, every style a player has played
 // is public, so a player's record is the thing to read.
 
-// The rules version, written on every ledger record. 5 = v0.38 (the win/lose amount and the hourly rate grow with the
+// The rules version, written on every ledger record. 6 = v0.90 (every win/lose amount five times bigger: 500,000 and 50,000 an hour),
+// 5 = v0.38 (the win/lose amount and the hourly rate grow with the
 // hours a farm stood), 4 = v0.6 (one style each, a flat 100,000). Records with 3 (v0.5: lineups of 3 of
 // 5 cards, 19 cards), 2 (v0.4) or none (v0.1-v0.3) are from the card game: see git history to re-deal them.
-export const RULES = 5;
+export const RULES = 6;
 
 export const STYLE = { D: "DRIP", R: "RIZZ", M: "MOG" };
 export const EMOJI = { D: "💎", R: "😏", M: "🗿" };
 export const BEATS = { D: "R", R: "M", M: "D" };
 export const STYLES = Object.keys(STYLE);
 
-export const STAKE = 100000;          // what a farm moves the moment it goes up
-export const STAKE_PER_HOUR = 10000;  // and this much more for each whole hour it stood before it was taken
+export const STAKE = 500000;          // what a farm moves the moment it goes up
+export const STAKE_PER_HOUR = 50000;  // and this much more for each whole hour it stood before it was taken
 export const STAND_PER_HOUR = 10000;  // what a farm earns for each whole hour it stands
 export const MAX_OPEN = 3;      // farms one player can have up at once
 export const FLEX_PER_FARM = 1;  // each farm you have up lets you FLEX this many times in any FLEX_WINDOW
@@ -31,7 +32,7 @@ export const isStyle = (s) => STYLES.includes(s);
 export const PICS = ["😎", "🤠", "🥸", "😈", "🤡", "👻", "🧌", "🦝", "🐸", "🐢", "🦊", "🐙", "🤖", "👽", "🧙", "🥷", "🧛", "🧑‍🚀", "🤓", "😼", "🦄", "🐲", "🦖", "🧃"];
 export const isPic = (p) => PICS.includes(p);
 
-// What a farm moves after it has stood this many whole hours: 100,000, then 10,000 more for every hour.
+// What a farm moves after it has stood this many whole hours: 500,000, then 50,000 more for every hour (100,000 and 10,000 before v0.90).
 export const stake = (hours) => STAKE + STAKE_PER_HOUR * hours;
 // What a farm has earned by standing this many whole hours: a flat 10,000 for each.
 export const earned = (hours) => STAND_PER_HOUR * hours;

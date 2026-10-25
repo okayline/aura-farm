@@ -3,13 +3,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as A from "../public/engine/aura.js";
 
-test("DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP: the winner gets 100,000, the loser loses it", () => {
-  assert.deepEqual(A.farm("D", "R"), { winner: 0, how: "win", deltas: [100000, -100000] });
-  assert.deepEqual(A.farm("R", "M"), { winner: 0, how: "win", deltas: [100000, -100000] });
-  assert.deepEqual(A.farm("M", "D"), { winner: 0, how: "win", deltas: [100000, -100000] });
-  assert.deepEqual(A.farm("R", "D"), { winner: 1, how: "win", deltas: [-100000, 100000] });
-  assert.deepEqual(A.farm("D", "M"), { winner: 1, how: "win", deltas: [-100000, 100000] });
-  assert.deepEqual(A.farm("M", "R"), { winner: 1, how: "win", deltas: [-100000, 100000] });
+test("DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP: the winner gets 500,000, the loser loses it", () => {
+  assert.deepEqual(A.farm("D", "R"), { winner: 0, how: "win", deltas: [500000, -500000] });
+  assert.deepEqual(A.farm("R", "M"), { winner: 0, how: "win", deltas: [500000, -500000] });
+  assert.deepEqual(A.farm("M", "D"), { winner: 0, how: "win", deltas: [500000, -500000] });
+  assert.deepEqual(A.farm("R", "D"), { winner: 1, how: "win", deltas: [-500000, 500000] });
+  assert.deepEqual(A.farm("D", "M"), { winner: 1, how: "win", deltas: [-500000, 500000] });
+  assert.deepEqual(A.farm("M", "R"), { winner: 1, how: "win", deltas: [-500000, 500000] });
 });
 
 test("the same style is a MUTUAL MOG: nothing changes", () => {
@@ -19,11 +19,11 @@ test("the same style is a MUTUAL MOG: nothing changes", () => {
 
 test("captions: a win is AURA FARMED, a loss is COOKED, a draw is MUTUAL MOG", () => {
   const r = A.farm("D", "M");     // MOG beats DRIP: the taker wins
-  assert.equal(A.caption(r, 0), "COOKED. -100,000 AURA");
-  assert.equal(A.caption(r, 1), "AURA FARMED. +100,000 AURA");
+  assert.equal(A.caption(r, 0), "COOKED. -500,000 AURA");
+  assert.equal(A.caption(r, 1), "AURA FARMED. +500,000 AURA");
   const s = A.farm("D", "R");     // DRIP beats RIZZ: the poster wins
-  assert.equal(A.caption(s, 0), "AURA FARMED. +100,000 AURA");
-  assert.equal(A.caption(s, 1), "COOKED. -100,000 AURA");
+  assert.equal(A.caption(s, 0), "AURA FARMED. +500,000 AURA");
+  assert.equal(A.caption(s, 1), "COOKED. -500,000 AURA");
   assert.equal(A.caption(A.farm("M", "M"), 1), "MUTUAL MOG. +0 AURA");
 });
 
@@ -45,12 +45,12 @@ test("a record is a player's latest 10 styles, newest first", () => {
   assert.deepEqual(A.record([{ id: 3, style: "M" }, { id: 9, style: "D" }]), ["D", "M"]);
 });
 
-test("a farm moves 100,000 plus 10,000 for each whole hour it stood", () => {
-  assert.deepEqual(A.farm("D", "R", 1), { winner: 0, how: "win", deltas: [110000, -110000] });
-  assert.deepEqual(A.farm("D", "M", 12), { winner: 1, how: "win", deltas: [-220000, 220000] });
-  assert.deepEqual(A.farm("R", "D", 23), { winner: 1, how: "win", deltas: [-330000, 330000] });
+test("a farm moves 500,000 plus 50,000 for each whole hour it stood", () => {
+  assert.deepEqual(A.farm("D", "R", 1), { winner: 0, how: "win", deltas: [550000, -550000] });
+  assert.deepEqual(A.farm("D", "M", 12), { winner: 1, how: "win", deltas: [-1100000, 1100000] });
+  assert.deepEqual(A.farm("R", "D", 23), { winner: 1, how: "win", deltas: [-1650000, 1650000] });
   assert.deepEqual(A.farm("M", "M", 12), { winner: null, how: "tie", deltas: [0, 0] });
-  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +220,000 AURA");
+  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +1,100,000 AURA");
   assert.throws(() => A.farm("D", "R", 1.5));
   assert.throws(() => A.farm("D", "R", -1));
 });
