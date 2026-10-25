@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.71 (Oct 24 2026, HST)
+
+- On the About tab's ledger, there is a little more space between the lines of each panel (the title, the date and line, the styles, the hash). Removed: the tighter spacing.
+
 ## v0.70 (Oct 24 2026, HST)
 
 - On the About tab's ledger, the hash stays on one line and shows as much of it as fits, trailing off with "…" only when the screen is too narrow for all of it. Removed: the hash wrapping onto a second line (v0.68).
