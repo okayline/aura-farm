@@ -148,6 +148,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   const { entries } = await call("ann", "GET", "/api/ledger");
   assert.equal(entries.length, 1);
   const row = env.DB.raw.prepare("SELECT * FROM ledger").get();
+  assert.equal(entries[0].at, row.created_at, "each entry carries the second it was sealed");
   assert.equal(row.prev_hash, "0".repeat(64));
   assert.equal(row.hash, sha(row.prev_hash + "|" + row.record));
   assert.equal(row.farm_id, f.id);

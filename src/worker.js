@@ -440,7 +440,7 @@ async function ledger(req, env, url) {
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 30));
   const { results } = await env.DB.prepare(
     "SELECT id, farm_id, record, prev_hash, hash, created_at FROM ledger WHERE id < ? ORDER BY id DESC LIMIT ?").bind(before, limit).all();
-  return json({ entries: results.map((r) => ({ id: r.id, farm: r.farm_id, record: JSON.parse(r.record), prev: r.prev_hash, hash: r.hash })) });
+  return json({ entries: results.map((r) => ({ id: r.id, farm: r.farm_id, at: r.created_at, record: JSON.parse(r.record), prev: r.prev_hash, hash: r.hash })) });
 }
 
 

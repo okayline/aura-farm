@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.68 (Oct 24 2026, HST)
+
+- Each panel on the About tab's ledger shows when its farm was taken, above the line ("A RIZZY standoff."), in the same small text: 24-hour time with seconds, in your own time zone, like "Oct 24, 17:14:09". The panel shows the whole fingerprint (hash) instead of its first 16 characters and "…"; it wraps onto a second line. The ledger now sends each entry's sealing time. Removed: the cut-off hash ("371da1e438e41152…").
+
 ## v0.67 (Oct 24 2026, HST)
 
 - The About panel is one short paragraph in the game's voice: pick a style (💎 beats 😏 beats 🗿 beats 💎), FARM AURA puts yours on the board face down and earns +10,000 AURA an hour while nobody takes it, FLEX on someone's Farm when you have one up, the winner takes 100,000 AURA plus 10,000 for every hour that Farm stood and the loser gets COOKED, the same style is a draw, "Stand there. Look cool. Bluff." Removed: the five paragraphs from v0.66, which also said a Farm lasts up to 24 hours, 3 can be up at once, FLEX once every 30 minutes per Farm, and that battles are sealed in the ledger.
