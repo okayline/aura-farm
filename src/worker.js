@@ -16,6 +16,7 @@
 //   POST /api/take  {id, style}        take a farm with your style: both are revealed and sealed on the ledger at once
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
 //   POST /api/pic   {pic}              pick your profile pic, one of A.PICS (none picked: the page picks one from the name)
+//   GET  /api/player?id=               a player's page: lifetime aura, farms up, wins-losses-draws, latest styles (public)
 //   GET  /api/leaderboard?day=         a day's players by net aura
 //   GET  /api/ledger?before=&limit=    finished farms, newest first
 //   GET  /api/account                  your save codes, passkeys and devices
@@ -64,6 +65,7 @@ const ROUTES = {
   "POST /api/take": take,
   "POST /api/name": setName,
   "POST /api/pic": setPic,
+  "GET /api/player": playerPage,
   "GET /api/leaderboard": leaderboard,
   "GET /api/ledger": ledger,
   "GET /api/account": account,
@@ -353,8 +355,45 @@ async function board(req, env) {
      WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE).all();
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
   // one row per open farm (a player with 3 farms up has 3 rows)
-  const farms = results.map((r) => ({ id: r.id, name: r.name, pic: r.pic ?? null, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
+  const farms = results.map((r) => ({ id: r.id, name: r.name, pic: r.pic ?? null, record: records.get(r.c_id) ?? [], pid: r.c_id, postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
   return json({ day, farms });
+}
+
+// A player's page, open to anyone (logged in or not): what is already public about them, and their lifetime aura.
+// Lifetime aura = every day that has ended (saved in aura_days the first time anyone asks: a day that has ended never
+// changes) + today so far, worked out now, so it is current whenever the page loads. Only the days after the newest saved
+// one are worked out from farms.
+async function playerPage(req, env, url) {
+  const id = Number(url.searchParams.get("id"));
+  const who = Number.isInteger(id) && id > 0 ? await env.DB.prepare("SELECT id, name, pic FROM players WHERE id = ?").bind(id).first() : null;
+  if (!who) throw new Oops("No such player.", 404);
+  const t = now(), today = utcDay(t);
+  const { results: saved } = await env.DB.prepare("SELECT day, aura FROM aura_days WHERE player_id = ? ORDER BY day").bind(id).all();
+  const last = saved.length ? saved[saved.length - 1].day : "";
+  const mine = `SELECT ${AURA_COLS} FROM farms WHERE %c = ?1 AND day >= ?2 AND status IN ('open', 'done', 'expired')`;
+  const [farms, up, counts, rec] = await env.DB.batch([
+    env.DB.prepare(`${mine.replace("%c", "c_id")} UNION ALL ${mine.replace("%c", "t_id")}`).bind(id, last),
+    env.DB.prepare("SELECT id, posted_at FROM farms WHERE c_id = ? AND status = 'open' AND posted_at > ? ORDER BY posted_at, id").bind(id, t - A.LIFE),
+    env.DB.prepare(`SELECT SUM(c_delta > 0) AS w, SUM(c_delta < 0) AS l, SUM(c_delta = 0) AS d FROM farms WHERE c_id = ?1 AND status = 'done'
+                    UNION ALL SELECT SUM(t_delta > 0), SUM(t_delta < 0), SUM(t_delta = 0) FROM farms WHERE t_id = ?1 AND status = 'done'`).bind(id),
+    recordsStmt(env, [id]),
+  ]);
+  const rows = farms.results;
+  let lifetime = saved.reduce((sum, r) => sum + r.aura, 0);
+  const first = rows.reduce((m, r) => (r.posted_at != null && r.posted_at < m ? r.posted_at : m), Infinity);
+  const fresh = [];
+  for (let d = last ? utcDay(dayStart(last) + 86400) : first === Infinity ? today : utcDay(first); d < today; d = utcDay(dayStart(d) + 86400)) {
+    const m = aurasFrom(rows, d);
+    if (m.has(id)) { fresh.push([d, m.get(id)]); lifetime += m.get(id); }
+  }
+  if (fresh.length) await env.DB.batch(fresh.map(([d, a]) => env.DB.prepare("INSERT OR IGNORE INTO aura_days (player_id, day, aura) VALUES (?, ?, ?)").bind(id, d, a)));
+  const todayAura = aurasFrom(rows, today).get(id) || 0;
+  const n = (k) => counts.results.reduce((sum, r) => sum + (r[k] || 0), 0);
+  return json({
+    id, name: who.name, pic: who.pic ?? null, lifetime: lifetime + todayAura,
+    up: up.results.map((r) => ({ id: r.id, postedAt: r.posted_at, left: r.posted_at + A.LIFE - t })),
+    wins: n("w"), losses: n("l"), draws: n("d"), record: recordsFrom(rec.results).get(id) ?? [],
+  });
 }
 
 async function farmOf(req, env, url) {
@@ -436,7 +475,7 @@ async function leaderboard(req, env, url) {
   const top = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100);
   const { results: who } = await env.DB.prepare("SELECT id, name, pic FROM players WHERE id IN (SELECT value FROM json_each(?))").bind(JSON.stringify(top.map(([id]) => id))).all();
   const by = new Map(who.map((p) => [p.id, p]));
-  const rows = top.map(([id, aura]) => ({ name: by.get(id)?.name ?? null, pic: by.get(id)?.pic ?? null, aura }));
+  const rows = top.map(([id, aura]) => ({ id, name: by.get(id)?.name ?? null, pic: by.get(id)?.pic ?? null, aura }));
   if (day === utcDay()) leaderboardCache = { day, at: now(), rows };
   return json({ day, rows });
 }

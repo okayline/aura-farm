@@ -23,6 +23,10 @@ of their own, both are revealed at once, and the style that beats the other wins
   you can take has a Details panel under FLEX with what is public about it. A finished farm has a Results panel (who
   played what, the aura, when, and each side's fingerprint with the salt that opens it) and its whole ledger entry
   (record, prev, hash), with a link to its entry on The Registry.
+- **Player pages**: tap a name or pic on The Farm or Today to open that player's page (aura.88x31.app/?player=N, the back
+  button works), open to anyone, logged in or not. It shows their lifetime aura (every day that has ended, saved in
+  `aura_days` the first time anyone opens the page, plus today so far, worked out when the page loads), the farms they have
+  up, how many battles they won, lost and drew, and their latest 10 styles.
 - **Save codes and passkeys**: the shared Accounts service (dungeon-items `ACCOUNTS.md`, bound as `ACCOUNTS`). This game
   keeps its own players and cookie; a device loaded later gets its own token in `sessions`.
 

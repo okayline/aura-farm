@@ -81,7 +81,7 @@ setInterval(() => {
   fitLines();   // the numbers above change length
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
-  if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
+  if (view && !view.you && !view.player) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
   else if (!view) refreshMe();
 }, 20000);
 
@@ -142,7 +142,7 @@ function farmsTab() {
 function boardTab(b) {
   const rows = (b?.farms || []).map((c) => `
     <button class="item farmcard" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
-      ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small stakeline-card" data-fit>${stakeSpan((b._t ?? Date.now()) - c.up * 1000, 1)} at stake${c.mine ? " · yours" : ""}</span>
+      <span class="who" data-player="${c.pid}">${halo(pic(c.name, c.pic))}</span><span class="grow"><b class="who" data-player="${c.pid}">${esc(c.name)}</b><br><span class="small stakeline-card" data-fit>${stakeSpan((b._t ?? Date.now()) - c.up * 1000, 1)} at stake${c.mine ? " · yours" : ""}</span>
       <span class="small">${recordLine(c.record)}</span></span>
       <span style="text-align:right"><span class="meme glow${c.mine ? "" : " flexgo"}">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
@@ -151,7 +151,7 @@ function boardTab(b) {
 
 function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
-    ${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+    <span class="who" data-player="${r.id}">${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}</span><span class="grow who" data-player="${r.id}">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any AURA yet. Go farm.</p>`}</div>`;
 }
@@ -272,6 +272,17 @@ function farmScreen(v) {
     <div class="duel">${face(esc(v.names[other] || "?"), other, 18)}
       <div class="cap" style="color:${d > 0 ? "var(--D)" : d < 0 ? "#ff4d5e" : "#d6cfee"}">${v.line ? `<div class="why">${sentences(v.line).map((t) => bit(t)).join(" ")}</div>` : ""}${sentences(v.captions[side]).map((t, i, all) => bit(t, i === all.length - 1 && all.length > 1 ? "amt" : "")).join(" ")}</div>
       ${face(v.side >= 0 ? "you" : esc(v.names[side] || "?"), side, d > 0 ? 30 : 12)}</div>${pastDetails(v, playing)}${seal(v)}${back}`;
+}
+
+// A player's page: what is public about them, and their lifetime aura (the Worker adds up every day that has ended, plus today so far).
+function playerScreen(v) {
+  const farms = v.up.map((f) => `<button class="item home" data-act="look:${f.id}" type="button"><span class="grow"><b>Farm #${f.id}</b><br><span class="small">${leftSpan(v._t + f.left * 1000)}</span></span><span>›</span></button>`).join("");
+  return `<div class="panel" style="text-align:center">
+      <div class="row" style="justify-content:center">${halo(pic(v.name, v.pic), 22)}<div class="big glow">${esc(v.name)}</div></div>
+      <div class="big glow" data-fit style="margin-top:14px">${num(v.lifetime)} AURA lifetime</div></div>
+    <div class="panel" style="margin-top:12px">${kv("Farms up", v.up.length)}${kv("Battles", `${v.wins} won · ${v.losses} lost · ${v.draws} drawn`)}${kv("Latest styles", recordLine(v.record))}</div>
+    ${farms ? `<div class="list" style="margin-top:12px">${farms}</div>` : ""}
+    <button class="link" data-act="back" type="button">back</button>`;
 }
 
 // ---------- you: name, save codes and passkeys (kept by the shared Accounts, like the other 88x31 games) ----------
@@ -415,9 +426,9 @@ function fitLines() {
 addEventListener("resize", fitLines);
 
 function draw() {
-  const farmKey = view ? (view.you ? "you" : "f" + view.id) : null;
+  const farmKey = view ? (view.you ? "you" : view.player ? "p" + view.id : "f" + view.id) : null;
   if (farmKey !== shownFarm) { shownFarm = farmKey; openBoxes.clear(); if (farmKey) scrollTop = true; }
-  const body = view?.you ? youScreen() : view ? farmScreen(view)
+  const body = view?.you ? youScreen() : view?.player ? playerScreen(view) : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Today"], ["ledger", "📜", "About"]]
@@ -437,16 +448,24 @@ async function openFarm(id, step = true) {
   pick = null;
   if (step && location.search !== "?farm=" + id) history.pushState({ farm: id }, "", "?farm=" + id);
 }
+// A player's page (?player=N), the same way: a new history step when opened from a tap, a link or back/forward opens it in place.
+async function openPlayer(id, step = true) {
+  view = { player: true, ...(await api("GET", "player?id=" + id)) };
+  pick = null;
+  if (step && location.search !== "?player=" + id) history.pushState({ player: id }, "", "?player=" + id);
+}
 // The address follows the screen: a farm shows ?farm=N, The Farm / Today / About show ?tab=..., Home the bare address (so a reload stays where you were).
 function syncAddress() {
-  const want = view && !view.you ? "?farm=" + view.id : !view && tab !== "farms" ? "?tab=" + tab : "";
+  const want = view?.player ? "?player=" + view.id : view && !view.you ? "?farm=" + view.id : !view && tab !== "farms" ? "?tab=" + tab : "";
   if (location.search !== want) history.replaceState(null, "", location.pathname + want);
 }
 
 // back from a farm we stepped into goes back a history step (the same as the browser's back); from a ?farm=N link, home
-const goBack = () => (history.state?.farm ? history.back() : showTab(tab));
+const goBack = () => (history.state?.farm || history.state?.player ? history.back() : showTab(tab));
 
 document.addEventListener("click", (e) => {
+  const who = e.target.closest("[data-player]");   // a name or pic on The Farm or Today: that player's page, not the card around it
+  if (who) return run(() => openPlayer(Number(who.dataset.player)));
   const t = e.target.closest("[data-tab],[data-act]");
   // the finished results card: once the reveal is over, a tap anywhere on it goes back
   if (!t && e.target.closest(".duel") && !revealing()) return goBack();
@@ -488,11 +507,12 @@ document.addEventListener("click", (e) => {
 
 // aura.88x31.app/?farm=16 opens that farm (the shared registry links its Aura Farm entries here)
 const linked = Number(new URLSearchParams(location.search).get("farm"));
-run(async () => { await loadToday(); if (linked > 0) await openFarm(linked, false); });
+const linkedPlayer = Number(new URLSearchParams(location.search).get("player"));
+run(async () => { await loadToday(); if (linked > 0) await openFarm(linked, false); else if (linkedPlayer > 0) await openPlayer(linkedPlayer, false); });
 const wanted = new URLSearchParams(location.search).get("tab");
-if (!(linked > 0) && ["board", "top", "ledger"].includes(wanted)) showTab(wanted);   // a reload comes back to the same tab
+if (!(linked > 0) && !(linkedPlayer > 0) && ["board", "top", "ledger"].includes(wanted)) showTab(wanted);   // a reload comes back to the same tab
 // the browser's back and forward buttons: a ?farm=N step opens that farm, the bare address shows the tab you were on
 addEventListener("popstate", () => {
-  const id = Number(new URLSearchParams(location.search).get("farm"));
-  if (id > 0) run(() => openFarm(id, false)); else showTab(tab);
+  const q = new URLSearchParams(location.search), id = Number(q.get("farm")), pid = Number(q.get("player"));
+  if (id > 0) run(() => openFarm(id, false)); else if (pid > 0) run(() => openPlayer(pid, false)); else showTab(tab);
 });

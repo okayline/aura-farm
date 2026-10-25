@@ -76,3 +76,12 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   count         INTEGER NOT NULL,
   PRIMARY KEY (key, window_start)
 );
+
+-- v0.98: a player's aura on each day that has ended, saved the first time someone opens their page (migrations/008).
+-- Lifetime aura = these added up + today so far, worked out when the page loads.
+CREATE TABLE IF NOT EXISTS aura_days (
+  player_id  INTEGER NOT NULL REFERENCES players(id),
+  day        TEXT NOT NULL,           -- "2027-01-01" (UTC), a day that has ended
+  aura       INTEGER NOT NULL,        -- the player's aura on that day (battles taken that day plus standing)
+  PRIMARY KEY (player_id, day)
+);

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.98 (Oct 24 2026, HST)
+
+- Player pages. Tap a player's name or pic on The Farm or on Today to open their page, which anyone can see, logged in or not. It shows their lifetime aura (every finished day added up, plus today so far, so it is current whenever the page loads), the farms they have up (tap one to open it), how many battles they have won, lost and drawn, and their latest 10 styles. Removed: nothing.
+
 ## v0.97 (Oct 24 2026, HST)
 
 - Your own farm's screen now shows how much the farm has earned so far (like "+160,000 AURA farmed") above the time left. It counts up on its own as each hour finishes. Removed: nothing; the "Farmed so far" row in Details stays.
