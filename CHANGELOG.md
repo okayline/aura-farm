@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.94 (Oct 24 2026, HST)
+
+- Farming now earns 30,000 AURA an hour while your farm stands (up to 720,000 over its 24 hours). The stake still goes up 50,000 an hour, so farming no longer cancels out the stake growth: a poster who loses now ends below -500,000 the longer they waited (-740,000 at 12 hours). Removed: the 50,000-an-hour farming rate.
+
 ## v0.93 (Oct 24 2026, HST)
 
 - The game's name is now AURA FARMING SIMULATOR: LOCKED IN BATTLE EDITION 2027, on the line under the title, the browser tab and the README. Removed: "NO CAP" from the name.

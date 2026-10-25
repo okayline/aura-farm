@@ -55,22 +55,22 @@ test("a farm moves 500,000 plus 50,000 for each whole hour it stood", () => {
   assert.throws(() => A.farm("D", "R", -1));
 });
 
-test("a farm earns a flat 50,000 for each whole hour", () => {
+test("a farm earns a flat 30,000 for each whole hour", () => {
   assert.equal(A.earned(0), 0);
-  assert.equal(A.earned(1), 50000);
-  assert.equal(A.earned(2), 100000);
-  assert.equal(A.earned(3), 150000);
-  assert.equal(A.earned(12), 600000);
-  assert.equal(A.earned(24), 1200000);
+  assert.equal(A.earned(1), 30000);
+  assert.equal(A.earned(2), 60000);
+  assert.equal(A.earned(3), 90000);
+  assert.equal(A.earned(12), 360000);
+  assert.equal(A.earned(24), 720000);
 });
 
 test("standing aura: by the farm's age, the oldest farm up earns, a partial hour waits", () => {
-  assert.equal(A.standing([[0, 5400, 0]]), 50000);                          // 1.5 hours: one whole hour
-  assert.equal(A.standing([[0, 7200, 0]]), 100000);
-  assert.equal(A.standing([[0, 3600, 0], [7200, 10800, 7200]]), 100000);     // two farms an hour apart, 50,000 each
-  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 150000);     // the younger one carries on from its own age: 100,000 then its 2nd hour, 50,000
-  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 100000);      // a younger farm inside an older one adds nothing
-  assert.equal(A.standing([[3600, 7200, 0]]), 50000);                       // the 2nd hour of a farm put up at 0, counted from 3600
+  assert.equal(A.standing([[0, 5400, 0]]), 30000);                          // 1.5 hours: one whole hour
+  assert.equal(A.standing([[0, 7200, 0]]), 60000);
+  assert.equal(A.standing([[0, 3600, 0], [7200, 10800, 7200]]), 60000);     // two farms an hour apart, 30,000 each
+  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 90000);     // the younger one carries on from its own age: 60,000 then its 2nd hour, 30,000
+  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 60000);      // a younger farm inside an older one adds nothing
+  assert.equal(A.standing([[3600, 7200, 0]]), 30000);                       // the 2nd hour of a farm put up at 0, counted from 3600
 });
 
 
