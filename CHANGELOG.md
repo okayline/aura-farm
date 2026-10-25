@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.67 (Oct 24 2026, HST)
+
+- The About panel is one short paragraph in the game's voice: pick a style (💎 beats 😏 beats 🗿 beats 💎), FARM AURA puts yours on the board face down and earns +10,000 AURA an hour while nobody takes it, FLEX on someone's Farm when you have one up, the winner takes 100,000 AURA plus 10,000 for every hour that Farm stood and the loser gets COOKED, the same style is a draw, "Stand there. Look cool. Bluff." Removed: the five paragraphs from v0.66, which also said a Farm lasts up to 24 hours, 3 can be up at once, FLEX once every 30 minutes per Farm, and that battles are sealed in the ledger.
+
 ## v0.66 (Oct 24 2026, HST)
 
 - The Ledger tab is now called About. Above "Legends of AURA" it has a short panel on how to play: what beats what, FARM AURA (+10,000 AURA an hour, up to 24 hours, 3 at once), FLEX (the winner takes 100,000 AURA plus 10,000 for every hour that Farm stood), what you need to FLEX (a Farm up, once every 30 minutes per Farm), and that every finished battle is sealed in the ledger. The numbers come from the game's rules file, so they follow it if the rules change. Removed: the name "Ledger" on the tab. The address is still `?tab=ledger`, and the tab keeps its 📜 icon.

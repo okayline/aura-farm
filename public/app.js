@@ -148,11 +148,7 @@ function ledgerTab(l) {
   }).join("");
   const n = (x) => x.toLocaleString("en-US");
   const about = `<div class="panel"><div class="big glow">About</div>
-      <p class="small">${A.EMOJI.D} ${A.STYLE.D} beats ${A.EMOJI.R} ${A.STYLE.R}, ${A.EMOJI.R} ${A.STYLE.R} beats ${A.EMOJI.M} ${A.STYLE.M}, ${A.EMOJI.M} ${A.STYLE.M} beats ${A.EMOJI.D} ${A.STYLE.D}. The same style is a draw.</p>
-      <p class="small"><b>FARM AURA</b> puts your style on the board, face down. While nobody takes it you farm +${n(A.STAND_PER_HOUR)} AURA every hour, for up to ${A.LIFE / 3600} hours. You can have ${A.MAX_OPEN} up at once.</p>
-      <p class="small"><b>FLEX</b> on someone's Farm with a style of your own to start an AURA Battle. Both styles flip over and the winner takes ${n(A.STAKE)} AURA from the loser, plus ${n(A.STAKE_PER_HOUR)} more for every hour that Farm stood.</p>
-      <p class="small">To FLEX you need a Farm up. Each Farm you have up lets you FLEX once every ${A.FLEX_WINDOW / 60} minutes.</p>
-      <p class="small">Every finished battle is sealed in the ledger below.</p></div>`;
+      <p class="small">Pick ${A.STYLE.D}, ${A.STYLE.R} or ${A.STYLE.M}: ${A.EMOJI.D} beats ${A.EMOJI.R} beats ${A.EMOJI.M} beats ${A.EMOJI.D}. <b>FARM AURA</b> puts yours on the board face down, earning +${n(A.STAND_PER_HOUR)} AURA an hour while nobody takes it. Got a Farm up? <b>FLEX</b> on someone's Farm with your own style: both flip, the winner takes ${n(A.STAKE)} AURA plus ${n(A.STAKE_PER_HOUR)} for every hour that Farm stood, and the loser gets COOKED. Same style is a draw. Stand there. Look cool. Bluff.</p></div>`;
   return `${about}<div class="panel" style="margin-top:12px"><div class="big glow">Legends of AURA</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
