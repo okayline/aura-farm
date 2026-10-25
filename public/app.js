@@ -118,10 +118,10 @@ function farmsTab() {
 
 function boardTab(b) {
   const rows = (b?.farms || []).map((c) => `
-    <button class="item" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
+    <button class="item farmcard" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
       ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${stakeSpan((b._t ?? Date.now()) - c.up * 1000, 1)} at stake${c.mine ? " · yours" : ""}</span><br>
       <span class="small">${recordLine(c.record)}</span></span>
-      <span style="text-align:right"><span class="meme glow">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
+      <span style="text-align:right"><span class="meme glow${c.mine ? "" : " flexgo"}">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
     <div class="list">${rows || `<p class="small">Nobody is farming right now.</p>`}</div>`;
 }

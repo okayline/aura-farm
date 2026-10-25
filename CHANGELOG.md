@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.76 (Oct 24 2026, HST)
+
+- On The Farm, when you move the mouse over a farm card, the whole card lights up pink behind it (like the profile pic does) and FLEX turns bright white with a glow. On a phone nothing changes. Removed: nothing; before this the cards did not react to the mouse.
+
 ## v0.75 (Oct 24 2026, HST)
 
 - On the About tab's ledger, the emojis in each panel ("😏 vs 💎") are bigger. Removed: the smaller size they had.
