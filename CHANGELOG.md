@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.107 (Oct 24 2026, HST)
+
+- The Today tab at the bottom is now called "Board" (🏆). Same screen, same address. Removed: the name "Today" on the tab (the "AURA today" number at the top is still called that).
+
 ## v0.106 (Oct 24 2026, HST)
 
 - The player pages' backend is gone too. Removed: the player answer (`/api/player`: lifetime aura, farms up, battles won, lost and drawn, latest styles), the saved-days table `aura_days` and its migration, and the player ids that the board and the leaderboard sent for it. The weekly leaderboard stays.

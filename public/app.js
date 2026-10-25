@@ -425,7 +425,7 @@ function draw() {
   const body = view?.you ? youScreen() : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
-  $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Today"], ["ledger", "📜", "About"]]
+  $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Board"], ["ledger", "📜", "About"]]
     .map(([k, i, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button"><span class="ti">${i}</span>${w}</button>`).join("");
   fitLines();
   syncAddress();
@@ -442,7 +442,7 @@ async function openFarm(id, step = true) {
   pick = null;
   if (step && location.search !== "?farm=" + id) history.pushState({ farm: id }, "", "?farm=" + id);
 }
-// The address follows the screen: a farm shows ?farm=N, The Farm / Today / About show ?tab=..., Home the bare address (so a reload stays where you were).
+// The address follows the screen: a farm shows ?farm=N, The Farm / Board / About show ?tab=..., Home the bare address (so a reload stays where you were).
 function syncAddress() {
   const want = view && !view.you ? "?farm=" + view.id : !view && tab !== "farms" ? "?tab=" + tab : "";
   if (location.search !== want) history.replaceState(null, "", location.pathname + want);

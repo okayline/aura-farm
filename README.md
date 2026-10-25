@@ -35,7 +35,7 @@ Live at aura.88x31.app. Four tabs at the bottom; a reload stays on the tab you w
   below with the time left.
 - **🌾 The Farm**: every open farm, whoever has been farming the longest first, with what it is worth now, the
   poster's latest styles and how long it has been up. Tap FLEX to take one.
-- **🏆 Today**: the AURA LEADERBOARD for the day and, below it, a WEEKLY LEADERBOARD (the last 7 days added up). The top 3 portraits glow.
+- **🏆 Board**: the AURA LEADERBOARD for the day and, below it, a WEEKLY LEADERBOARD (the last 7 days added up). The top 3 portraits glow.
 - **📜 About**: a short how-to-play panel, then "Legends of AURA", the hash-chained ledger. Tap an entry to open its farm. (The address is still `?tab=ledger`.)
 
 Each player has a profile pic, one of 24 emojis, the same on every screen: the one they picked (tap it on the player
