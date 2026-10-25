@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.96 (Oct 24 2026, HST)
+
+- The FARM AURA button on Home is now lit up whenever you have room to put a farm up (fewer than 3 up), so it shows the action is available, looking the same as after you pick DRIP, RIZZ or MOG. Before, it stayed dim until you picked a style. Tapping it before picking a style still does nothing. It stays dim only when you already have 3 farms up. Removed: the dim look when you could farm but hadn't picked a style yet.
+
 ## v0.95 (Oct 24 2026, HST)
 
 - Smaller numbers. A win or loss is now 120,000 (was 500,000), going up 15,000 for each whole hour the farm stood (was 50,000), and farming earns 10,000 an hour (was 30,000, up to 240,000 over 24 hours). A farm taken at 12 hours moves 300,000. Removed: the 500,000 / 50,000-an-hour stake and the 30,000-an-hour farming rate.

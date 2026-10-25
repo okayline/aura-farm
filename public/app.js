@@ -135,7 +135,7 @@ function farmsTab() {
       <p class="small">+${A.STAND_PER_HOUR.toLocaleString("en-US")} AURA every hour while your Farm is up</p>
       <p class="small">Flex on someone's Farm to start an AURA Battle!</p></div>
     ${styles(full, false)}
-    <button class="go" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>
+    <button class="go${full ? "" : " ready"}" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>
     <div class="list">${list || `<p class="small">No farms yet today.</p>`}</div>`;
 }
 
