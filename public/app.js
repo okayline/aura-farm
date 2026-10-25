@@ -218,8 +218,8 @@ function takeInfo(v) {
   const end = v.left != null ? endOf(v) : null;
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
-    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("AURA farmed so far", earnSpan(end)) : ""}
-    ${kv("If you win", onTheLine(v))}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Mutual MOG", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}${end ? kv("AURA farmed so far", earnSpan(end)) : ""}
+    ${kv("If you win", onTheLine(v))}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Mutual MOG", num(0) + " AURA")}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 

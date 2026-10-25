@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.85 (Oct 24 2026, HST)
+
+- In the Details panel under FLEX, the "Goes up" line moved up to sit right under "Stood for". Removed: its old spot at the bottom, under "Mutual MOG".
+
 ## v0.84 (Oct 24 2026, HST)
 
 - On the FLEX page, only the amount ("+260,000 AURA") is bold now; the words after it ("on the line!", "at stake!", "on this!", "to the winner!") are normal weight. Removed: the bold on those words.
