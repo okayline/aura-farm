@@ -218,6 +218,7 @@ function openFarmPage(v, back) {
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="panel" style="text-align:center">
       <div class="row" style="justify-content:center">${halo(pic(me?.name, me?.pic), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
+      <div class="big glow" data-fit style="margin-top:14px">${earnSpan(end)} farmed</div>
       <div class="time glow">${leftSpan(end)}</div>${barOf(end)}
       </div>
     <div style="width:170px;margin:14px auto 0">${style(s, { on: true })}</div>
