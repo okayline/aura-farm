@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.63 (Oct 24 2026, HST)
+
+- Lighter on the database, nothing changes on screen except that Today can be up to 30 seconds behind. A player's latest styles (the emoji row on The Farm and on a farm's page) are now found with two new lookup lists, `farms_c_status` and `farms_t_status` (migration `007_record_indexes.sql`), instead of reading every finished farm in the game twice each time. Home reads only your farms from the last 3 days instead of all of them. Today looks up names for the top 100 players only instead of for both players of every farm, and keeps today's board for 30 seconds (a farm posted or taken clears it). Removed: reading every finished farm for each record; the two player lookups on every farm in Today's query (`namesFrom` and `picsFrom`); the quick refresh of today's board on every tap of Today.
+- Before this goes live, run `migrations/007_record_indexes.sql` on the live aura-db.
+
 ## v0.62 (Oct 24 2026, HST)
 
 - "Aura" is no longer one of the first words in random names (so no new "Aura Goblin" or "Aura Yapper"). 31 first words and 23 last words are left. Removed: "Aura" from the first words. Names you already have stay until you reroll.

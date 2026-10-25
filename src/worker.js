@@ -84,7 +84,7 @@ function json(data, status = 200, headers = {}) {
 
 // the clock, in unix seconds (tests move it with env.NOW)
 let clock = () => Math.floor(Date.now() / 1000);
-export function setClock(fn) { clock = fn; }
+export function setClock(fn) { clock = fn; leaderboardCache = null; }
 const now = () => clock();
 const utcDay = (t = now()) => new Date(t * 1000).toISOString().slice(0, 10);
 const dayStart = (day) => Date.parse(day + "T00:00:00Z") / 1000;
@@ -194,19 +194,18 @@ const AURA_COLS = "c_id, t_id, status, c_delta, t_delta, posted_at, taken_at";
 
 // The farms that could count on a day: posted that day or the day before (a farm is up at most 24 hours).
 const daysOf = (day) => [utcDay(dayStart(day) - 86400), day];
+// the last n UTC days up to and including this one, oldest first. Everything on a player's Home was posted within the last
+// 48 hours (a farm lives 24 and is listed for 24 more), so those 3 days hold it, and the (c_id, day) indexes can be used.
+const daysBack = (day, n) => Array.from({ length: n }, (_, i) => utcDay(dayStart(day) - (n - 1 - i) * 86400));
 
 // One player's aura on a day. The statement goes in a batch with the call's other reads: one trip to the database.
 const auraStmt = (env, playerId, day) => env.DB.prepare(
   `SELECT ${AURA_COLS} FROM farms WHERE day IN (?1, ?2) AND c_id = ?3 UNION ALL SELECT ${AURA_COLS} FROM farms WHERE day IN (?1, ?2) AND t_id = ?3`)
   .bind(...daysOf(day), playerId);
 
-// Everyone's aura on a day, with their names (also batched).
+// Everyone's aura on a day. No names here: the leaderboard looks up names for the top 100 only.
 const aurasStmt = (env, day) => env.DB.prepare(
-  `SELECT d.c_id, d.t_id, d.status, d.c_delta, d.t_delta, d.posted_at, d.taken_at, pc.name AS c_name, pt.name AS t_name, pc.pic AS c_pic, pt.pic AS t_pic
-   FROM farms d LEFT JOIN players pc ON pc.id = d.c_id LEFT JOIN players pt ON pt.id = d.t_id
-   WHERE d.status IN ('open', 'done', 'expired') AND d.day IN (?, ?)`).bind(...daysOf(day));
-const namesFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_name], [r.t_id, r.t_name]]));
-const picsFrom = (rows) => new Map(rows.flatMap((r) => [[r.c_id, r.c_pic], [r.t_id, r.t_pic]]));
+  `SELECT ${AURA_COLS} FROM farms WHERE status IN ('open', 'done', 'expired') AND day IN (?, ?)`).bind(...daysOf(day));
 
 // ---------- records ----------
 
@@ -309,9 +308,9 @@ async function today(req, env) {
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
     `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, o.name AS opponent FROM farms d
      LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
-     WHERE (d.c_id = ?1 OR d.t_id = ?1) AND ((d.status = 'open' AND d.posted_at > ?2) OR (d.status = 'done' AND d.taken_at >= ?3)
+     WHERE (d.c_id = ?1 OR d.t_id = ?1) AND d.day IN (?5, ?6, ?7) AND ((d.status = 'open' AND d.posted_at > ?2) OR (d.status = 'done' AND d.taken_at >= ?3)
        OR (d.status != 'done' AND d.posted_at > ?4))
-     ORDER BY d.id DESC LIMIT 30`).bind(player.id, now() - A.LIFE, dayStart(day), now() - 2 * A.LIFE)]);
+     ORDER BY d.id DESC LIMIT 30`).bind(player.id, now() - A.LIFE, dayStart(day), now() - 2 * A.LIFE, ...daysBack(day, 3))]);
   out.aura = aurasFrom(a.results, day).get(player.id) || 0;
   out.farms = list.results.map((d) => {
     // a farm past its 24 hours that the minute-by-minute expiry hasn't reached yet already reads as expired
@@ -337,6 +336,7 @@ async function postFarm(req, env) {
      SELECT ?1, 'open', ?2, ?3, ?4, ?5, ?6, ?6 WHERE (SELECT COUNT(*) FROM farms WHERE c_id = ?2 AND status = 'open' AND posted_at > ?8) < ?7 RETURNING id`)
     .bind(day, player.id, style, salt, await commitment(style, salt), t, A.MAX_OPEN, t - A.LIFE).first();
   if (!r) throw new Oops(`You already have ${A.MAX_OPEN} farms on the board.`);
+  leaderboardCache = null;
   return withCookie(json(await farmView(env, await getFarm(env, r.id), player)), cookie);
 }
 
@@ -397,6 +397,7 @@ async function take(req, env) {
     }
     if (!res[0].meta.changes) throw new Oops("Someone already took that one.");
     await checkpoint(env, d.id);
+    leaderboardCache = null;
     return json(await farmView(env, await getFarm(env, d.id), player));
   }
   throw new Error("The ledger is busy. Try again.");
@@ -418,12 +419,19 @@ async function setPic(req, env) {
   return withCookie(json({ pic }), cookie);
 }
 
+const LEADERBOARD_TTL = 30;   // seconds
+let leaderboardCache = null;   // { day, at, rows }
 async function leaderboard(req, env, url) {
   const day = url.searchParams.get("day") || utcDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Oops("Bad day.");
+  // today's board is kept for LEADERBOARD_TTL seconds by this Worker instance; a farm posted or taken through it clears it
+  if (day === utcDay() && leaderboardCache && leaderboardCache.day === day && now() - leaderboardCache.at < LEADERBOARD_TTL) return json({ day, rows: leaderboardCache.rows });
   const { results } = await aurasStmt(env, day).all();
-  const names = namesFrom(results), pics = picsFrom(results);
-  const rows = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([id, aura]) => ({ name: names.get(id) ?? null, pic: pics.get(id) ?? null, aura }));
+  const top = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100);
+  const { results: who } = await env.DB.prepare("SELECT id, name, pic FROM players WHERE id IN (SELECT value FROM json_each(?))").bind(JSON.stringify(top.map(([id]) => id))).all();
+  const by = new Map(who.map((p) => [p.id, p]));
+  const rows = top.map(([id, aura]) => ({ name: by.get(id)?.name ?? null, pic: by.get(id)?.pic ?? null, aura }));
+  if (day === utcDay()) leaderboardCache = { day, at: now(), rows };
   return json({ day, rows });
 }
 

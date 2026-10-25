@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS farms (
 CREATE INDEX IF NOT EXISTS farms_status ON farms (status, day);
 CREATE INDEX IF NOT EXISTS farms_c ON farms (c_id, day);
 CREATE INDEX IF NOT EXISTS farms_t ON farms (t_id, day);
+-- a player's finished farms, newest first (v0.63, migrations/007): their record of styles
+CREATE INDEX IF NOT EXISTS farms_c_status ON farms (c_id, status, id);
+CREATE INDEX IF NOT EXISTS farms_t_status ON farms (t_id, status, id);
 
 -- The ledger: one entry per finished farm (finished duel before v0.6), a SHA-256 hash chain (src/ledger.js).
 CREATE TABLE IF NOT EXISTS ledger (

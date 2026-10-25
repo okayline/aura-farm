@@ -165,6 +165,23 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.deepEqual(lb.rows.map((r) => r.aura), [120000, -100000]);
 });
 
+test("today's leaderboard is kept for 30 seconds and a take clears it; names come for the players shown", async () => {
+  const { env, call, tick } = setup();
+  const f = await call("ann", "POST", "/api/farm", { style: "D" });
+  tick(3 * 3600);   // 3 hours standing: ann has 30,000 and is on the board
+  const first = await call("bo", "GET", "/api/leaderboard");
+  assert.equal(first.rows.length, 1);
+  assert.equal(first.rows[0].name, env.DB.raw.prepare("SELECT name FROM players WHERE id = 1").get().name, "the player's name is filled in");
+  env.DB.raw.prepare("UPDATE players SET name = 'Zed Zed' WHERE id = 1").run();   // behind the API's back
+  assert.notEqual((await call("bo", "GET", "/api/leaderboard")).rows[0].name, "Zed Zed", "within 30 seconds the kept board is shown");
+  tick(31);
+  assert.equal((await call("bo", "GET", "/api/leaderboard")).rows[0].name, "Zed Zed", "after 30 seconds it is read again");
+  await call("bo", "POST", "/api/farm", { style: "M" });   // bo needs a farm up to FLEX
+  assert.equal((await call("cy", "GET", "/api/leaderboard")).rows.length, 1, "bo has earned nothing yet; this read is kept");
+  assert.equal((await call("bo", "POST", "/api/take", { id: f.id, style: "R" })).status, "done");
+  assert.equal((await call("cy", "GET", "/api/leaderboard")).rows.length, 2, "a take shows at once, not 30 seconds later");
+});
+
 test("a draw changes nothing", async () => {
   const { call, tick } = setup();
   const f = await call("ann", "POST", "/api/farm", { style: "M" });
@@ -235,7 +252,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   assert.equal(JSON.stringify(sent).includes("ann"), false);
 });
 
-test("migrations 004-006 turn a v0.5 card duel into a farm, drop VIBES and add profile pics: the old ledger entry and result stay as sealed", async () => {
+test("migrations 004-007 turn a v0.5 card duel into a farm, drop VIBES, add profile pics and the record indexes: the old ledger entry and result stay as sealed", async () => {
   const old = new DatabaseSync(":memory:");
   old.exec(execSync("git show a35b001:schema.sql", { encoding: "utf8" }));   // v0.5
   old.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (1, 'a', 1, 1), (2, 'b', 1, 1)").run();
@@ -243,7 +260,7 @@ test("migrations 004-006 turn a v0.5 card duel into a farm, drop VIBES and add p
   old.prepare("INSERT INTO duels (id, day, status, c_id, created_at, posted_at) VALUES (8, '2027-01-01', 'open', 1, 1, 1)").run();
   old.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 7, '{}', ?, ?, 5)")
     .run("0".repeat(64), sha("0".repeat(64) + "|{}"));
-  for (const m of ["004_aura_farm", "005_no_vibes", "006_pics"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
+  for (const m of ["004_aura_farm", "005_no_vibes", "006_pics", "007_record_indexes"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
   assert.deepEqual({ ...old.prepare("SELECT id, kind, farm_id, record FROM ledger").get() }, { id: 1, kind: "duel", farm_id: 7, record: "{}" });
   assert.deepEqual({ ...old.prepare("SELECT status, c_delta, t_delta, c_style FROM farms WHERE id = 7").get() }, { status: "done", c_delta: 110000, t_delta: -10000, c_style: null });
   assert.equal(old.prepare("SELECT status FROM farms WHERE id = 8").get().status, "expired", "an open card duel can't be taken as a farm");
