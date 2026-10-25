@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.100 (Oct 24 2026, HST)
+
+- About: after the DRIP line, the last three lines now run on as one paragraph ("Your AURA farms 10,000 an hour up to 24 hours. The stakes raise 15,000 an hour. Flex on someone to start the AURA BATTLE!"), which wraps like normal text. The first two lines still stay on one line each. Removed: the line breaks between those last three lines.
+
 ## v0.99 (Oct 24 2026, HST)
 
 - The About panel is rewritten, one short line each: "Stand there. Look cool. Bluff." / "DRIP 💎 beats RIZZ 😏 beats MOG 🗿 beats DRIP 💎." / "Your AURA farms 10,000 an hour up to 24 hours." / "The stakes raise 15,000 an hour." / "Flex on someone to start the AURA BATTLE!" Every line stays on one line (the text shrinks a little on a narrow phone). Removed: the long paragraph, including the lines about the starting amount, losing being COOKED and the same style being a draw.

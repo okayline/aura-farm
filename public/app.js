@@ -170,13 +170,11 @@ function ledgerTab(l) {
       ${e.at || r.line ? `<span class="small dateline" data-fit>${[e.at ? atSec(e.at) : "", r.line ? esc(r.line) : ""].filter(Boolean).join(" - ")}</span>` : ""}<span class="small emos">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
   }).join("");
   const n = (x) => x.toLocaleString("en-US");
-  // each line stays on one line (data-fit)
+  // the first two lines stay on one line each (data-fit); the rest runs on as one paragraph
   const about = `<div class="panel"><div class="big glow">About</div>
       <p class="small" data-fit>Stand there. Look cool. Bluff.</p>
       <p class="small" data-fit>${A.STYLE.D} ${A.EMOJI.D} beats ${A.STYLE.R} ${A.EMOJI.R} beats ${A.STYLE.M} ${A.EMOJI.M} beats ${A.STYLE.D} ${A.EMOJI.D}.</p>
-      <p class="small" data-fit>Your AURA farms ${n(A.STAND_PER_HOUR)} an hour up to ${A.LIFE / 3600} hours.</p>
-      <p class="small" data-fit>The stakes raise ${n(A.STAKE_PER_HOUR)} an hour.</p>
-      <p class="small" data-fit>Flex on someone to start the AURA BATTLE!</p></div>`;
+      <p class="small">Your AURA farms ${n(A.STAND_PER_HOUR)} an hour up to ${A.LIFE / 3600} hours. The stakes raise ${n(A.STAKE_PER_HOUR)} an hour. Flex on someone to start the AURA BATTLE!</p></div>`;
   return `${about}<div class="panel" style="margin-top:12px"><div class="big glow">Legends of AURA</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
