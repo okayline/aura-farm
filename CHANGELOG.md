@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.82 (Oct 24 2026, HST)
+
+- On the FLEX page, the "+260,000 AURA on the line!" line never wraps onto a second line: on a smaller screen the text gets a little smaller instead (and a little bigger, up to 26px, on wider ones). Removed: the fixed 22px size that left a gap and could wrap.
+
 ## v0.81 (Oct 24 2026, HST)
 
 - On the FLEX page, "VS." is gone, and the "+260,000 AURA on the line!" line is now bold and has the full glow. Removed: the "VS." text.
