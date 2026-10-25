@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.80 (Oct 24 2026, HST)
+
+- On the FLEX page, between the face-down card and "VS.", there is now a big line: "+260,000 AURA on the line!". It goes up by itself each whole hour the farm stands. Removed: nothing.
+
 ## v0.79 (Oct 24 2026, HST)
 
 - In the Details panel under FLEX, "Same style" is now "Mutual MOG" (still +0 AURA).

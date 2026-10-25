@@ -46,6 +46,8 @@ const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(e
 const upText = (since) => { const m = Math.floor((Date.now() - since) / 60000); return "Up for " + (m < 60 ? Math.max(m, 0) + " min" : Math.floor(m / 60) + (m < 120 ? " hr" : " hrs")); };
 const leftText = (end) => (end - Date.now() <= 0 ? "time's up" : clock(end - Date.now()) + " left");
 const endOf = (x, from = x) => from._t + x.left * 1000;
+// what a battle on this farm moves right now, as the FLEX page shows it (ticks up by itself every whole hour); a farm with no clock yet moves the starting amount
+const onTheLine = (v) => (v.left != null ? stakeSpan(endOf(v) - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA");
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
 const upSpan = (end) => `<span data-since="${end - A.LIFE * 1000}">${clock(Date.now() - (end - A.LIFE * 1000))}</span>`;
 const barOf = (end) => `<div class="bar"><i data-bar="${end}" style="width:${Math.min(100, Math.max(0, 100 - ((end - Date.now()) / (A.LIFE * 10)))).toFixed(1)}%"></i></div>`;
@@ -214,7 +216,7 @@ function takeInfo(v) {
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("AURA farmed so far", earnSpan(end)) : ""}
-    ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Mutual MOG", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
+    ${kv("If you win", onTheLine(v))}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Mutual MOG", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 
@@ -224,6 +226,7 @@ function farmScreen(v) {
     return `<div class="row">${halo(pic(v.names[0], v.pics?.[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         <div class="duel"><div class="face"><div class="slot"><div class="card back">?</div><div class="card" style="visibility:hidden"></div></div></div></div>
+        <div class="big glow" style="text-align:center;font-size:26px;margin:20px 0 0">${onTheLine(v)} on the line!</div>
         <div style="text-align:center;margin:1em 0">VS.</div>
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
