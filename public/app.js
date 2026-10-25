@@ -37,7 +37,7 @@ const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Ma
 const clockSec = (ms) => { const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return h ? `${h}h ${m}m ${sec}s` : m ? `${m}m ${sec}s` : `${sec}s`; };
 // whole hours a farm has stood since it went up (ms)
 const hoursUp = (since) => Math.floor(Math.min(Math.max(Date.now() - since, 0), A.LIFE * 1000) / 3600000);
-// what a farm has earned by standing so far: 10,000 for each whole hour (this farm on its own; farms up together earn from the oldest)
+// what a farm has earned by standing so far: A.STAND_PER_HOUR for each whole hour (this farm on its own; farms up together earn from the oldest)
 const earnText = (since) => "+" + A.earned(hoursUp(since)).toLocaleString("en-US") + " AURA";
 // what a farm earns per hour, and what it moves if it is taken now
 const rateText = "+" + A.STAND_PER_HOUR.toLocaleString("en-US") + " an hour";
@@ -131,7 +131,7 @@ function farmsTab() {
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
-      <p class="small">+10,000 AURA every hour while your Farm is up</p>
+      <p class="small">+${A.STAND_PER_HOUR.toLocaleString("en-US")} AURA every hour while your Farm is up</p>
       <p class="small">Flex on someone's Farm to start an AURA Battle!</p></div>
     ${styles(full, false)}
     <button class="go" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>

@@ -109,7 +109,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   const b = await call("bo", "GET", "/api/board");
   assert.equal(b.farms.length, 1);
   assert.equal("aura" in b.farms[0], false, "the board no longer sends the poster's aura for the day");
-  assert.equal((await call("ann", "GET", "/api/today")).aura, 20000, "2 hours standing: 10,000 each, in ann's aura today");
+  assert.equal((await call("ann", "GET", "/api/today")).aura, 100000, "2 hours standing: 50,000 each, in ann's aura today");
   assert.deepEqual(b.farms[0].record, []);
   assert.equal(JSON.stringify(b).includes('"R"'), false, "the board never shows the style");
 
@@ -153,7 +153,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(row.hash, sha(row.prev_hash + "|" + row.record));
   assert.equal(row.farm_id, f.id);
   const rec = JSON.parse(row.record);
-  assert.equal(rec.rules, 6);
+  assert.equal(rec.rules, 7);
   assert.deepEqual(rec.styles, ["R", "D"]);
   assert.equal(rec.players.includes(null), false);
   assert.equal(rec.line, "RIZZ tried. DRIP shined.", "the line is sealed with the farm");
@@ -162,8 +162,8 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
 
   const lb = await call("bo", "GET", "/api/leaderboard");
   assert.equal(lb.rows.length, 2);
-  // bo +600,000; ann -600,000 plus 2 full hours standing (10,000 each) before bo took it
-  assert.deepEqual(lb.rows.map((r) => r.aura), [600000, -580000]);
+  // bo +600,000; ann -600,000 plus 2 full hours standing (50,000 each) before bo took it
+  assert.deepEqual(lb.rows.map((r) => r.aura), [600000, -500000]);
 });
 
 test("today's leaderboard is kept for 30 seconds and a take clears it; names come for the players shown", async () => {
@@ -225,14 +225,14 @@ test("at most 3 farms up at once; each stays up 24 hours, across midnight, then 
   // ann's untaken farm shows as expired, so she can see her time was up
   assert.equal((await call("ann", "GET", "/api/today")).farms.filter((x) => x.status === "expired").length, 1);
   // aura counts on the day it happened: Jan 1 has the first take and the oldest farm's first 16 hours (08:00-24:00):
-  // 16 x 10,000 = 160,000. The two farms stood together, so they earn once.
+  // 16 x 50,000 = 800,000. The two farms stood together, so they earn once.
   // Jan 2 has the second take (16 whole hours up: 500,000 + 16 x 50,000 = 1,300,000) and the farm still standing carrying on from
-  // its 17th hour to its 24th: 240,000 - 160,000 = 80,000
+  // its 17th hour to its 24th: 1,200,000 - 800,000 = 400,000
   const name = (await call("ann", "GET", "/api/today")).name;
   const aura = async (day) => (await call("ann", "GET", "/api/leaderboard?day=" + day)).rows.find((r) => r.name === name).aura;
   assert.equal(d1, -1300000);
-  assert.equal(await aura("2027-01-01"), d0 + 160000);
-  assert.equal(await aura("2027-01-02"), d1 + 80000);
+  assert.equal(await aura("2027-01-01"), d0 + 800000);
+  assert.equal(await aura("2027-01-02"), d1 + 400000);
 });
 
 test("each finished farm sends the registry a checkpoint of the ledger: public facts, never a player", async () => {

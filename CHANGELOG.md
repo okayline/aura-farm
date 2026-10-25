@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.91 (Oct 24 2026, HST)
+
+- Farming now earns 50,000 AURA for each whole hour a farm stands (was 10,000): up to 1,200,000 in the 24 hours if nobody takes it. This changes how farming earnings show everywhere, including today's and earlier days' AURA (they are worked out from when your farms stood, so they follow the new rate; the amounts battles moved stay as they were sealed). New entries are sealed as rules version 7. Removed: the old 10,000 an hour.
+
 ## v0.90 (Oct 24 2026, HST)
 
 - Every battle now moves five times as much AURA: the winner gets, and the loser loses, 500,000 (was 100,000) plus 50,000 (was 10,000) for each whole hour the farm stood, so a farm that stood 12 hours moves 1,100,000 and one that stood 23 hours moves 1,650,000. Farming earnings are unchanged (10,000 an hour). Farms taken before this change keep the amounts they were sealed with, and new entries are sealed as rules version 6. Removed: the old 100,000 and 10,000 amounts.
