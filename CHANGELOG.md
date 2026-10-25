@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.69 (Oct 24 2026, HST)
+
+- On the About tab's ledger, the date, time and line share one line: "Oct 24, 2026 - 17:14:09 - A RIZZY standoff." The date now has the year. A farm with no line (the old card duels) shows just "Oct 23, 2026 - 19:00:05". Removed: the time on a line of its own (v0.68) and the date without a year.
+
 ## v0.68 (Oct 24 2026, HST)
 
 - Each panel on the About tab's ledger shows when its farm was taken, above the line ("A RIZZY standoff."), in the same small text: 24-hour time with seconds, in your own time zone, like "Oct 24, 17:14:09". The panel shows the whole fingerprint (hash) instead of its first 16 characters and "…"; it wraps onto a second line. The ledger now sends each entry's sealing time. Removed: the cut-off hash ("371da1e438e41152…").

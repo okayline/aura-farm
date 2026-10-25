@@ -144,7 +144,7 @@ function ledgerTab(l) {
       : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
     // tap an entry to open its farm, which is the entry's page
     return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
-      ${e.at ? `<span class="small">${atSec(e.at)}</span><br>` : ""}${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
+      ${e.at || r.line ? `<span class="small">${[e.at ? atSec(e.at) : "", r.line ? esc(r.line) : ""].filter(Boolean).join(" - ")}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
   }).join("");
   const n = (x) => x.toLocaleString("en-US");
   const about = `<div class="panel"><div class="big glow">About</div>
@@ -160,8 +160,9 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
 const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-// the ledger panels' time: 24-hour with seconds, in the viewer's own time zone ("Oct 24, 17:14:09")
-const atSec = (sec) => new Date(sec * 1000).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+// the ledger panels' date and time, in the viewer's own time zone: "Oct 24, 2026 - 17:14:09" (24-hour, with seconds)
+const atSec = (sec) => { const d = new Date(sec * 1000);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " - " + d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }); };
 const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
 // A panel that starts rolled up and opens when tapped. It stays as you left it while the same screen redraws, and starts rolled up again on the next one.
 const openBoxes = new Set();
