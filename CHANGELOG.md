@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.78 (Oct 24 2026, HST)
+
+- On a farm's page, the times now show seconds: "14:46:09 on Oct 25th, 2026".
+- In the Details panel under FLEX, removed "Your AURA today" (the top of every screen already shows it) and "Your farms up".
+
 ## v0.77 (Oct 24 2026, HST)
 
 - On a farm's page, the times in the Details and Results panels ("Put up", "Comes down", "Taken") now read "14:46 on Oct 25th, 2026": 24-hour time, then the date with the day's ending (1st, 2nd, 3rd, 4th) and the year. Removed: the old "Oct 25, 2:46 AM" style.

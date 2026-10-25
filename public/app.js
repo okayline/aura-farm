@@ -159,10 +159,10 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
   <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
-// a time on a farm's page, in the viewer's own time zone: "14:46 on Oct 25th, 2026" (24-hour, no seconds)
+// a time on a farm's page, in the viewer's own time zone: "14:46 on Oct 25th, 2026" (24-hour, with seconds)
 const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
 const at = (sec) => { const d = new Date(sec * 1000);
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short" }) + " " + nth(d.getDate()) + ", " + d.getFullYear(); };
+  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short" }) + " " + nth(d.getDate()) + ", " + d.getFullYear(); };
 // the ledger panels' time and date, in the viewer's own time zone: "17:14:09 on Oct 24, 2026" (24-hour, with seconds)
 const atSec = (sec) => { const d = new Date(sec * 1000);
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
@@ -211,12 +211,11 @@ function openFarmPage(v, back) {
 
 // Under the FLEX button: what is public about a farm you can take. Their style is never in here, only its sealed fingerprint.
 function takeInfo(v) {
-  const end = v.left != null ? endOf(v) : null, open = (me?.farms || []).filter((f) => f.status === "open").length;
+  const end = v.left != null ? endOf(v) : null;
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("AURA farmed so far", earnSpan(end)) : ""}
     ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Same style", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
-    ${kv("Your AURA today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 
