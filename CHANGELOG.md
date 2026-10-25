@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.86 (Oct 24 2026, HST)
+
+- In the Details panel under FLEX, the "Goes up" text is now purple, like the numbers around it.
+- In the Results panel of a finished farm, removed the two "latest styles" lines (one for each player).
+
 ## v0.85 (Oct 24 2026, HST)
 
 - In the Details panel under FLEX, the "Goes up" line moved up to sit right under "Stood for". Removed: its old spot at the bottom, under "Mutual MOG".

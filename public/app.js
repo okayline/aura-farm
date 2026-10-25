@@ -189,7 +189,6 @@ function pastDetails(v, playing) {
     ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]))}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clock((v.takenAt - v.postedAt) * 1000)) : ""}
     ${rec ? kv("Rules", "version " + rec.rules) : ""}
-    ${v.records ? kv(`${esc(v.names[0] || "?")}'s latest styles`, recordLine(v.records[0])) + kv(`${esc(v.names[1] || "?")}'s latest styles`, recordLine(v.records[1])) : ""}
     ${proof}`, `detail${playing ? " wait" : ""}`, "margin-top:30px");
 }
 
@@ -218,7 +217,7 @@ function takeInfo(v) {
   const end = v.left != null ? endOf(v) : null;
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
-    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}${end ? kv("AURA farmed so far", earnSpan(end)) : ""}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) : ""}${kv("Goes up", `<span class="purple">+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands</span>`)}${end ? kv("AURA farmed so far", earnSpan(end)) : ""}
     ${kv("If you win", onTheLine(v))}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Mutual MOG", num(0) + " AURA")}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
