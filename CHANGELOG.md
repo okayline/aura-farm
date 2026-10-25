@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.64 (Oct 24 2026, HST)
+
+- On your Home screen, each farm you have up says how much it has farmed so far, above its "+10,000 an hour" line: "+130,000 AURA farmed so far" for a farm that has stood 13 hours. It counts up as the hours pass, the same number as "Farmed so far" on that farm's own page (10,000 for each whole hour, for that farm on its own). Removed: nothing.
+
 ## v0.63 (Oct 24 2026, HST)
 
 - Lighter on the database, nothing changes on screen except that Today can be up to 30 seconds behind. A player's latest styles (the emoji row on The Farm and on a farm's page) are now found with two new lookup lists, `farms_c_status` and `farms_t_status` (migration `007_record_indexes.sql`), instead of reading every finished farm in the game twice each time. Home reads only your farms from the last 3 days instead of all of them. Today looks up names for the top 100 players only instead of for both players of every farm, and keeps today's board for 30 seconds (a farm posted or taken clears it). Removed: reading every finished farm for each record; the two player lookups on every farm in Today's query (`namesFrom` and `picsFrom`); the quick refresh of today's board on every tap of Today.

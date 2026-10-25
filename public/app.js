@@ -105,7 +105,7 @@ function farmsTab() {
   const list = (me?.farms || []).map((d) => `
     <button class="item home" data-act="open:${d.id}" type="button">
       <span class="grow"><b>${d.status === "open" ? "Farming " + emo(d.style) : d.status === "expired" ? "Your time is up" : "vs " + esc(d.opponent || "?")}</b><br>
-      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${d.left != null ? rateText + " · " + leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
+      <span class="small">${d.status === "done" ? esc(d.caption) : d.status === "open" ? `${d.left != null ? earnSpan(endOf(d, me)) + " farmed so far<br>" + rateText + " · " + leftSpan(endOf(d, me)) : ""}` : ""}</span></span>
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
