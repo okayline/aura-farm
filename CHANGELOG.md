@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.92 (Oct 24 2026, HST)
+
+- Lines that used to wrap onto a second line now stay on one line, shrinking a little when they need to: the "AURA today" number at the top of every screen, the "NO CAP BATTLE EDITION 2027" line under the title, each ledger entry's title and its date-and-line, the stake line on The Farm's cards, and the "Put up by" and "Taken by" rows in Results. Nothing changes when the text already fits. Removed: the second lines (like "today" or "AURA" on its own).
+
 ## v0.91 (Oct 24 2026, HST)
 
 - Farming now earns 50,000 AURA for each whole hour a farm stands (was 10,000): up to 1,200,000 in the 24 hours if nobody takes it. This changes how farming earnings show everywhere, including today's and earlier days' AURA (they are worked out from when your farms stood, so they follow the new rate; the amounts battles moved stay as they were sealed). New entries are sealed as rules version 7. Removed: the old 10,000 an hour.

@@ -78,6 +78,7 @@ setInterval(() => {
   for (const n of document.querySelectorAll("[data-stake]")) n.textContent = stakeText(+n.dataset.stake, +n.dataset.sign);
   for (const n of document.querySelectorAll("[data-upfor]")) n.textContent = upText(+n.dataset.upfor);
   for (const n of document.querySelectorAll("[data-flex]")) { n.textContent = flexText(); const b = n.closest("button"); if (b) b.disabled = !pick || !flexReady(); }   // a FLEX coming back lights the button up
+  fitLines();   // the numbers above change length
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
   if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
@@ -116,9 +117,9 @@ const halo = (emoji, glow = 18) => `<div class="halo" style="box-shadow: 0 0 ${g
 
 function header() {
   return `<header>
-    <div class="title">AURA FARMING SIMULATOR<small>NO CAP BATTLE EDITION 2027</small></div>
-    <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button><br>
-      ${me?.aura != null ? `<b>${num(me.aura)}</b> AURA today` : "stand there. look cool."}</div>
+    <div class="title">AURA FARMING SIMULATOR<small data-fit>NO CAP BATTLE EDITION 2027</small></div>
+    <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button>
+      <span class="aura" data-fit>${me?.aura != null ? `<b>${num(me.aura)}</b> AURA today` : "stand there. look cool."}</span></div>
   </header>`;
 }
 
@@ -141,7 +142,7 @@ function farmsTab() {
 function boardTab(b) {
   const rows = (b?.farms || []).map((c) => `
     <button class="item farmcard" data-act="${c.mine ? "open" : "look"}:${c.id}" type="button">
-      ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small">${stakeSpan((b._t ?? Date.now()) - c.up * 1000, 1)} at stake${c.mine ? " · yours" : ""}</span><br>
+      ${halo(pic(c.name, c.pic))}<span class="grow"><b>${esc(c.name)}</b><br><span class="small stakeline-card" data-fit>${stakeSpan((b._t ?? Date.now()) - c.up * 1000, 1)} at stake${c.mine ? " · yours" : ""}</span>
       <span class="small">${recordLine(c.record)}</span></span>
       <span style="text-align:right"><span class="meme glow${c.mine ? "" : " flexgo"}">${c.mine ? "FARMING" : "FLEX ›"}</span><br><span class="small" data-upfor="${(b._t ?? Date.now()) - c.up * 1000}">${upText((b._t ?? Date.now()) - c.up * 1000)}</span></span></button>`).join("");
   return `<div class="panel"><div class="big glow">The Farm</div></div>
@@ -165,8 +166,8 @@ function ledgerTab(l) {
       // a card duel from before v0.6, as it was sealed
       : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
     // tap an entry to open its farm, which is the entry's page
-    return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
-      ${e.at || r.line ? `<span class="small">${[e.at ? atSec(e.at) : "", r.line ? esc(r.line) : ""].filter(Boolean).join(" - ")}</span><br>` : ""}<span class="small emos">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
+    return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow" data-fit>${title}</span>
+      ${e.at || r.line ? `<span class="small dateline" data-fit>${[e.at ? atSec(e.at) : "", r.line ? esc(r.line) : ""].filter(Boolean).join(" - ")}</span>` : ""}<span class="small emos">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
   }).join("");
   const n = (x) => x.toLocaleString("en-US");
   const about = `<div class="panel"><div class="big glow">About</div>
@@ -188,7 +189,7 @@ const at = (sec) => { const d = new Date(sec * 1000);
 // the ledger panels' time and date, in the viewer's own time zone: "17:14:09 on Oct 24, 2026" (24-hour, with seconds)
 const atSec = (sec) => { const d = new Date(sec * 1000);
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
-const kv = (k, val) => `<div class="kv"><span>${k}</span><span>${val}</span></div>`;
+const kv = (k, val, fit = false) => `<div class="kv"${fit ? " data-fit" : ""}><span>${k}</span><span>${val}</span></div>`;
 // A panel that starts rolled up and opens when tapped. It stays as you left it while the same screen redraws, and starts rolled up again on the next one.
 const openBoxes = new Set();
 const rolled = (id, title, inner, cls = "", style = "") => `<details class="panel ${cls}" data-box="${id}" style="${style}"${openBoxes.has(id) ? " open" : ""}><summary>${title}</summary>${inner}</details>`;
@@ -203,7 +204,7 @@ function pastDetails(v, playing) {
   const verdict = win == null ? "A tie" : v.side >= 0 ? (win === v.side ? "You won" : "You lost") : `${esc(v.names[win] || "?")} won`;
   const proof = rec && v.styles ? [0, 1].map((i) => `<p class="small seal">${esc(v.names[i] || "?")} sealed ${esc(v.commits[i])}<br>then showed ${esc(v.styles[i])}|${esc(rec.salts?.[i] ?? "")}</p>`).join("") : "";
   return rolled("past", "Results", `
-    ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]))}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]))}
+    ${kv("Result", verdict)}${kv("Put up by", who(0) + played(0) + " · " + num(v.result.deltas[0]), true)}${kv("Taken by", who(1) + played(1) + " · " + num(v.result.deltas[1]), true)}
     ${v.postedAt && v.takenAt ? kv("At stake", num(A.stake(Math.floor((v.takenAt - v.postedAt) / 3600))) + " AURA") : ""}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${v.takenAt ? kv("Taken", at(v.takenAt)) : ""}${v.postedAt && v.takenAt ? kv("Stood for", clockSec((v.takenAt - v.postedAt) * 1000)) : ""}${v.deadline && v.takenAt ? kv("Time left when taken", clockSec((v.deadline - v.takenAt) * 1000) + " left") : ""}
     ${rec ? kv("Rules", "version " + rec.rules) : ""}
@@ -402,6 +403,16 @@ function refreshMe() {
 }
 
 let shownFarm = null, scrollTop = false;   // the farm on screen: opening a different one starts at its top, with its panels rolled up
+// Lines that must stay on one line (`data-fit`): if one is wider than its box it shrinks, half a pixel at a time down to 9px, until it fits.
+function fitLines() {
+  for (const el of document.querySelectorAll("[data-fit]")) {
+    el.style.fontSize = "";
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth + 0.5 && size > 9) { size -= 0.5; el.style.fontSize = size + "px"; }
+  }
+}
+addEventListener("resize", fitLines);
+
 function draw() {
   const farmKey = view ? (view.you ? "you" : "f" + view.id) : null;
   if (farmKey !== shownFarm) { shownFarm = farmKey; openBoxes.clear(); if (farmKey) scrollTop = true; }
@@ -410,6 +421,7 @@ function draw() {
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
   $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Today"], ["ledger", "📜", "About"]]
     .map(([k, i, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button"><span class="ti">${i}</span>${w}</button>`).join("");
+  fitLines();
   syncAddress();
   if (scrollTop) { scrollTop = false; window.scrollTo(0, 0); }
   if (flexed && view?.styles) { flexed = false; reveal($app.querySelector(".duel"), view); }

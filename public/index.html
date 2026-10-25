@@ -27,10 +27,11 @@
   .stakeline b { font-weight: 800; }   /* only the amount is bold, not the words after it */
   .meme { font-family: var(--meme); letter-spacing: .5px; text-transform: uppercase; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  .title { font-family: var(--meme); font-size: 19px; line-height: 1.05; text-shadow: 0 0 8px rgba(176,132,255,.6), 0 0 16px rgba(255,111,207,.3); }
+  .title { flex: 1 1 0; min-width: 8em; font-family: var(--meme); font-size: 19px; line-height: 1.05; text-shadow: 0 0 8px rgba(176,132,255,.6), 0 0 16px rgba(255,111,207,.3); }
   .title small { display: block; font-size: 11px; color: var(--mute); letter-spacing: 1px; text-shadow: 0 0 8px #b084ff; }
-  .me { text-align: right; font-size: 12px; color: var(--mute); }
-  .me b { color: var(--ink); font-size: 15px; text-shadow: 0 0 10px #ff6fcf; }
+  .me { text-align: right; font-size: 12px; color: var(--mute); flex: 0 1 auto; min-width: 0; }   /* it can get narrower, and its text then shrinks (fitLines) so the title keeps its room */
+  .me .aura { display: block; }
+  .me b { color: var(--ink); font-size: 1.25em; text-shadow: 0 0 10px #ff6fcf; }
   button { font: inherit; color: var(--ink); cursor: pointer; }
   .link { background: none; border: 0; padding: 0; color: var(--mute); text-decoration: underline; font-size: 12px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
@@ -103,8 +104,10 @@
   .tab.on { color: var(--ink); font-weight: 700; text-shadow: 0 0 10px #b084ff; background: var(--panel2); }
   .err { color: #ffb3b3; text-align: center; font-size: 13px; min-height: 18px; }
   .entry { font-size: 13px; }
-  .entry .meme { font-size: 16px; }
+  .entry .meme { font-size: 16px; display: block; }
   .entry .emos { font-size: 18px; }   /* the styles' emojis (😏 vs 💎) a little bigger than the 12px small text */
+  .stakeline-card, .dateline { display: block; }
+  [data-fit], [data-fit] span { white-space: nowrap; }   /* these lines never wrap: app.js's fitLines() shrinks them to fit */
   .entry .grow { line-height: 1.75; }   /* a little more space between the lines of a ledger panel */
   .entry code { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* the whole hash on one line, trailing off with … only when it doesn't fit */
   code { font-size: 11px; color: var(--dim); word-break: break-all; }
