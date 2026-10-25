@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.101 (Oct 24 2026, HST)
+
+- About: the last line now reads "Flex on someone to AURA BATTLE for the stakes!". Removed: "Flex on someone to start the AURA BATTLE!".
+
 ## v0.100 (Oct 24 2026, HST)
 
 - About: after the DRIP line, the last three lines now run on as one paragraph ("Your AURA farms 10,000 an hour up to 24 hours. The stakes raise 15,000 an hour. Flex on someone to start the AURA BATTLE!"), which wraps like normal text. The first two lines still stay on one line each. Removed: the line breaks between those last three lines.

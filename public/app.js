@@ -174,7 +174,7 @@ function ledgerTab(l) {
   const about = `<div class="panel"><div class="big glow">About</div>
       <p class="small" data-fit>Stand there. Look cool. Bluff.</p>
       <p class="small" data-fit>${A.STYLE.D} ${A.EMOJI.D} beats ${A.STYLE.R} ${A.EMOJI.R} beats ${A.STYLE.M} ${A.EMOJI.M} beats ${A.STYLE.D} ${A.EMOJI.D}.</p>
-      <p class="small">Your AURA farms ${n(A.STAND_PER_HOUR)} an hour up to ${A.LIFE / 3600} hours. The stakes raise ${n(A.STAKE_PER_HOUR)} an hour. Flex on someone to start the AURA BATTLE!</p></div>`;
+      <p class="small">Your AURA farms ${n(A.STAND_PER_HOUR)} an hour up to ${A.LIFE / 3600} hours. The stakes raise ${n(A.STAKE_PER_HOUR)} an hour. Flex on someone to AURA BATTLE for the stakes!</p></div>`;
   return `${about}<div class="panel" style="margin-top:12px"><div class="big glow">Legends of AURA</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
