@@ -150,8 +150,9 @@ function boardTab(b) {
 }
 
 function boardOfDay(lb) {
-  const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
-    <span class="who" data-player="${r.id}">${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}</span><span class="grow who" data-player="${r.id}">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+  // the whole row is one tap: that player's page
+  const rows = (lb?.rows || []).map((r, i) => `<div class="item who" data-player="${r.id}"><span class="meme" style="width:28px">${i + 1}</span>
+    ${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
     <div class="list">${rows || `<p class="small">Nobody has any AURA yet. Go farm.</p>`}</div>`;
 }

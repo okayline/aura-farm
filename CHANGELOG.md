@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.103 (Oct 24 2026, HST)
+
+- On Today, the whole row is one tap that opens that player's page, not only their name or pic. Removed: the separate name and pic taps on Today rows (the whole row does it now).
+
 ## v0.102 (Oct 24 2026, HST)
 
 - Your own page now holds everything about you. Tap your name at the top (or your own name or pic on The Farm or Today) and you see your player page with, below it, your profile pic (tap it to change), 🎲 reroll name, your save codes and passkeys, New code, Add passkey, Use passkey, Log in as another player, and log out. Logged out, "log in" still opens the log-in screen. Removed: the separate "You" screen for players (it is now only the log-in screen for someone who isn't a player yet).
