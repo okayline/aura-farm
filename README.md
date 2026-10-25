@@ -33,8 +33,8 @@ Live at aura.88x31.app. Four tabs at the bottom; a reload stays on the tab you w
 
 - **🏠 Home**: "(your name)'s AURA FARM". Pick a style, FARM AURA, and your farms (open, finished, timed out) are listed
   below with the time left.
-- **🌾 The Farm**: every open farm, whoever has been farming the longest first, with the poster's aura today, latest
-  styles and how long it has been up. Tap FLEX to take one.
+- **🌾 The Farm**: every open farm, whoever has been farming the longest first, with what it is worth now, the
+  poster's latest styles and how long it has been up. Tap FLEX to take one.
 - **🏆 Today**: the AURA LEADERBOARD for the day. The top 3 portraits glow.
 - **📜 Ledger**: "Legends of AURA", the hash-chained ledger. Tap an entry to open its farm.
 

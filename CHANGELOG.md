@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.60 (Oct 24 2026, HST)
+
+- On The Farm, each row says what that farm is worth: "worth +260,000 aura" for a farm that has stood 16 hours, which is what the winner gets if it is taken now (100,000 plus 10,000 for each whole hour). It counts up as the hours pass, the same number as "If you win" on the FLEX screen. Removed: "+50,000 aura today" (the poster's aura for the day) on those rows.
+
 ## v0.59 (Oct 24 2026, HST)
 
 - Home screen: the "beats (emoji)" line under DRIP, RIZZ and MOG is gone (it stays on the FLEX screen). The line under your Aura Farm now reads "Flex on someone currently Farming to start an AURA Battle!". On a finished farm, a loss ("COOKED. -280,000 aura") is red and a win ("AURA FARMED. +100,000 aura") is blue, the DRIP blue. Removed: the home screen's "beats" line; the pink win color and the pale purple loss color (a draw keeps the pale purple).
