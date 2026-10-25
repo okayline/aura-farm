@@ -192,7 +192,6 @@ function pastDetails(v, playing) {
 // public (a hash of the style and a secret salt), so showing it gives nothing away.
 function openFarmPage(v, back) {
   const end = endOf(v), s = v.mine, loses = A.STYLES.find((x) => A.BEATS[x] === s);
-  const open = (me?.farms || []).filter((f) => f.status === "open").length;
   return `<div class="small" style="text-align:center">Farm #${v.id}</div>
     <div class="panel" style="text-align:center">
       <div class="row" style="justify-content:center">${halo(pic(me?.name, me?.pic), 22)}<div class="big glow">${me?.name ? esc(me.name) + " is farming" : "Farming"}</div></div>
@@ -203,8 +202,8 @@ function openFarmPage(v, back) {
     ${rolled("open", "Details", `
       ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Farmed so far", earnSpan(end))}
       ${kv("Earning", rateText)}${kv("At most", "+" + A.earned(A.LIFE / 3600).toLocaleString("en-US") + " if nobody takes it")}
-      ${kv("If you win", stakeSpan(end - A.LIFE * 1000, 1))}${kv("If you lose", stakeSpan(end - A.LIFE * 1000, -1))}${kv("Goes up", `Win/lose +${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour`)}
-      ${kv("Your AURA today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
+      ${kv("If you win", stakeSpan(end - A.LIFE * 1000, 1))}${kv("If you lose", stakeSpan(end - A.LIFE * 1000, -1))}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour`)}
+      ${kv("Your AURA today", me?.aura != null ? num(me.aura) : "…")}
       ${kv("Your record", recordLine(v.records[0]))}
       <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px")}${back}`;
 }
@@ -215,7 +214,7 @@ function takeInfo(v) {
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
     ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("AURA farmed so far", earnSpan(end)) : ""}
-    ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Same style", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
+    ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Mutual MOG", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 

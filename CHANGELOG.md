@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.79 (Oct 24 2026, HST)
+
+- In the Details panel under FLEX, "Same style" is now "Mutual MOG" (still +0 AURA).
+- In the Details panel on your own farm, "Goes up" now reads "+10,000 every hour" and "Your farms up" is removed. Removed: the words "Win/lose" and the "Your farms up" line. (The times there already use the new format.)
+
 ## v0.78 (Oct 24 2026, HST)
 
 - On a farm's page, the times now show seconds: "14:46:09 on Oct 25th, 2026".
