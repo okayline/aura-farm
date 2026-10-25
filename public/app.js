@@ -151,10 +151,12 @@ function boardTab(b) {
 
 function boardOfDay(lb) {
   // the whole row is one tap: that player's page
-  const rows = (lb?.rows || []).map((r, i) => `<div class="item who" data-player="${r.id}"><span class="meme" style="width:28px">${i + 1}</span>
-    ${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
+  const rowsOf = (list) => (list || []).map((r, i) => `<div class="item who" data-player="${r.id}"><span class="meme" style="width:28px">${i + 1}</span>
+    ${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("") || `<p class="small">Nobody has any AURA yet. Go farm.</p>`;
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
-    <div class="list">${rows || `<p class="small">Nobody has any AURA yet. Go farm.</p>`}</div>`;
+    <div class="list">${rowsOf(lb?.rows)}</div>
+    <div class="panel" style="margin-top:18px"><div class="big glow">WEEKLY LEADERBOARD</div></div>
+    <div class="list">${rowsOf(lb?.weekly)}</div>`;
 }
 
 function ledgerTab(l) {

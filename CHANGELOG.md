@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.104 (Oct 24 2026, HST)
+
+- A WEEKLY LEADERBOARD below the AURA LEADERBOARD on Today. It adds up each player's aura over the last 7 days (today and the 6 before, rolling), counted the same way Today counts each day, and each row opens that player's page. Removed: nothing.
+
 ## v0.103 (Oct 24 2026, HST)
 
 - On Today, the whole row is one tap that opens that player's page, not only their name or pic. Removed: the separate name and pic taps on Today rows (the whole row does it now).

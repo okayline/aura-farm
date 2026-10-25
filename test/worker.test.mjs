@@ -183,6 +183,24 @@ test("today's leaderboard is kept for 30 seconds and a take clears it; names com
   assert.equal((await call("cy", "GET", "/api/leaderboard")).rows.length, 2, "a take shows at once, not 30 seconds later");
 });
 
+test("the weekly leaderboard adds up the last 7 days, today and the 6 before, and an old day drops off", async () => {
+  const { call, tick } = setup();   // T0 is 08:00 UTC on Jan 1
+  const f = await call("ann", "POST", "/api/farm", { style: "D" });
+  await call("bo", "POST", "/api/farm", { style: "M" });   // bo's farm stands from 08:00 on Jan 1 until 08:00 on Jan 2
+  tick(2 * 3600);
+  await call("bo", "POST", "/api/take", { id: f.id, style: "R" });   // 10:00: DRIP beats RIZZ, ann wins 120,000 + 2 x 15,000 = 150,000 after standing 2 x 10,000
+  const annId = (await call("ann", "GET", "/api/today")).id, boId = (await call("bo", "GET", "/api/today")).id;
+  const week = async () => (await call("cy", "GET", "/api/leaderboard")).weekly.map((r) => [r.id, r.aura]);
+  assert.deepEqual(await week(), [[annId, 170000], [boId, -130000]], "day one, 10:00: the same as Today (bo: -150,000 and 2 hours standing, 20,000)");
+  tick(24 * 3600);   // 10:00 on Jan 2. bo's farm stood 24 hours, 16 of them on Jan 1 and 8 on Jan 2: 80,000 more on Jan 2
+  const day2 = await call("cy", "GET", "/api/leaderboard");
+  assert.deepEqual(day2.rows.map((r) => [r.id, r.aura]), [[boId, 80000]], "Today has only Jan 2");
+  assert.deepEqual(day2.weekly.map((r) => [r.id, r.aura]), [[annId, 170000], [boId, 10000 + 80000]], "the week has both days (bo on Jan 1: -150,000 + 16 hours standing, 160,000 = 10,000)");
+  tick(6 * 24 * 3600);   // 10:00 on Jan 8: the week is Jan 2 to Jan 8, so Jan 1 has dropped off
+  assert.deepEqual(await week(), [[boId, 80000]]);
+  assert.equal((await call("cy", "GET", "/api/leaderboard?day=2027-01-01")).weekly, undefined, "a past day's board has no week");
+});
+
 test("a draw changes nothing", async () => {
   const { call, tick } = setup();
   const f = await call("ann", "POST", "/api/farm", { style: "M" });

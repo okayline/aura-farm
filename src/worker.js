@@ -17,7 +17,7 @@
 //   POST /api/name                     reroll your name: a new random two-word one (names can't be typed)
 //   POST /api/pic   {pic}              pick your profile pic, one of A.PICS (none picked: the page picks one from the name)
 //   GET  /api/player?id=               a player's page: lifetime aura, farms up, wins-losses-draws, latest styles (public)
-//   GET  /api/leaderboard?day=         a day's players by net aura
+//   GET  /api/leaderboard?day=         a day's players by net aura (today's also has the last 7 days: `weekly`)
 //   GET  /api/ledger?before=&limit=    finished farms, newest first
 //   GET  /api/account                  your save codes, passkeys and devices
 //   POST /api/codes {action, id}       "new": make a save code (shown once); "remove": forget one
@@ -465,19 +465,31 @@ async function setPic(req, env) {
 }
 
 const LEADERBOARD_TTL = 30;   // seconds
-let leaderboardCache = null;   // { day, at, rows }
+let leaderboardCache = null;   // { day, at, out }
+// The last 7 UTC days, rolling (today and the 6 before): each player's aura on each of those days added up, every day counted the
+// way Today counts it. These are the farms that can touch those days: posted from 7 days ago, with the day before for ones that were still up.
+const weekStmt = (env, day) => env.DB.prepare(
+  `SELECT ${AURA_COLS} FROM farms WHERE status IN ('open', 'done', 'expired') AND day IN (SELECT value FROM json_each(?))`).bind(JSON.stringify(daysBack(day, 8)));
+function weeklyFrom(results, day) {
+  const sum = new Map();
+  for (const d of daysBack(day, 7)) for (const [id, aura] of aurasFrom(results, d)) sum.set(id, (sum.get(id) || 0) + aura);
+  return sum;
+}
 async function leaderboard(req, env, url) {
   const day = url.searchParams.get("day") || utcDay();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Oops("Bad day.");
-  // today's board is kept for LEADERBOARD_TTL seconds by this Worker instance; a farm posted or taken through it clears it
-  if (day === utcDay() && leaderboardCache && leaderboardCache.day === day && now() - leaderboardCache.at < LEADERBOARD_TTL) return json({ day, rows: leaderboardCache.rows });
-  const { results } = await aurasStmt(env, day).all();
-  const top = [...aurasFrom(results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100);
-  const { results: who } = await env.DB.prepare("SELECT id, name, pic FROM players WHERE id IN (SELECT value FROM json_each(?))").bind(JSON.stringify(top.map(([id]) => id))).all();
+  const live = day === utcDay();
+  // today's board (and the week's, which comes with it) is kept for LEADERBOARD_TTL seconds by this Worker instance; a farm posted or taken through it clears it
+  if (live && leaderboardCache && leaderboardCache.day === day && now() - leaderboardCache.at < LEADERBOARD_TTL) return json(leaderboardCache.out);
+  const [daily, week] = await env.DB.batch(live ? [aurasStmt(env, day), weekStmt(env, day)] : [aurasStmt(env, day)]);
+  const top = [...aurasFrom(daily.results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100);
+  const topWeek = live ? [...weeklyFrom(week.results, day)].sort((a, b) => b[1] - a[1]).slice(0, 100) : [];
+  const { results: who } = await env.DB.prepare("SELECT id, name, pic FROM players WHERE id IN (SELECT value FROM json_each(?))").bind(JSON.stringify([...new Set([...top, ...topWeek].map(([id]) => id))])).all();
   const by = new Map(who.map((p) => [p.id, p]));
-  const rows = top.map(([id, aura]) => ({ id, name: by.get(id)?.name ?? null, pic: by.get(id)?.pic ?? null, aura }));
-  if (day === utcDay()) leaderboardCache = { day, at: now(), rows };
-  return json({ day, rows });
+  const row = ([id, aura]) => ({ id, name: by.get(id)?.name ?? null, pic: by.get(id)?.pic ?? null, aura });
+  const out = live ? { day, rows: top.map(row), weekly: topWeek.map(row) } : { day, rows: top.map(row) };
+  if (live) leaderboardCache = { day, at: now(), out };
+  return json(out);
 }
 
 async function ledger(req, env, url) {
