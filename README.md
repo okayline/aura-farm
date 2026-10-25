@@ -23,10 +23,10 @@ of their own, both are revealed at once, and the style that beats the other wins
   you can take has a Details panel under FLEX with what is public about it. A finished farm has a Results panel (who
   played what, the aura, when, and each side's fingerprint with the salt that opens it) and its whole ledger entry
   (record, prev, hash), with a link to its entry on The Registry.
-- **Player pages**: tap a name or pic on The Farm or Today to open that player's page (aura.88x31.app/?player=N, the back
-  button works), open to anyone, logged in or not. It shows their lifetime aura (every day that has ended, saved in
-  `aura_days` the first time anyone opens the page, plus today so far, worked out when the page loads), the farms they have
-  up, how many battles they won, lost and drew, and their latest 10 styles.
+- **Player pages (backend only)**: the Worker still answers `GET /api/player?id=N` (anyone, logged in or not) with a
+  player's lifetime aura (every day that has ended, saved in `aura_days` the first time it is asked for, plus today so far),
+  the farms they have up, battles won, lost and drawn, and their latest 10 styles. The page does not show it: the player
+  pages were taken out of the page in v0.105. `GET /api/board` rows carry `pid` and `GET /api/leaderboard` rows carry `id`.
 - **Save codes and passkeys**: the shared Accounts service (dungeon-items `ACCOUNTS.md`, bound as `ACCOUNTS`). This game
   keeps its own players and cookie; a device loaded later gets its own token in `sessions`.
 
@@ -39,7 +39,7 @@ Live at aura.88x31.app. Four tabs at the bottom; a reload stays on the tab you w
   below with the time left.
 - **🌾 The Farm**: every open farm, whoever has been farming the longest first, with what it is worth now, the
   poster's latest styles and how long it has been up. Tap FLEX to take one.
-- **🏆 Today**: the AURA LEADERBOARD for the day. The top 3 portraits glow.
+- **🏆 Today**: the AURA LEADERBOARD for the day and, below it, a WEEKLY LEADERBOARD (the last 7 days added up). The top 3 portraits glow.
 - **📜 About**: a short how-to-play panel, then "Legends of AURA", the hash-chained ledger. Tap an entry to open its farm. (The address is still `?tab=ledger`.)
 
 Each player has a profile pic, one of 24 emojis, the same on every screen: the one they picked (tap it on the player

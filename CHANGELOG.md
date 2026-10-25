@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.105 (Oct 24 2026, HST)
+
+- The player pages are taken out of the page. Your name at the top opens the "You" screen again (pic, reroll name, save codes and passkeys, log in as another player, log out), as it did before; names and pics on The Farm and the rows on Today no longer open anything. The About text and the weekly leaderboard stay. Removed: the player page and its `?player=` address, tapping a name, pic or Today row to open it, and the account controls on your own page (they are back on the "You" screen). The Worker's player answer (`/api/player`) and the `aura_days` table are still there, not used by the page.
+
 ## v0.104 (Oct 24 2026, HST)
 
 - A WEEKLY LEADERBOARD below the AURA LEADERBOARD on Today. It adds up each player's aura over the last 7 days (today and the 6 before, rolling), counted the same way Today counts each day, and each row opens that player's page. Removed: nothing.
