@@ -146,7 +146,14 @@ function ledgerTab(l) {
     return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
       ${r.line ? `<span class="small">${esc(r.line)}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash.slice(0, 16)}…</code></span><span>›</span></button>`;
   }).join("");
-  return `<div class="panel"><div class="big glow">Legends of AURA</div></div>
+  const n = (x) => x.toLocaleString("en-US");
+  const about = `<div class="panel"><div class="big glow">About</div>
+      <p class="small">${A.EMOJI.D} ${A.STYLE.D} beats ${A.EMOJI.R} ${A.STYLE.R}, ${A.EMOJI.R} ${A.STYLE.R} beats ${A.EMOJI.M} ${A.STYLE.M}, ${A.EMOJI.M} ${A.STYLE.M} beats ${A.EMOJI.D} ${A.STYLE.D}. The same style is a draw.</p>
+      <p class="small"><b>FARM AURA</b> puts your style on the board, face down. While nobody takes it you farm +${n(A.STAND_PER_HOUR)} AURA every hour, for up to ${A.LIFE / 3600} hours. You can have ${A.MAX_OPEN} up at once.</p>
+      <p class="small"><b>FLEX</b> on someone's Farm with a style of your own to start an AURA Battle. Both styles flip over and the winner takes ${n(A.STAKE)} AURA from the loser, plus ${n(A.STAKE_PER_HOUR)} more for every hour that Farm stood.</p>
+      <p class="small">To FLEX you need a Farm up. Each Farm you have up lets you FLEX once every ${A.FLEX_WINDOW / 60} minutes.</p>
+      <p class="small">Every finished battle is sealed in the ledger below.</p></div>`;
+  return `${about}<div class="panel" style="margin-top:12px"><div class="big glow">Legends of AURA</div></div>
     <div class="list">${rows || `<p class="small">No farms finished yet.</p>`}</div>`;
 }
 
@@ -379,7 +386,7 @@ function draw() {
   const body = view?.you ? youScreen() : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
   $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
-  $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Today"], ["ledger", "📜", "Ledger"]]
+  $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Today"], ["ledger", "📜", "About"]]
     .map(([k, i, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button"><span class="ti">${i}</span>${w}</button>`).join("");
   syncAddress();
   if (scrollTop) { scrollTop = false; window.scrollTo(0, 0); }
@@ -394,7 +401,7 @@ async function openFarm(id, step = true) {
   pick = null;
   if (step && location.search !== "?farm=" + id) history.pushState({ farm: id }, "", "?farm=" + id);
 }
-// The address follows the screen: a farm shows ?farm=N, The Farm / Today / Ledger show ?tab=..., Home the bare address (so a reload stays where you were).
+// The address follows the screen: a farm shows ?farm=N, The Farm / Today / About show ?tab=..., Home the bare address (so a reload stays where you were).
 function syncAddress() {
   const want = view && !view.you ? "?farm=" + view.id : !view && tab !== "farms" ? "?tab=" + tab : "";
   if (location.search !== want) history.replaceState(null, "", location.pathname + want);
