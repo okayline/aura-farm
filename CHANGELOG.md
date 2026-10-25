@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.93 (Oct 24 2026, HST)
+
+- The game's name is now AURA FARMING SIMULATOR: LOCKED IN BATTLE EDITION 2027, on the line under the title, the browser tab and the README. Removed: "NO CAP" from the name.
+
 ## v0.92 (Oct 24 2026, HST)
 
 - Lines that used to wrap onto a second line now stay on one line, shrinking a little when they need to: the "AURA today" number at the top of every screen, the "NO CAP BATTLE EDITION 2027" line under the title, each ledger entry's title and its date-and-line, the stake line on The Farm's cards, and the "Put up by" and "Taken by" rows in Results. Nothing changes when the text already fits. Removed: the second lines (like "today" or "AURA" on its own).

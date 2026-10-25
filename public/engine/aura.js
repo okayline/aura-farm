@@ -1,4 +1,4 @@
-// AURA FARMING SIMULATOR: NO CAP BATTLE EDITION 2027. The rules, shared by the Worker and the page.
+// AURA FARMING SIMULATOR: LOCKED IN BATTLE EDITION 2027. The rules, shared by the Worker and the page.
 // Pure functions only: no network, no storage.
 //
 // AURA FARM (v0.6). You put a style on the board, sealed: DRIP, RIZZ or MOG (DRIP > RIZZ > MOG > DRIP). While it

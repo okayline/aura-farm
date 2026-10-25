@@ -117,7 +117,7 @@ const halo = (emoji, glow = 18) => `<div class="halo" style="box-shadow: 0 0 ${g
 
 function header() {
   return `<header>
-    <div class="title">AURA FARMING SIMULATOR<small data-fit>NO CAP BATTLE EDITION 2027</small></div>
+    <div class="title">AURA FARMING SIMULATOR<small data-fit>LOCKED IN BATTLE EDITION 2027</small></div>
     <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button>
       <span class="aura" data-fit>${me?.aura != null ? `<b>${num(me.aura)}</b> AURA today` : "stand there. look cool."}</span></div>
   </header>`;
