@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.72 (Oct 24 2026, HST)
+
+- On your Home screen, each farm card no longer says "+10,000 an hour". It reads "+140,000 AURA farmed so far" and, under it, the time left ("9h 46m left"). Removed: "+10,000 an hour ·" from that line (the farm's own page still says what it earns).
+
 ## v0.71 (Oct 24 2026, HST)
 
 - On the About tab's ledger, there is a little more space between the lines of each panel (the title, the date and line, the styles, the hash). Removed: the tighter spacing.
