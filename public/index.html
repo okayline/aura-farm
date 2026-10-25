@@ -23,7 +23,8 @@
   .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 118px; display: flex; flex-direction: column; gap: 14px; }
   .glow { text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }
   .big.glow { text-shadow: 0 0 8px rgba(176,132,255,.45); }
-  .stakeline, .big.glow.stakeline { text-align: center; white-space: nowrap; font-size: min(26px, calc((min(100vw, 430px) - 32px) / (var(--n, 26) * 0.56))); font-weight: 800; margin: 22px 0; text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }   /* "+260,000 AURA on the line!" on the FLEX page: bold, with the full glow, never wraps (the text shrinks with the screen and the length of the words, --n = its characters, instead) */   /* large white headings: a softer glow */
+  .stakeline, .big.glow.stakeline { text-align: center; white-space: nowrap; font-size: min(26px, calc((min(100vw, 430px) - 32px) / (var(--n, 26) * 0.56))); font-weight: 400; margin: 22px 0; text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }   /* "+260,000 AURA on the line!" on the FLEX page: bold, with the full glow, never wraps (the text shrinks with the screen and the length of the words, --n = its characters, instead) */   /* large white headings: a softer glow */
+  .stakeline b { font-weight: 800; }   /* only the amount is bold, not the words after it */
   .meme { font-family: var(--meme); letter-spacing: .5px; text-transform: uppercase; }
   header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .title { font-family: var(--meme); font-size: 19px; line-height: 1.05; text-shadow: 0 0 8px rgba(176,132,255,.6), 0 0 16px rgba(255,111,207,.3); }

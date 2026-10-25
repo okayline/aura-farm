@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.84 (Oct 24 2026, HST)
+
+- On the FLEX page, only the amount ("+260,000 AURA") is bold now; the words after it ("on the line!", "at stake!", "on this!", "to the winner!") are normal weight. Removed: the bold on those words.
+
 ## v0.83 (Oct 24 2026, HST)
 
 - On the FLEX page, the words after the amount change each time a farm page opens: "+260,000 AURA on the line!", "at stake!", "on this!" or "to the winner!". The text still never wraps (the longer ones are a little smaller). Removed: the single fixed "on the line!".
