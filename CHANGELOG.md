@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.70 (Oct 24 2026, HST)
+
+- On the About tab's ledger, the hash stays on one line and shows as much of it as fits, trailing off with "…" only when the screen is too narrow for all of it. Removed: the hash wrapping onto a second line (v0.68).
+
 ## v0.69 (Oct 24 2026, HST)
 
 - On the About tab's ledger, the date, time and line share one line: "Oct 24, 2026 - 17:14:09 - A RIZZY standoff." The date now has the year. A farm with no line (the old card duels) shows just "Oct 23, 2026 - 19:00:05". Removed: the time on a line of its own (v0.68) and the date without a year.
