@@ -3,13 +3,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as A from "../public/engine/aura.js";
 
-test("DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP: the winner gets 500,000, the loser loses it", () => {
-  assert.deepEqual(A.farm("D", "R"), { winner: 0, how: "win", deltas: [500000, -500000] });
-  assert.deepEqual(A.farm("R", "M"), { winner: 0, how: "win", deltas: [500000, -500000] });
-  assert.deepEqual(A.farm("M", "D"), { winner: 0, how: "win", deltas: [500000, -500000] });
-  assert.deepEqual(A.farm("R", "D"), { winner: 1, how: "win", deltas: [-500000, 500000] });
-  assert.deepEqual(A.farm("D", "M"), { winner: 1, how: "win", deltas: [-500000, 500000] });
-  assert.deepEqual(A.farm("M", "R"), { winner: 1, how: "win", deltas: [-500000, 500000] });
+test("DRIP beats RIZZ, RIZZ beats MOG, MOG beats DRIP: the winner gets 120,000, the loser loses it", () => {
+  assert.deepEqual(A.farm("D", "R"), { winner: 0, how: "win", deltas: [120000, -120000] });
+  assert.deepEqual(A.farm("R", "M"), { winner: 0, how: "win", deltas: [120000, -120000] });
+  assert.deepEqual(A.farm("M", "D"), { winner: 0, how: "win", deltas: [120000, -120000] });
+  assert.deepEqual(A.farm("R", "D"), { winner: 1, how: "win", deltas: [-120000, 120000] });
+  assert.deepEqual(A.farm("D", "M"), { winner: 1, how: "win", deltas: [-120000, 120000] });
+  assert.deepEqual(A.farm("M", "R"), { winner: 1, how: "win", deltas: [-120000, 120000] });
 });
 
 test("the same style is a MUTUAL MOG: nothing changes", () => {
@@ -19,11 +19,11 @@ test("the same style is a MUTUAL MOG: nothing changes", () => {
 
 test("captions: a win is AURA FARMED, a loss is COOKED, a draw is MUTUAL MOG", () => {
   const r = A.farm("D", "M");     // MOG beats DRIP: the taker wins
-  assert.equal(A.caption(r, 0), "COOKED. -500,000 AURA");
-  assert.equal(A.caption(r, 1), "AURA FARMED. +500,000 AURA");
+  assert.equal(A.caption(r, 0), "COOKED. -120,000 AURA");
+  assert.equal(A.caption(r, 1), "AURA FARMED. +120,000 AURA");
   const s = A.farm("D", "R");     // DRIP beats RIZZ: the poster wins
-  assert.equal(A.caption(s, 0), "AURA FARMED. +500,000 AURA");
-  assert.equal(A.caption(s, 1), "COOKED. -500,000 AURA");
+  assert.equal(A.caption(s, 0), "AURA FARMED. +120,000 AURA");
+  assert.equal(A.caption(s, 1), "COOKED. -120,000 AURA");
   assert.equal(A.caption(A.farm("M", "M"), 1), "MUTUAL MOG. +0 AURA");
 });
 
@@ -45,32 +45,32 @@ test("a record is a player's latest 10 styles, newest first", () => {
   assert.deepEqual(A.record([{ id: 3, style: "M" }, { id: 9, style: "D" }]), ["D", "M"]);
 });
 
-test("a farm moves 500,000 plus 50,000 for each whole hour it stood", () => {
-  assert.deepEqual(A.farm("D", "R", 1), { winner: 0, how: "win", deltas: [550000, -550000] });
-  assert.deepEqual(A.farm("D", "M", 12), { winner: 1, how: "win", deltas: [-1100000, 1100000] });
-  assert.deepEqual(A.farm("R", "D", 23), { winner: 1, how: "win", deltas: [-1650000, 1650000] });
+test("a farm moves 120,000 plus 15,000 for each whole hour it stood", () => {
+  assert.deepEqual(A.farm("D", "R", 1), { winner: 0, how: "win", deltas: [135000, -135000] });
+  assert.deepEqual(A.farm("D", "M", 12), { winner: 1, how: "win", deltas: [-300000, 300000] });
+  assert.deepEqual(A.farm("R", "D", 23), { winner: 1, how: "win", deltas: [-465000, 465000] });
   assert.deepEqual(A.farm("M", "M", 12), { winner: null, how: "tie", deltas: [0, 0] });
-  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +1,100,000 AURA");
+  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +300,000 AURA");
   assert.throws(() => A.farm("D", "R", 1.5));
   assert.throws(() => A.farm("D", "R", -1));
 });
 
-test("a farm earns a flat 30,000 for each whole hour", () => {
+test("a farm earns a flat 10,000 for each whole hour", () => {
   assert.equal(A.earned(0), 0);
-  assert.equal(A.earned(1), 30000);
-  assert.equal(A.earned(2), 60000);
-  assert.equal(A.earned(3), 90000);
-  assert.equal(A.earned(12), 360000);
-  assert.equal(A.earned(24), 720000);
+  assert.equal(A.earned(1), 10000);
+  assert.equal(A.earned(2), 20000);
+  assert.equal(A.earned(3), 30000);
+  assert.equal(A.earned(12), 120000);
+  assert.equal(A.earned(24), 240000);
 });
 
 test("standing aura: by the farm's age, the oldest farm up earns, a partial hour waits", () => {
-  assert.equal(A.standing([[0, 5400, 0]]), 30000);                          // 1.5 hours: one whole hour
-  assert.equal(A.standing([[0, 7200, 0]]), 60000);
-  assert.equal(A.standing([[0, 3600, 0], [7200, 10800, 7200]]), 60000);     // two farms an hour apart, 30,000 each
-  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 90000);     // the younger one carries on from its own age: 60,000 then its 2nd hour, 30,000
-  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 60000);      // a younger farm inside an older one adds nothing
-  assert.equal(A.standing([[3600, 7200, 0]]), 30000);                       // the 2nd hour of a farm put up at 0, counted from 3600
+  assert.equal(A.standing([[0, 5400, 0]]), 10000);                          // 1.5 hours: one whole hour
+  assert.equal(A.standing([[0, 7200, 0]]), 20000);
+  assert.equal(A.standing([[0, 3600, 0], [7200, 10800, 7200]]), 20000);     // two farms an hour apart, 10,000 each
+  assert.equal(A.standing([[0, 7200, 0], [3600, 10800, 3600]]), 30000);     // the younger one carries on from its own age: 20,000 then its 2nd hour, 10,000
+  assert.equal(A.standing([[0, 7200, 0], [1800, 3600, 1800]]), 20000);      // a younger farm inside an older one adds nothing
+  assert.equal(A.standing([[3600, 7200, 0]]), 10000);                       // the 2nd hour of a farm put up at 0, counted from 3600
 });
 
 

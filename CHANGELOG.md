@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.95 (Oct 24 2026, HST)
+
+- Smaller numbers. A win or loss is now 120,000 (was 500,000), going up 15,000 for each whole hour the farm stood (was 50,000), and farming earns 10,000 an hour (was 30,000, up to 240,000 over 24 hours). A farm taken at 12 hours moves 300,000. Removed: the 500,000 / 50,000-an-hour stake and the 30,000-an-hour farming rate.
+
 ## v0.94 (Oct 24 2026, HST)
 
 - Farming now earns 30,000 AURA an hour while your farm stands (up to 720,000 over its 24 hours). The stake still goes up 50,000 an hour, so farming no longer cancels out the stake growth: a poster who loses now ends below -500,000 the longer they waited (-740,000 at 12 hours). Removed: the 50,000-an-hour farming rate.

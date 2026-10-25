@@ -109,7 +109,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   const b = await call("bo", "GET", "/api/board");
   assert.equal(b.farms.length, 1);
   assert.equal("aura" in b.farms[0], false, "the board no longer sends the poster's aura for the day");
-  assert.equal((await call("ann", "GET", "/api/today")).aura, 60000, "2 hours standing: 30,000 each, in ann's aura today");
+  assert.equal((await call("ann", "GET", "/api/today")).aura, 20000, "2 hours standing: 10,000 each, in ann's aura today");
   assert.deepEqual(b.farms[0].record, []);
   assert.equal(JSON.stringify(b).includes('"R"'), false, "the board never shows the style");
 
@@ -126,9 +126,9 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(tk.status, "done");
   assert.deepEqual(tk.styles, ["R", "D"]);
   assert.equal(judge("R", "D"), 1);
-  assert.deepEqual(tk.result.deltas, [-600000, 600000], "taken after 2 whole hours: 500,000 + 2 x 50,000");
+  assert.deepEqual(tk.result.deltas, [-150000, 150000], "taken after 2 whole hours: 120,000 + 2 x 15,000");
   assert.equal(tk.result.winner, 1);
-  assert.deepEqual(tk.captions, ["COOKED. -600,000 AURA", "AURA FARMED. +600,000 AURA"]);
+  assert.deepEqual(tk.captions, ["COOKED. -150,000 AURA", "AURA FARMED. +150,000 AURA"]);
   assert.equal(f.id, 1);
   assert.equal(tk.line, "RIZZ tried. DRIP shined.");
   assert.equal(tk.takenAt - tk.postedAt, 2 * 3600 + 60, "the farm's own page knows when it was put up and taken: it stood for the 2 hours and a minute above");
@@ -153,7 +153,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(row.hash, sha(row.prev_hash + "|" + row.record));
   assert.equal(row.farm_id, f.id);
   const rec = JSON.parse(row.record);
-  assert.equal(rec.rules, 8);
+  assert.equal(rec.rules, 9);
   assert.deepEqual(rec.styles, ["R", "D"]);
   assert.equal(rec.players.includes(null), false);
   assert.equal(rec.line, "RIZZ tried. DRIP shined.", "the line is sealed with the farm");
@@ -162,14 +162,14 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
 
   const lb = await call("bo", "GET", "/api/leaderboard");
   assert.equal(lb.rows.length, 2);
-  // bo +600,000; ann -600,000 plus 2 full hours standing (30,000 each) before bo took it
-  assert.deepEqual(lb.rows.map((r) => r.aura), [600000, -540000]);
+  // bo +150,000; ann -150,000 plus 2 full hours standing (10,000 each) before bo took it
+  assert.deepEqual(lb.rows.map((r) => r.aura), [150000, -130000]);
 });
 
 test("today's leaderboard is kept for 30 seconds and a take clears it; names come for the players shown", async () => {
   const { env, call, tick } = setup();
   const f = await call("ann", "POST", "/api/farm", { style: "D" });
-  tick(3 * 3600);   // 3 hours standing: ann has 90,000 and is on the board
+  tick(3 * 3600);   // 3 hours standing: ann has 30,000 and is on the board
   const first = await call("bo", "GET", "/api/leaderboard");
   assert.equal(first.rows.length, 1);
   assert.equal(first.rows[0].name, env.DB.raw.prepare("SELECT name FROM players WHERE id = 1").get().name, "the player's name is filled in");
@@ -225,14 +225,14 @@ test("at most 3 farms up at once; each stays up 24 hours, across midnight, then 
   // ann's untaken farm shows as expired, so she can see her time was up
   assert.equal((await call("ann", "GET", "/api/today")).farms.filter((x) => x.status === "expired").length, 1);
   // aura counts on the day it happened: Jan 1 has the first take and the oldest farm's first 16 hours (08:00-24:00):
-  // 16 x 30,000 = 480,000. The two farms stood together, so they earn once.
-  // Jan 2 has the second take (16 whole hours up: 500,000 + 16 x 50,000 = 1,300,000) and the farm still standing carrying on from
-  // its 17th hour to its 24th: 720,000 - 480,000 = 240,000
+  // 16 x 10,000 = 160,000. The two farms stood together, so they earn once.
+  // Jan 2 has the second take (16 whole hours up: 120,000 + 16 x 15,000 = 360,000) and the farm still standing carrying on from
+  // its 17th hour to its 24th: 240,000 - 160,000 = 80,000
   const name = (await call("ann", "GET", "/api/today")).name;
   const aura = async (day) => (await call("ann", "GET", "/api/leaderboard?day=" + day)).rows.find((r) => r.name === name).aura;
-  assert.equal(d1, -1300000);
-  assert.equal(await aura("2027-01-01"), d0 + 480000);
-  assert.equal(await aura("2027-01-02"), d1 + 240000);
+  assert.equal(d1, -360000);
+  assert.equal(await aura("2027-01-01"), d0 + 160000);
+  assert.equal(await aura("2027-01-02"), d1 + 80000);
 });
 
 test("each finished farm sends the registry a checkpoint of the ledger: public facts, never a player", async () => {
@@ -246,8 +246,8 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   const sent = env.REGISTRY.checkpoints;
   assert.deepEqual(sent.map((c) => [c.game, c.entries, c.head]), [["aura-farm", 1, rows[0].hash], ["aura-farm", 2, rows[1].hash]]);
   assert.deepEqual(sent.map((c) => c.detail), [
-    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [500000, -500000], line: "RIZZ tried. DRIP shined." },
-    { day: "2027-01-01", farm: 3, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-500000, 500000], line: "The DRIP couldn't survive the MOG." },
+    { day: "2027-01-01", farm: 1, result: "win", styles: ["DRIP", "RIZZ"], winner: "poster", aura: [120000, -120000], line: "RIZZ tried. DRIP shined." },
+    { day: "2027-01-01", farm: 3, result: "win", styles: ["DRIP", "MOG"], winner: "taker", aura: [-120000, 120000], line: "The DRIP couldn't survive the MOG." },
   ]);
   assert.equal(JSON.stringify(sent).includes("players"), false);
   assert.equal(JSON.stringify(sent).includes("ann"), false);
