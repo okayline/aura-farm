@@ -159,7 +159,10 @@ const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;mar
   <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
-const at = (sec) => new Date(sec * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+// a time on a farm's page, in the viewer's own time zone: "14:46 on Oct 25th, 2026" (24-hour, no seconds)
+const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+const at = (sec) => { const d = new Date(sec * 1000);
+  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short" }) + " " + nth(d.getDate()) + ", " + d.getFullYear(); };
 // the ledger panels' time and date, in the viewer's own time zone: "17:14:09 on Oct 24, 2026" (24-hour, with seconds)
 const atSec = (sec) => { const d = new Date(sec * 1000);
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }) + " on " + d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
