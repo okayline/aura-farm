@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.61 (Oct 24 2026, HST)
+
+- Every "aura" and "Aura" on the screens now reads AURA: the numbers ("+260,000 AURA", "COOKED. -100,000 AURA", "MUTUAL MOG. +0 AURA"), "AURA today", "Your AURA today", "AURA farmed so far", "+10,000 AURA every hour…", "Nobody has any AURA yet. Go farm." and the page's description line. Removed: the lowercase and capitalised spellings. Farms already taken keep their sealed ledger entry as it was written, so an old entry's record text still says "aura" in lowercase; the caption shown above it reads AURA.
+- The Farm no longer works out each poster's aura for the day, which its rows stopped showing in v0.60. Removed: that lookup and the `aura` number the board sent with each row (one fewer database query each time The Farm loads).
+
 ## v0.60 (Oct 24 2026, HST)
 
 - On The Farm, each row says what that farm is worth: "worth +260,000 aura" for a farm that has stood 16 hours, which is what the winner gets if it is taken now (100,000 plus 10,000 for each whole hour). It counts up as the hours pass, the same number as "If you win" on the FLEX screen. Removed: "+50,000 aura today" (the poster's aura for the day) on those rows.

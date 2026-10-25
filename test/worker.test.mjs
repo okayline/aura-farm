@@ -108,7 +108,8 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal((await call("ann", "GET", `/api/farm?id=${f.id}`)).left, 24 * 3600 - (2 * 3600 + 60), "and so does the farm's own page");
   const b = await call("bo", "GET", "/api/board");
   assert.equal(b.farms.length, 1);
-  assert.equal(b.farms[0].aura, 20000, "2 hours standing: 10,000 each");
+  assert.equal("aura" in b.farms[0], false, "the board no longer sends the poster's aura for the day");
+  assert.equal((await call("ann", "GET", "/api/today")).aura, 20000, "2 hours standing: 10,000 each, in ann's aura today");
   assert.deepEqual(b.farms[0].record, []);
   assert.equal(JSON.stringify(b).includes('"R"'), false, "the board never shows the style");
 
@@ -127,7 +128,7 @@ test("a whole farm: post a sealed style, take: decided at once and sealed on the
   assert.equal(judge("R", "D"), 1);
   assert.deepEqual(tk.result.deltas, [-120000, 120000], "taken after 2 whole hours: 100,000 + 2 x 10,000");
   assert.equal(tk.result.winner, 1);
-  assert.deepEqual(tk.captions, ["COOKED. -120,000 aura", "AURA FARMED. +120,000 aura"]);
+  assert.deepEqual(tk.captions, ["COOKED. -120,000 AURA", "AURA FARMED. +120,000 AURA"]);
   assert.equal(f.id, 1);
   assert.equal(tk.line, "RIZZ tried. DRIP shined.");
   assert.equal(tk.takenAt - tk.postedAt, 2 * 3600 + 60, "the farm's own page knows when it was put up and taken: it stood for the 2 hours and a minute above");
@@ -172,7 +173,7 @@ test("a draw changes nothing", async () => {
   const tk = await call("bo", "POST", "/api/take", { id: f.id, style: "M" });
   assert.equal(tk.result.winner, null);
   assert.deepEqual(tk.result.deltas, [0, 0]);
-  assert.equal(tk.captions[1], "MUTUAL MOG. +0 aura");
+  assert.equal(tk.captions[1], "MUTUAL MOG. +0 AURA");
 });
 
 test("The Farm lists whoever has been farming the longest first", async () => {

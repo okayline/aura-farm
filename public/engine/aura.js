@@ -49,8 +49,8 @@ export function farm(a, b, hours = 0) {
 
 // The meme caption for a finished farm, from one side's point of view (side 0 or 1).
 export function caption(result, side) {
-  const d = result.deltas[side], amt = `${d >= 0 ? "+" : "-"}${Math.abs(d).toLocaleString("en-US")} aura`;
-  if (result.winner === null || result.winner === undefined) return "MUTUAL MOG. +0 aura";
+  const d = result.deltas[side], amt = `${d >= 0 ? "+" : "-"}${Math.abs(d).toLocaleString("en-US")} AURA`;
+  if (result.winner === null || result.winner === undefined) return "MUTUAL MOG. +0 AURA";
   return `${result.winner === side ? "AURA FARMED" : "COOKED"}. ${amt}`;
 }
 

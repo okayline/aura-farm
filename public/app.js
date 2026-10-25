@@ -36,10 +36,10 @@ const clock = (ms) => { const m = Math.floor(ms / 60000); return m >= 60 ? `${Ma
 // whole hours a farm has stood since it went up (ms)
 const hoursUp = (since) => Math.floor(Math.min(Math.max(Date.now() - since, 0), A.LIFE * 1000) / 3600000);
 // what a farm has earned by standing so far: 10,000 for each whole hour (this farm on its own; farms up together earn from the oldest)
-const earnText = (since) => "+" + A.earned(hoursUp(since)).toLocaleString("en-US") + " aura";
+const earnText = (since) => "+" + A.earned(hoursUp(since)).toLocaleString("en-US") + " AURA";
 // what a farm earns per hour, and what it moves if it is taken now
 const rateText = "+" + A.STAND_PER_HOUR.toLocaleString("en-US") + " an hour";
-const stakeText = (since, sign) => num(sign * A.stake(hoursUp(since))) + " aura";
+const stakeText = (since, sign) => num(sign * A.stake(hoursUp(since))) + " AURA";
 const stakeSpan = (since, sign) => `<span data-stake="${since}" data-sign="${sign}">${stakeText(since, sign)}</span>`;
 const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(end - A.LIFE * 1000)}</span>`;
 // how long a farm has been up, in the words of The Farm's rows: "Up for 5 hrs" (minutes for the first hour)
@@ -96,7 +96,7 @@ function header() {
   return `<header>
     <div class="title">AURA FARMING SIMULATOR<small>NO CAP BATTLE EDITION 2027</small></div>
     <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button><br>
-      ${me?.aura != null ? `<b>${num(me.aura)}</b> aura today` : "stand there. look cool."}</div>
+      ${me?.aura != null ? `<b>${num(me.aura)}</b> AURA today` : "stand there. look cool."}</div>
   </header>`;
 }
 
@@ -109,7 +109,7 @@ function farmsTab() {
       <span>${d.style && d.status === "done" ? emo(d.style) : ""} ›</span>
     </button>`).join("");
   return `<div class="panel"><div class="big glow">${me?.name ? esc(me.name) + "'s " : ""}AURA FARM</div>
-      <p class="small">+10,000 Aura every hour while your Farm is up</p>
+      <p class="small">+10,000 AURA every hour while your Farm is up</p>
       <p class="small">Flex on someone currently Farming to start an AURA Battle!</p></div>
     ${styles(full, false)}
     <button class="go" data-act="farm" type="button" ${pick && !full ? "" : "disabled"}>🌾 FARM AURA</button>
@@ -130,7 +130,7 @@ function boardOfDay(lb) {
   const rows = (lb?.rows || []).map((r, i) => `<div class="item"><span class="meme" style="width:28px">${i + 1}</span>
     ${halo(pic(r.name, r.pic), [18, 11, 5][i] ?? 0)}<span class="grow">${esc(r.name)}</span><b class="glow">${num(r.aura)}</b></div>`).join("");
   return `<div class="panel"><div class="big glow">AURA LEADERBOARD</div></div>
-    <div class="list">${rows || `<p class="small">Nobody has any aura yet. Go farm.</p>`}</div>`;
+    <div class="list">${rows || `<p class="small">Nobody has any AURA yet. Go farm.</p>`}</div>`;
 }
 
 function ledgerTab(l) {
@@ -195,7 +195,7 @@ function openFarmPage(v, back) {
       ${kv("Put up", at(v.postedAt))}${kv("Comes down", at(v.deadline))}${kv("Up for", upSpan(end))}${kv("Farmed so far", earnSpan(end))}
       ${kv("Earning", rateText)}${kv("At most", "+" + A.earned(A.LIFE / 3600).toLocaleString("en-US") + " if nobody takes it")}
       ${kv("If you win", stakeSpan(end - A.LIFE * 1000, 1))}${kv("If you lose", stakeSpan(end - A.LIFE * 1000, -1))}${kv("Goes up", `Win/lose +${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour`)}
-      ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
+      ${kv("Your AURA today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
       ${kv("Your record", recordLine(v.records[0]))}
       <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px")}${back}`;
 }
@@ -205,9 +205,9 @@ function takeInfo(v) {
   const end = v.left != null ? endOf(v) : null, open = (me?.farms || []).filter((f) => f.status === "open").length;
   return rolled("take", "Details", `
     ${kv("Farm", "#" + v.id)}${kv("Put up by", esc(v.names[0] || "?"))}
-    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("Aura farmed so far", earnSpan(end)) : ""}
-    ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " aura")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " aura")}${kv("Same style", num(0) + " aura")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
-    ${kv("Your aura today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
+    ${v.postedAt ? kv("Put up", at(v.postedAt)) : ""}${end ? kv("Comes down", at(v.deadline)) + kv("Time left", leftSpan(end)) + kv("Stood for", upSpan(end)) + kv("AURA farmed so far", earnSpan(end)) : ""}
+    ${kv("If you win", end ? stakeSpan(end - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA")}${kv("If you lose", end ? stakeSpan(end - A.LIFE * 1000, -1) : num(-A.STAKE) + " AURA")}${kv("Same style", num(0) + " AURA")}${kv("Goes up", `+${A.STAKE_PER_HOUR.toLocaleString("en-US")} every hour it stands`)}
+    ${kv("Your AURA today", me?.aura != null ? num(me.aura) : "…")}${kv("Your farms up", `${open} of ${A.MAX_OPEN}`)}
     <p class="small seal">${esc(v.commits[0])}</p>`, "", "margin-top:12px");
 }
 

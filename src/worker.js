@@ -343,13 +343,12 @@ async function postFarm(req, env) {
 async function board(req, env) {
   const day = utcDay();
   const player = await findPlayer(req, env);
-  const [list, rows] = await env.DB.batch([env.DB.prepare(
+  const { results } = await env.DB.prepare(
     `SELECT d.id, d.c_id, d.posted_at, p.name, p.pic FROM farms d JOIN players p ON p.id = d.c_id
-     WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE), aurasStmt(env, day)]);
-  const results = list.results, auras = aurasFrom(rows.results, day);
+     WHERE d.status = 'open' AND d.posted_at > ? ORDER BY d.posted_at, d.id LIMIT 100`).bind(now() - A.LIFE).all();
   const records = recordsFrom((await recordsStmt(env, results.map((r) => r.c_id)).all()).results);
   // one row per open farm (a player with 3 farms up has 3 rows)
-  const farms = results.map((r) => ({ id: r.id, name: r.name, pic: r.pic ?? null, aura: auras.get(r.c_id) || 0, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
+  const farms = results.map((r) => ({ id: r.id, name: r.name, pic: r.pic ?? null, record: records.get(r.c_id) ?? [], postedAt: r.posted_at, up: now() - r.posted_at, mine: !!player && r.c_id === player.id }));   // up: seconds it has stood, so the page's own clock doesn't matter
   return json({ day, farms });
 }
 

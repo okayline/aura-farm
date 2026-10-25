@@ -19,12 +19,12 @@ test("the same style is a MUTUAL MOG: nothing changes", () => {
 
 test("captions: a win is AURA FARMED, a loss is COOKED, a draw is MUTUAL MOG", () => {
   const r = A.farm("D", "M");     // MOG beats DRIP: the taker wins
-  assert.equal(A.caption(r, 0), "COOKED. -100,000 aura");
-  assert.equal(A.caption(r, 1), "AURA FARMED. +100,000 aura");
+  assert.equal(A.caption(r, 0), "COOKED. -100,000 AURA");
+  assert.equal(A.caption(r, 1), "AURA FARMED. +100,000 AURA");
   const s = A.farm("D", "R");     // DRIP beats RIZZ: the poster wins
-  assert.equal(A.caption(s, 0), "AURA FARMED. +100,000 aura");
-  assert.equal(A.caption(s, 1), "COOKED. -100,000 aura");
-  assert.equal(A.caption(A.farm("M", "M"), 1), "MUTUAL MOG. +0 aura");
+  assert.equal(A.caption(s, 0), "AURA FARMED. +100,000 AURA");
+  assert.equal(A.caption(s, 1), "COOKED. -100,000 AURA");
+  assert.equal(A.caption(A.farm("M", "M"), 1), "MUTUAL MOG. +0 AURA");
 });
 
 test("the line: picked by the farm's number from the winning matchup's four; a draw names its style", () => {
@@ -50,7 +50,7 @@ test("a farm moves 100,000 plus 10,000 for each whole hour it stood", () => {
   assert.deepEqual(A.farm("D", "M", 12), { winner: 1, how: "win", deltas: [-220000, 220000] });
   assert.deepEqual(A.farm("R", "D", 23), { winner: 1, how: "win", deltas: [-330000, 330000] });
   assert.deepEqual(A.farm("M", "M", 12), { winner: null, how: "tie", deltas: [0, 0] });
-  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +220,000 aura");
+  assert.equal(A.caption(A.farm("D", "R", 12), 0), "AURA FARMED. +220,000 AURA");
   assert.throws(() => A.farm("D", "R", 1.5));
   assert.throws(() => A.farm("D", "R", -1));
 });
