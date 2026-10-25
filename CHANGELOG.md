@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.99 (Oct 24 2026, HST)
+
+- The About panel is rewritten, one short line each: "Stand there. Look cool. Bluff." / "DRIP 💎 beats RIZZ 😏 beats MOG 🗿 beats DRIP 💎." / "Your AURA farms 10,000 an hour up to 24 hours." / "The stakes raise 15,000 an hour." / "Flex on someone to start the AURA BATTLE!" Every line stays on one line (the text shrinks a little on a narrow phone). Removed: the long paragraph, including the lines about the starting amount, losing being COOKED and the same style being a draw.
+
 ## v0.98 (Oct 24 2026, HST)
 
 - Player pages. Tap a player's name or pic on The Farm or on Today to open their page, which anyone can see, logged in or not. It shows their lifetime aura (every finished day added up, plus today so far, so it is current whenever the page loads), the farms they have up (tap one to open it), how many battles they have won, lost and drawn, and their latest 10 styles. Removed: nothing.
