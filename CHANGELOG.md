@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.74 (Oct 24 2026, HST)
+
+- On The Farm, each card now says "+240,000 AURA at stake" where it used to say "worth +240,000 AURA". Removed: the word "worth".
+
 ## v0.73 (Oct 24 2026, HST)
 
 - On the About tab's ledger, each panel's time and date now read "05:10:43 on Oct 21, 2026 - (the farm's line)": the time first (24-hour, with seconds), then the date with the year. Removed: the old order, "Oct 21, 2026 - 05:10:43".
