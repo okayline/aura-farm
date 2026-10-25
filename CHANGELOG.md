@@ -63,7 +63,7 @@
 
 ## v0.44 (Oct 21 2026, HST)
 
-- You get one FLEX for every farm you put up, good for 24 hours from when you posted it. Nothing counts down while you wait, and FLEXing doesn't take your farm down. With none left, FLEX says to put a farm up. Removed: the limit of 3 FLEXes every 30 minutes.
+- You get one FLEX for every farm you put up, good for 24 hours from when you posted it. Nothing counts down while you wait, and FLEXing doesn't take your farm down. With none left, FLEX says to put a farm up. A visitor with no player can't FLEX, and FLEXing no longer makes a player for them. Removed: the limit of 3 FLEXes every 30 minutes, and the new player that FLEXing used to make.
 
 ## v0.43 (Oct 21 2026, HST)
 
@@ -90,6 +90,7 @@
 - A farm that has stood longer is worth more when it is taken: the winner gets, and the loser loses, 100,000 plus 10,000 for every whole hour it stood (110,000 after 1 hour, 220,000 after 12, 330,000 after 23). The FLEX screen's "If you win" and "If you lose" count up as the hours pass. Removed: the flat 100,000.
 - A farm earns more the longer it stands: 10,000 in its first hour, 11,000 in its second, 12,000 in its third, and so on (186,000 after 12 hours, 516,000 after 24). "Earning", "Earned so far", "At most" and the hourly line on your Farming rows follow it. Farms up together still earn once, from the oldest. Removed: the flat 10,000 an hour.
 - Your open farm's Details also say what you win or lose if it is taken now, and that earning goes up 1,000 and win/lose 10,000 every hour. The FLEX screen's Details say the win/lose goes up 10,000 every hour. Removed: nothing.
+
 ## v0.37 (Oct 21 2026, HST)
 
 - Reloading The Farm, Today or Ledger now comes back to the same tab: the address shows `?tab=board`, `?tab=top` or `?tab=ledger` (Home stays the plain address). Removed: reloads always landing on Home.
@@ -169,6 +170,26 @@
 ## v0.20 (Oct 21 2026, HST)
 
 - Log out happens on one tap. "Forget" a save code and "remove" a passkey ask "are you sure?" on the page itself, with Yes and No. Removed: the browser pop-ups for all three.
+
+## v0.19 (Oct 21 2026, HST)
+
+- Each browser keeps its own player. Log in as someone else and then log out, and you're back on the player this browser had, instead of a new one. Removed: v0.18's "log in first" after a log out, and the "Switch anyway?" question before logging in (switching no longer loses this browser's player).
+- Rolled back the same day, before v0.20 (commit `3719077`). v0.21 brought the same idea back.
+
+## v0.18 (Oct 21 2026, HST)
+
+- After you log out of this browser, playing asks you to log in with your save code or passkey first, instead of making a new player. A browser that has never played still gets a player the first time it plays. Removed: a new empty player every time you played after logging out.
+- Rolled back the same day, before v0.20 (commit `f801bc6`).
+
+## v0.17 (Oct 21 2026, HST)
+
+- A finished farm's page shows its whole ledger entry: the record exactly as sealed, the hash before it and its own hash, so anyone can check it. The registry's Aura Farm entries open this page when tapped, and no longer repeat the record there. Removed: the hash shown alone under "Ledger entry".
+- Rolled back the same day, before v0.20 (commit `d755476`, back to v0.15). v0.23 brought the farm page's ledger entry back.
+
+## v0.16 (Oct 21 2026, HST)
+
+- Logging in as another player (save code or passkey) first asks "Switch anyway?" if the player you're on has no save code or passkey, because you couldn't get back to it. Removed: switching away from an unsaved player without a word.
+- Rolled back the same day, before v0.20 (commit `d755476`, back to v0.15). Not brought back.
 
 ## v0.15 (Oct 21 2026, HST)
 
