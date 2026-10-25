@@ -36,6 +36,15 @@ export const stake = (hours) => STAKE + STAKE_PER_HOUR * hours;
 // What a farm has earned by standing this many whole hours: a flat 10,000 for each.
 export const earned = (hours) => STAND_PER_HOUR * hours;
 
+// What a player can FLEX right now: each farm up lets them FLEX FLEX_PER_FARM times in any FLEX_WINDOW. `up` is how many farms they
+// have up, `taken` when (in seconds) their FLEXes happened, `t` is now. Returns how many are ready and, when none is, the seconds
+// until the next one frees up. The Worker refuses a FLEX with this and the page shows it on the FLEX button, so the rule is here once.
+export function flexState(up, taken, t) {
+  const cap = up * FLEX_PER_FARM, recent = taken.filter((x) => x > t - FLEX_WINDOW).sort((a, b) => a - b);
+  const ready = Math.max(0, cap - recent.length);
+  return { ready, wait: ready > 0 || cap === 0 ? 0 : recent[recent.length - cap] + FLEX_WINDOW - t };
+}
+
 // A farm between two styles, taken after it stood this many whole hours. Side 0 is the poster, side 1 the taker. The
 // winner gets the amount and the loser loses the same; a draw changes nothing. Returns { winner: 0 | 1 | null, how: "win" | "tie", deltas: [a, b] }.
 export function farm(a, b, hours = 0) {

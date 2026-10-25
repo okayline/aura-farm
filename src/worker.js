@@ -306,13 +306,18 @@ async function today(req, env) {
   const out = { day, nextIn: dayEnd(day) - now(), name: player?.name ?? null, pic: player?.pic ?? null, id: player?.id ?? null };
   if (!player) return json(out);
   const [a, list] = await env.DB.batch([auraStmt(env, player.id, day), env.DB.prepare(
-    `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, o.name AS opponent FROM farms d
+    `SELECT d.id, d.status, d.c_id, d.t_id, d.result, d.c_style, d.t_style, d.posted_at, d.taken_at, o.name AS opponent FROM farms d
      LEFT JOIN players o ON o.id = (CASE WHEN d.c_id = ?1 THEN d.t_id ELSE d.c_id END)
      WHERE (d.c_id = ?1 OR d.t_id = ?1) AND d.day IN (?5, ?6, ?7) AND ((d.status = 'open' AND d.posted_at > ?2) OR (d.status = 'done' AND d.taken_at >= ?3)
        OR (d.status != 'done' AND d.posted_at > ?4))
-     ORDER BY d.id DESC LIMIT 30`).bind(player.id, now() - A.LIFE, dayStart(day), now() - 2 * A.LIFE, ...daysBack(day, 3))]);
+     ORDER BY d.id DESC LIMIT 30`).bind(player.id, now() - A.LIFE, Math.min(dayStart(day), now() - A.FLEX_WINDOW), now() - 2 * A.LIFE, ...daysBack(day, 3))]);   // (a FLEX from just before midnight UTC is still read, for the FLEX counter below)
   out.aura = aurasFrom(a.results, day).get(player.id) || 0;
-  out.farms = list.results.map((d) => {
+  // the FLEX counter the FLEX button shows: farms up, and how long ago (seconds) each FLEX of the last 30 minutes was (the page counts the rest, with A.flexState)
+  out.flex = {
+    up: list.results.filter((d) => d.c_id === player.id && d.status === "open" && d.posted_at > now() - A.LIFE).length,
+    ago: list.results.filter((d) => d.t_id === player.id && d.status === "done" && d.taken_at > now() - A.FLEX_WINDOW).map((d) => now() - d.taken_at),
+  };
+  out.farms = list.results.filter((d) => !(d.status === "done" && d.taken_at < dayStart(day))).map((d) => {
     // a farm past its 24 hours that the minute-by-minute expiry hasn't reached yet already reads as expired
     const status = d.status === "open" && farmEnd(d) <= now() ? "expired" : d.status;
     const side = sideOf(d, player), row = { id: d.id, status, side, opponent: d.opponent ?? null };
@@ -368,10 +373,11 @@ async function take(req, env) {
   const style = posed(b.style, "a style"), salt = randomHex(), commit = await commitment(style, salt);
   const t = now();
   // each farm you have up lets you FLEX once every FLEX_WINDOW (30 minutes): no farm up, or as many FLEXes in the last window as farms up, is a no
-  const up = !player ? 0 : (await env.DB.prepare("SELECT COUNT(*) AS n FROM farms WHERE c_id = ? AND status = 'open' AND posted_at > ?").bind(player.id, t - A.LIFE).first()).n * A.FLEX_PER_FARM;
+  const farmsUp = !player ? 0 : (await env.DB.prepare("SELECT COUNT(*) AS n FROM farms WHERE c_id = ? AND status = 'open' AND posted_at > ?").bind(player.id, t - A.LIFE).first()).n;
   const { results: recent } = !player ? { results: [] } : await env.DB.prepare("SELECT taken_at FROM farms WHERE t_id = ? AND taken_at > ? ORDER BY taken_at").bind(player.id, t - A.FLEX_WINDOW).all();
-  if (!up) throw new Oops(`Put a farm up to FLEX: each farm you have up lets you FLEX once every ${A.FLEX_WINDOW / 60} minutes.`, 429);
-  if (recent.length >= up) throw new Oops(`Each farm you have up lets you FLEX once every ${A.FLEX_WINDOW / 60} minutes. Next one in ${Math.ceil((recent[recent.length - up].taken_at + A.FLEX_WINDOW - t) / 60)} min.`, 429);
+  if (!farmsUp) throw new Oops(`Put a farm up to FLEX: each farm you have up lets you FLEX once every ${A.FLEX_WINDOW / 60} minutes.`, 429);
+  const f = A.flexState(farmsUp, recent.map((r) => r.taken_at), t);
+  if (!f.ready) throw new Oops(`Each farm you have up lets you FLEX once every ${A.FLEX_WINDOW / 60} minutes. Next one in ${Math.ceil(f.wait / 60)} min.`, 429);
   const r = A.farm(d.c_style, style, Math.floor((t - d.posted_at) / 3600));
   const record = JSON.stringify({
     kind: "farm", rules: A.RULES, day: d.day, farm: d.id, players: [d.c_id, player.id],

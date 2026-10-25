@@ -53,6 +53,20 @@ const STAKE_WORDS = ["on the line!", "at stake!", "on this!", "to the winner!"];
 let stakeWord = STAKE_WORDS[0];
 // what a battle on this farm moves right now, as the FLEX page shows it (ticks up by itself every whole hour); a farm with no clock yet moves the starting amount
 const onTheLine = (v) => (v.left != null ? stakeSpan(endOf(v) - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA");
+// the FLEX button's counter, worked out live from what the Worker sent in `me.flex` with the same rule it refuses a FLEX by (A.flexState).
+// With none ready the button is greyed, so the Worker's error is never shown for it; before `me` has loaded nothing is known, so nothing is blocked.
+const flexInfo = () => {
+  if (!me) return null;
+  const f = me.flex ?? { up: 0, ago: [] };   // a visitor with no player has no farm up
+  return { up: f.up, ...A.flexState(f.up, f.ago.map((a) => me._t / 1000 - a), Date.now() / 1000) };
+};
+const flexReady = () => { const f = flexInfo(); return !f || f.ready > 0; };
+const flexText = () => {
+  const f = flexInfo();
+  if (!f) return "";
+  if (!f.up) return " · put a farm up";
+  return f.ready ? ` · ${f.ready} ready` : ` · next in ${Math.ceil(f.wait / 60)}m`;   // whole minutes, rounded up like the Worker's "Next one in N min" (the page's countdowns tick every 20 seconds)
+};
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
 const upSpan = (end) => `<span data-since="${end - A.LIFE * 1000}">${clock(Date.now() - (end - A.LIFE * 1000))}</span>`;
 const barOf = (end) => `<div class="bar"><i data-bar="${end}" style="width:${Math.min(100, Math.max(0, 100 - ((end - Date.now()) / (A.LIFE * 10)))).toFixed(1)}%"></i></div>`;
@@ -63,6 +77,7 @@ setInterval(() => {
   for (const n of document.querySelectorAll("[data-earn]")) n.textContent = earnText(+n.dataset.earn);
   for (const n of document.querySelectorAll("[data-stake]")) n.textContent = stakeText(+n.dataset.stake, +n.dataset.sign);
   for (const n of document.querySelectorAll("[data-upfor]")) n.textContent = upText(+n.dataset.upfor);
+  for (const n of document.querySelectorAll("[data-flex]")) { n.textContent = flexText(); const b = n.closest("button"); if (b) b.disabled = !pick || !flexReady(); }   // a FLEX coming back lights the button up
   for (const n of document.querySelectorAll("[data-bar]")) n.style.width = Math.min(100, Math.max(0, 100 - ((+n.dataset.bar - Date.now()) / (A.LIFE * 10)))).toFixed(1) + "%";
   if (!over || revealing()) return;
   if (view && !view.you) api("GET", "farm?id=" + view.id).then((d) => { if (view && view.id === d.id) { view = d; draw(); } }).catch(() => {});   // its time is up: show it
@@ -233,7 +248,7 @@ function farmScreen(v) {
         <div class="duel"><div class="face"><div class="slot"><div class="card back">?</div><div class="card" style="visibility:hidden"></div></div></div></div>
         <div class="big glow stakeline" style="--n:${14 + stakeWord.length}"><b>${onTheLine(v)}</b> ${stakeWord}</div>
         ${styles()}
-      <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
+      <button class="go" data-act="take" type="button" ${pick && flexReady() ? "" : "disabled"}>😤 FLEX<span data-flex>${flexText()}</span></button>${takeInfo(v)}${back}`;
   }
   if (v.status === "open" && v.left != null && v.mine) return openFarmPage(v, back);
   if (v.status === "open" || v.status === "expired") {

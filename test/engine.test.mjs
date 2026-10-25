@@ -73,3 +73,12 @@ test("standing aura: by the farm's age, the oldest farm up earns, a partial hour
   assert.equal(A.standing([[3600, 7200, 0]]), 10000);                       // the 2nd hour of a farm put up at 0, counted from 3600
 });
 
+
+test("flexState: each farm up is one FLEX per 30 minutes; none ready says how long until the next", () => {
+  assert.deepEqual(A.flexState(0, [], 1000), { ready: 0, wait: 0 });             // no farm up: none, and nothing to wait for
+  assert.deepEqual(A.flexState(1, [], 1000), { ready: 1, wait: 0 });
+  assert.deepEqual(A.flexState(1, [900], 1000), { ready: 0, wait: 1700 });        // FLEXed at 900: back at 900 + 1800 = 2700, 1700 s from now
+  assert.deepEqual(A.flexState(3, [100, 200], 1000), { ready: 1, wait: 0 });      // 3 farms up, 2 FLEXes in the last 30 minutes
+  assert.deepEqual(A.flexState(3, [950, 800, 900], 1000), { ready: 0, wait: 1600 });   // the oldest (800) comes back first: 800 + 1800 - 1000
+  assert.deepEqual(A.flexState(1, [-900], 1000), { ready: 1, wait: 0 });          // -900 is over 30 minutes ago (before -800)
+});

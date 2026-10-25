@@ -349,8 +349,10 @@ test("each farm you have up lets you FLEX once every 30 minutes: no farm, no FLE
   assert.match(r0.error, /Put a farm up to FLEX/);
   assert.equal(env.DB.raw.prepare("SELECT COUNT(*) AS n FROM players").get().n, 2, "refusing x made no player");
   assert.ok((await call("x", "POST", "/api/farm", { style: "D" })).id);   // 1 farm up: 1 FLEX per 30 minutes
+  assert.deepEqual((await call("x", "GET", "/api/today")).flex, { up: 1, ago: [] });   // the FLEX counter the button shows: 1 farm up, none used
   assert.equal((await take(a)).status, "done");
   tick(600);
+  assert.deepEqual((await call("x", "GET", "/api/today")).flex, { up: 1, ago: [600] });   // the FLEX was 600 s ago
   const r1 = await take(b);
   assert.equal(r1.status, 429);
   assert.match(r1.error, /once every 30 minutes\. Next one in 20 min/);    // taken at T0, now T0+600 s: 1800 - 600 = 1200 s = 20 min
