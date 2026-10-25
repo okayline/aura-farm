@@ -46,6 +46,9 @@ const earnSpan = (end) => `<span data-earn="${end - A.LIFE * 1000}">${earnText(e
 const upText = (since) => { const m = Math.floor((Date.now() - since) / 60000); return "Up for " + (m < 60 ? Math.max(m, 0) + " min" : Math.floor(m / 60) + (m < 120 ? " hr" : " hrs")); };
 const leftText = (end) => (end - Date.now() <= 0 ? "time's up" : clock(end - Date.now()) + " left");
 const endOf = (x, from = x) => from._t + x.left * 1000;
+// the words after the amount on the FLEX page ("+260,000 AURA at stake!"); every one is true: the winner gets the amount, the loser loses it
+const STAKE_WORDS = ["on the line!", "at stake!", "on this!", "to the winner!"];
+let stakeWord = STAKE_WORDS[0];
 // what a battle on this farm moves right now, as the FLEX page shows it (ticks up by itself every whole hour); a farm with no clock yet moves the starting amount
 const onTheLine = (v) => (v.left != null ? stakeSpan(endOf(v) - A.LIFE * 1000, 1) : num(A.STAKE) + " AURA");
 const leftSpan = (end) => `<span class="left" data-end="${end}">${leftText(end)}</span>`;
@@ -226,7 +229,7 @@ function farmScreen(v) {
     return `<div class="row">${halo(pic(v.names[0], v.pics?.[0]))}<div class="grow"><b class="glow">${esc(v.names[0])}</b><br>
         <span class="small">${recordLine(v.records[0])}</span></div></div>
         <div class="duel"><div class="face"><div class="slot"><div class="card back">?</div><div class="card" style="visibility:hidden"></div></div></div></div>
-        <div class="big glow stakeline">${onTheLine(v)} on the line!</div>
+        <div class="big glow stakeline" style="--n:${14 + stakeWord.length}">${onTheLine(v)} ${stakeWord}</div>
         ${styles()}
       <button class="go" data-act="take" type="button" ${pick ? "" : "disabled"}>😤 FLEX</button>${takeInfo(v)}${back}`;
   }
@@ -400,6 +403,7 @@ async function loadToday() { me = await api("GET", "today"); }
 // the browser's back button leaves it. A ?farm=N link, or the browser going back or forward to one, opens it in place.
 async function openFarm(id, step = true) {
   view = await api("GET", "farm?id=" + id);
+  stakeWord = STAKE_WORDS[Math.floor(Math.random() * STAKE_WORDS.length)];   // a new one each time a farm page opens, and it stays put while you're on it
   pick = null;
   if (step && location.search !== "?farm=" + id) history.pushState({ farm: id }, "", "?farm=" + id);
 }

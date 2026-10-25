@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.83 (Oct 24 2026, HST)
+
+- On the FLEX page, the words after the amount change each time a farm page opens: "+260,000 AURA on the line!", "at stake!", "on this!" or "to the winner!". The text still never wraps (the longer ones are a little smaller). Removed: the single fixed "on the line!".
+
 ## v0.82 (Oct 24 2026, HST)
 
 - On the FLEX page, the "+260,000 AURA on the line!" line never wraps onto a second line: on a smaller screen the text gets a little smaller instead (and a little bigger, up to 26px, on wider ones). Removed: the fixed 22px size that left a gap and could wrap.
