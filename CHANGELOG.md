@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.75 (Oct 24 2026, HST)
+
+- On the About tab's ledger, the emojis in each panel ("😏 vs 💎") are bigger. Removed: the smaller size they had.
+
 ## v0.74 (Oct 24 2026, HST)
 
 - On The Farm, each card now says "+240,000 AURA at stake" where it used to say "worth +240,000 AURA". Removed: the word "worth".

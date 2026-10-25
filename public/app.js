@@ -144,7 +144,7 @@ function ledgerTab(l) {
       : [`DUEL #${r.duel} · ${esc(r.caption[r.winner ?? 0])}`, (r.lineups ?? r.flipped ?? []).map((l) => [0, 1, 2].map((i) => emo(l[i])).join("")).join(" vs ") + (r.won ? ` · ${r.won[0]}-${r.won[1]}` : "")];
     // tap an entry to open its farm, which is the entry's page
     return `<button class="item entry" data-act="look:${e.farm}" type="button"><span class="grow"><span class="meme glow">${title}</span><br>
-      ${e.at || r.line ? `<span class="small">${[e.at ? atSec(e.at) : "", r.line ? esc(r.line) : ""].filter(Boolean).join(" - ")}</span><br>` : ""}<span class="small">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
+      ${e.at || r.line ? `<span class="small">${[e.at ? atSec(e.at) : "", r.line ? esc(r.line) : ""].filter(Boolean).join(" - ")}</span><br>` : ""}<span class="small emos">${line}</span><br><code>${e.hash}</code></span><span>›</span></button>`;
   }).join("");
   const n = (x) => x.toLocaleString("en-US");
   const about = `<div class="panel"><div class="big glow">About</div>
