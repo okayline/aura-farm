@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.62 (Oct 24 2026, HST)
+
+- "Aura" is no longer one of the first words in random names (so no new "Aura Goblin" or "Aura Yapper"). 31 first words and 23 last words are left. Removed: "Aura" from the first words. Names you already have stay until you reroll.
+
 ## v0.61 (Oct 24 2026, HST)
 
 - Every "aura" and "Aura" on the screens now reads AURA: the numbers ("+260,000 AURA", "COOKED. -100,000 AURA", "MUTUAL MOG. +0 AURA"), "AURA today", "Your AURA today", "AURA farmed so far", "+10,000 AURA every hour…", "Nobody has any AURA yet. Go farm." and the page's description line. Removed: the lowercase and capitalised spellings. Farms already taken keep their sealed ledger entry as it was written, so an old entry's record text still says "aura" in lowercase; the caption shown above it reads AURA.

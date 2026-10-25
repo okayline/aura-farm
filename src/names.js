@@ -4,9 +4,10 @@
 // v0.47 (ryan, Oct 22: "undo those new words and go back to the original few"): the v0.3.1 words again, without the
 // animals v0.22 removed and without the 23 words ryan picked out (Delulu, Feral, Gremlin, Villain and so on), plus 7 of v0.22's
 // words ryan kept (Gyatt, Lit, Dank, Yeet, Clutch, Enjoyer, Ratio).
+// v0.62 (Kura, Oct 24: "can we take Aura out of the random names?"): "Aura" is not a first word any more. Names players already have stay.
 const ADJECTIVES = [
   "Rizzed", "Unbothered", "Sigma", "Based", "Bussin", "Mewing", "Goated", "Lowkey", "Highkey", "Sus",
-  "Cracked", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Cooked", "Glazed", "Aura", "Drippy",
+  "Cracked", "Iconic", "Slay", "Ohio", "Skibidi", "Chill", "Cooked", "Glazed", "Drippy",
   "Yappy", "Extra", "Bougie", "Cozy", "Certified", "Rare", "Main", "Gyatt", "Lit", "Dank",
   "Yeet", "Clutch",
 ];
