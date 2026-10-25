@@ -23,10 +23,6 @@ of their own, both are revealed at once, and the style that beats the other wins
   you can take has a Details panel under FLEX with what is public about it. A finished farm has a Results panel (who
   played what, the aura, when, and each side's fingerprint with the salt that opens it) and its whole ledger entry
   (record, prev, hash), with a link to its entry on The Registry.
-- **Player pages (backend only)**: the Worker still answers `GET /api/player?id=N` (anyone, logged in or not) with a
-  player's lifetime aura (every day that has ended, saved in `aura_days` the first time it is asked for, plus today so far),
-  the farms they have up, battles won, lost and drawn, and their latest 10 styles. The page does not show it: the player
-  pages were taken out of the page in v0.105. `GET /api/board` rows carry `pid` and `GET /api/leaderboard` rows carry `id`.
 - **Save codes and passkeys**: the shared Accounts service (dungeon-items `ACCOUNTS.md`, bound as `ACCOUNTS`). This game
   keeps its own players and cookie; a device loaded later gets its own token in `sessions`.
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.106 (Oct 24 2026, HST)
+
+- The player pages' backend is gone too. Removed: the player answer (`/api/player`: lifetime aura, farms up, battles won, lost and drawn, latest styles), the saved-days table `aura_days` and its migration, and the player ids that the board and the leaderboard sent for it. The weekly leaderboard stays.
+
 ## v0.105 (Oct 24 2026, HST)
 
 - The player pages are taken out of the page. Your name at the top opens the "You" screen again (pic, reroll name, save codes and passkeys, log in as another player, log out), as it did before; names and pics on The Farm and the rows on Today no longer open anything. The About text and the weekly leaderboard stay. Removed: the player page and its `?player=` address, tapping a name, pic or Today row to open it, and the account controls on your own page (they are back on the "You" screen). The Worker's player answer (`/api/player`) and the `aura_days` table are still there, not used by the page.

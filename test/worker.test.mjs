@@ -189,13 +189,13 @@ test("the weekly leaderboard adds up the last 7 days, today and the 6 before, an
   await call("bo", "POST", "/api/farm", { style: "M" });   // bo's farm stands from 08:00 on Jan 1 until 08:00 on Jan 2
   tick(2 * 3600);
   await call("bo", "POST", "/api/take", { id: f.id, style: "R" });   // 10:00: DRIP beats RIZZ, ann wins 120,000 + 2 x 15,000 = 150,000 after standing 2 x 10,000
-  const annId = (await call("ann", "GET", "/api/today")).id, boId = (await call("bo", "GET", "/api/today")).id;
-  const week = async () => (await call("cy", "GET", "/api/leaderboard")).weekly.map((r) => [r.id, r.aura]);
+  const annId = (await call("ann", "GET", "/api/today")).name, boId = (await call("bo", "GET", "/api/today")).name;   // (rows have names, not ids)
+  const week = async () => (await call("cy", "GET", "/api/leaderboard")).weekly.map((r) => [r.name, r.aura]);
   assert.deepEqual(await week(), [[annId, 170000], [boId, -130000]], "day one, 10:00: the same as Today (bo: -150,000 and 2 hours standing, 20,000)");
   tick(24 * 3600);   // 10:00 on Jan 2. bo's farm stood 24 hours, 16 of them on Jan 1 and 8 on Jan 2: 80,000 more on Jan 2
   const day2 = await call("cy", "GET", "/api/leaderboard");
-  assert.deepEqual(day2.rows.map((r) => [r.id, r.aura]), [[boId, 80000]], "Today has only Jan 2");
-  assert.deepEqual(day2.weekly.map((r) => [r.id, r.aura]), [[annId, 170000], [boId, 10000 + 80000]], "the week has both days (bo on Jan 1: -150,000 + 16 hours standing, 160,000 = 10,000)");
+  assert.deepEqual(day2.rows.map((r) => [r.name, r.aura]), [[boId, 80000]], "Today has only Jan 2");
+  assert.deepEqual(day2.weekly.map((r) => [r.name, r.aura]), [[annId, 170000], [boId, 10000 + 80000]], "the week has both days (bo on Jan 1: -150,000 + 16 hours standing, 160,000 = 10,000)");
   tick(6 * 24 * 3600);   // 10:00 on Jan 8: the week is Jan 2 to Jan 8, so Jan 1 has dropped off
   assert.deepEqual(await week(), [[boId, 80000]]);
   assert.equal((await call("cy", "GET", "/api/leaderboard?day=2027-01-01")).weekly, undefined, "a past day's board has no week");
@@ -253,36 +253,6 @@ test("at most 3 farms up at once; each stays up 24 hours, across midnight, then 
   assert.equal(await aura("2027-01-02"), d1 + 80000);
 });
 
-test("a player's page is open to anyone: lifetime aura (days that have ended are saved, today is worked out now), farms up, record", async () => {
-  const { env, call, tick } = setup();   // T0 is 08:00 UTC on Jan 1
-  const f = await call("ann", "POST", "/api/farm", { style: "D" });
-  await call("bo", "POST", "/api/farm", { style: "M" });   // bo's farm: needed to FLEX, and stands the whole time
-  tick(16 * 3600 + 1);   // 00:00:01 on Jan 2: ann's farm has stood 16 whole hours
-  assert.equal((await call("bo", "POST", "/api/take", { id: f.id, style: "R" })).result.winner, 0, "DRIP beats RIZZ: ann wins");
-  const annId = (await call("ann", "GET", "/api/today")).id, boId = (await call("bo", "GET", "/api/today")).id;
-  // by hand: a win after 16 hours is 120,000 + 16 x 15,000 = 360,000 (on Jan 2). ann stood 16 x 10,000 = 160,000 on Jan 1 and
-  // nothing new on Jan 2 (no new whole hour). Lifetime 520,000. bo: 160,000 standing on Jan 1, then -360,000.
-  const a = await call("visitor", "GET", `/api/player?id=${annId}`);   // a visitor who is not logged in
-  assert.equal(a.status, 200);
-  assert.deepEqual([a.lifetime, a.wins, a.losses, a.draws, a.up.length, a.record], [520000, 1, 0, 0, 0, ["D"]]);
-  assert.equal(a.name, (await call("ann", "GET", "/api/today")).name);
-  const b = await call("visitor", "GET", `/api/player?id=${boId}`);
-  assert.deepEqual([b.lifetime, b.wins, b.losses, b.draws, b.record], [-200000, 0, 1, 0, ["R"]]);
-  assert.deepEqual(b.up.map((x) => x.left), [24 * 3600 - (16 * 3600 + 1)], "bo's farm is still up, with its time left");
-  const saved = () => env.DB.raw.prepare("SELECT player_id, day, aura FROM aura_days ORDER BY player_id, day").all().map((r) => ({ ...r }));
-  assert.deepEqual(saved(), [{ player_id: annId, day: "2027-01-01", aura: 160000 }, { player_id: boId, day: "2027-01-01", aura: 160000 }], "only the day that has ended is saved, not today");
-  env.DB.raw.prepare("UPDATE aura_days SET aura = 1000 WHERE player_id = ?").run(annId);   // behind the API's back
-  assert.equal((await call("visitor", "GET", `/api/player?id=${annId}`)).lifetime, 361000, "a saved day is read, not worked out again; today is still worked out");
-  assert.equal((await call("visitor", "GET", "/api/board")).farms[0].pid, boId, "the board says whose farm each is, so a name can be tapped");
-  tick(86400);   // Jan 3: Jan 2 has ended too, and gets saved
-  const c = await call("visitor", "GET", `/api/player?id=${annId}`);
-  assert.equal(c.lifetime, 1000 + 360000);
-  assert.deepEqual(saved().filter((r) => r.player_id === annId).map((r) => r.day), ["2027-01-01", "2027-01-02"]);
-  assert.equal((await call("visitor", "GET", "/api/player?id=999")).status, 404);
-  assert.equal((await call("visitor", "GET", "/api/player?id=x")).status, 404);
-  assert.equal((await call("visitor", "GET", "/api/leaderboard")).rows.every((r) => Number.isInteger(r.id)), true, "and so does the leaderboard");
-});
-
 test("each finished farm sends the registry a checkpoint of the ledger: public facts, never a player", async () => {
   const { env, call } = setup();
   for (let i = 0; i < 2; i++) {
@@ -301,7 +271,7 @@ test("each finished farm sends the registry a checkpoint of the ledger: public f
   assert.equal(JSON.stringify(sent).includes("ann"), false);
 });
 
-test("migrations 004-008 turn a v0.5 card duel into a farm, drop VIBES, add profile pics, the record indexes and the saved aura days: the old ledger entry and result stay as sealed", async () => {
+test("migrations 004-007 turn a v0.5 card duel into a farm, drop VIBES, add profile pics and the record indexes: the old ledger entry and result stay as sealed", async () => {
   const old = new DatabaseSync(":memory:");
   old.exec(execSync("git show a35b001:schema.sql", { encoding: "utf8" }));   // v0.5
   old.prepare("INSERT INTO players (id, token_hash, created_at, seen_at) VALUES (1, 'a', 1, 1), (2, 'b', 1, 1)").run();
@@ -309,7 +279,7 @@ test("migrations 004-008 turn a v0.5 card duel into a farm, drop VIBES, add prof
   old.prepare("INSERT INTO duels (id, day, status, c_id, created_at, posted_at) VALUES (8, '2027-01-01', 'open', 1, 1, 1)").run();
   old.prepare("INSERT INTO ledger (kind, day, duel_id, record, prev_hash, hash, created_at) VALUES ('duel', '2027-01-01', 7, '{}', ?, ?, 5)")
     .run("0".repeat(64), sha("0".repeat(64) + "|{}"));
-  for (const m of ["004_aura_farm", "005_no_vibes", "006_pics", "007_record_indexes", "008_aura_days"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
+  for (const m of ["004_aura_farm", "005_no_vibes", "006_pics", "007_record_indexes"]) old.exec(readFileSync(new URL(`../migrations/${m}.sql`, import.meta.url), "utf8"));
   assert.deepEqual({ ...old.prepare("SELECT id, kind, farm_id, record FROM ledger").get() }, { id: 1, kind: "duel", farm_id: 7, record: "{}" });
   assert.deepEqual({ ...old.prepare("SELECT status, c_delta, t_delta, c_style FROM farms WHERE id = 7").get() }, { status: "done", c_delta: 110000, t_delta: -10000, c_style: null });
   assert.equal(old.prepare("SELECT status FROM farms WHERE id = 8").get().status, "expired", "an open card duel can't be taken as a farm");
