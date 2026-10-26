@@ -325,18 +325,15 @@ function youScreen() {
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
-async function openYou() { view = { you: true }; newCode = null; ask = null; picking = false; acct = await api("GET", "account"); copies = (await api("GET", "copies")).copies; }
+async function openYou() { view = { you: true }; newCode = null; ask = null; picking = false; acct = await api("GET", "account"); }
 
-// (v0.108) CARRY: every copy your account holds in any game (the shared registry), newest first. Tap one to pin it:
-// every 88x31 game carries it from then on. Gold: the Moon blessed the one you carry.
-let copies = [];
+// (v0.108) CARRY: the copy you carry into every 88x31 game. Gold: the Moon blessed it. (v0.109) Choosing another one
+// happens in the registry's carry window (/api/carry), the same window every game opens.
 function carryPanel() {
   const c = me?.carry;
   const now = c ? `Carrying <b style="${c.blessed ? "color:#e3b341" : ""}">${esc(c.name)} #${c.copy}</b>` : "Carrying nothing yet.";
-  const list = copies.slice(0, 12).map((x) => `<div class="item"><span class="grow">${esc(x.name)} #${x.copy}<br><span class="small">${esc(x.game)}</span></span>
-      ${x.pinned ? `<span class="small">pinned</span>` : `<button class="link" data-act="pin:${x.itemId}-${x.copy}" type="button">pin</button>`}</div>`).join("");
-  return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div></div>
-    ${list ? `<div class="list">${list}</div>` : ""}`;
+  return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div>
+    <a class="link" href="/api/carry">open the carry window</a></div>`;
 }
 
 // the save code as a little text file, so it can be kept somewhere safe (from scoundrel.exe)
@@ -478,7 +475,6 @@ document.addEventListener("click", (e) => {
   if (act === "take") return run(async () => { view = await api("POST", "take", { id: view.id, style: pick }); flexed = true; pick = null; refreshMe(); });
   if (act === "you") { note = ""; return run(openYou); }
   if (act === "pics") { picking = !picking; return draw(); }
-  if (act === "pin") return run(async () => { const [itemId, copy] = arg.split("-").map(Number); await api("POST", "pin", { itemId, copy }); copies = (await api("GET", "copies")).copies; await loadToday(); note = "Pinned. Every game carries it now."; });
   if (act === "setpic") return run(async () => { const { pic: p } = await api("POST", "pic", { pic: arg }); acct.pic = p; if (me) me.pic = p; picking = false; note = ""; });
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 
