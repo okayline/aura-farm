@@ -415,3 +415,21 @@ test("profile pics: pick one of the 24, it shows wherever the name does and stay
   await call("ann", "POST", "/api/name");
   assert.equal((await call("ann", "GET", "/api/today")).pic, "🦝", "a new name keeps the pic");
 });
+
+test("the carried copy: today shows it; taking down a farm that stood 12 hours marks the taker's copy, a newer one doesn't", async () => {
+  const { env, call, tick } = setup(), marked = [];
+  Object.assign(env.REGISTRY, {
+    async pinned() { return { itemId: 4, copy: 2, item: { name: "a lamp" }, marks: [] }; },
+    async markCarried(m) { marked.push(m); return { ok: true, n: 1, created: true }; },
+  });
+  const f1 = await call("ann", "POST", "/api/farm", { style: "D" });
+  tick(12 * 3600);
+  const f2 = await call("ann", "POST", "/api/farm", { style: "D" });
+  await call("bo", "POST", "/api/farm", { style: "R" });
+  assert.deepEqual((await call("bo", "GET", "/api/today")).carry, { name: "a lamp", copy: 2, blessed: 0 });
+  await call("bo", "POST", "/api/take", { id: f1.id, style: "M" });   // MOG beats DRIP, after 12 hours up
+  tick(31 * 60);
+  await call("bo", "POST", "/api/take", { id: f2.id, style: "M" });   // just posted
+  const bo = env.DB.raw.prepare("SELECT c_id FROM farms WHERE id = 3").get().c_id;
+  assert.deepEqual(marked, [{ itemId: 4, copy: 2, by: { game: "aura-farm", playerId: bo }, kind: "deed", value: "toppled_farm", key: "farm:" + f1.id }]);
+});

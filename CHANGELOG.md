@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.108 (Oct 26 2026, HST)
+
+- The You screen shows the copy you carry (your account's pinned copy from any 88x31 game, or your newest copy), in gold if the Moon blessed it, and lists every copy your account holds with a pin button. Removed: no way to see or choose the copy you carry.
+- Taking down a farm that stood 12 hours or more marks the taker's carried copy "toppled_farm" in the shared registry. Removed: farms leaving no trace on the copies players hold.
+- Needs dungeon-items with the pinned copy (its migration 007) live first.
+
 ## v0.107 (Oct 24 2026, HST)
 
 - The Today tab at the bottom is now called "Board" (🏆). Same screen, same address. Removed: the name "Today" on the tab (the "AURA today" number at the top is still called that).
