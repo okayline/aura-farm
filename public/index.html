@@ -34,7 +34,7 @@
   .me b { color: var(--ink); font-size: 1.25em; text-shadow: 0 0 10px #ff6fcf; }
   button { font: inherit; color: var(--ink); cursor: pointer; }
   .link { background: none; border: 0; padding: 0; color: var(--mute); text-decoration: underline; font-size: 12px; }
-  .carry { width: 100%; height: 640px; border: 0; background: transparent; }   /* the registry's carry window, in the you screen (v0.111) */
+  .carry { width: 100%; height: 640px; border: 0; background: transparent; overflow: hidden; }   /* the registry's carry window, in the you screen (v0.111); grows to fit when it loads (v0.112) */
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
   .row { display: flex; align-items: center; gap: 12px; }
   .grow { flex: 1; min-width: 0; }

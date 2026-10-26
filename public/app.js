@@ -308,7 +308,7 @@ function carryPanel() {
   const c = me?.carry;
   const now = c ? `Carrying <b style="${c.blessed ? "color:#e3b341" : ""}">${esc(c.name)} #${c.copy}</b>` : "Carrying nothing yet.";
   return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div></div>
-    <iframe class="carry" src="/api/carry?embed=1" title="Save codes, passkeys and carry"></iframe>`;
+    <iframe class="carry" src="/api/carry?embed=1" title="Save codes, passkeys and carry" scrolling="no" onload="this.style.height=this.contentDocument.documentElement.scrollHeight+'px'"></iframe>`;
 }
 
 let extra = null;   // the board, leaderboard or ledger shown on its tab
