@@ -8,8 +8,7 @@ const $app = document.getElementById("app"), $tabs = document.getElementById("ta
 
 let tab = "farms", me = null, view = null, pick = null, err = "";
 let flexed = false;   // you just tapped FLEX: the finished farm plays its reveal (reveal.js) once, right after
-let acct = null, newCode = null, note = "";   // the "you" screen: account, a just-made save code, a line of news
-let ask = null;   // an in-game "are you sure?" on the you screen: { act, arg, text } (no browser popups)
+let acct = null, note = "";   // the "you" screen: account, a line of news
 let picking = false;   // the you screen's profile pics are open to pick from
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -286,20 +285,6 @@ const md = (t) => (t ? new Date(t * 1000).toLocaleDateString("en-US", { month: "
 function youScreen() {
   const a = acct;
   if (!a) return `<div class="panel"><p class="small">Loading…</p></div>`;
-  if (newCode) {
-    return `<div class="panel"><div class="big glow">Your new save code</div>
-        <p class="meme" style="font-size:20px;text-align:center;word-break:break-all">${esc(newCode)}</p>
-        <p class="small">Write it down or keep it in a password manager. It won't be shown again. Anyone with it can log in as you.</p>
-        <div class="row"><button class="chip" data-act="copycode" type="button">📋 Copy</button><button class="chip" data-act="savecode" type="button">⬇️ Download .txt</button></div></div>
-      <button class="go" data-act="codedone" type="button">DONE</button>`;
-  }
-  const ways = [
-    ...a.codes.map((c) => `<div class="item"><span class="grow">🔑 Save code<br><span class="small">made ${md(c.created_at)}${c.last_used_at ? " · last used " + md(c.last_used_at) : " · never used"}</span></span>
-      <button class="link" data-act="forgetcode:${c.id}" type="button">forget</button></div>`),
-    ...a.passkeys.map((k) => `<div class="item"><span class="grow">👆 Passkey: ${esc(k.label || "passkey")}<br><span class="small">${k.created_at ? "made " + md(k.created_at) : ""}</span></span>
-      <button class="link" data-act="forgetkey:${k.id}" type="button">remove</button></div>`),
-  ].join("");
-  const hasWay = a.codes.length + a.passkeys.length > 0;
   const mine = pic(a.name, a.pic);
   // your pic, left of your name: tap it to pick another
   const head = a.player ? `<div class="row"><button class="halo" data-act="pics" type="button" aria-label="Pick your profile pic" style="border:0;box-shadow: 0 0 22px 5px rgba(255,111,207,.55)">${mine}</button>
@@ -307,25 +292,14 @@ function youScreen() {
   const pics = a.player && picking ? `<div class="small" style="margin-top:12px">Pick your profile pic</div>
       <div class="pics">${A.PICS.map((p) => `<button class="${p === mine ? "on" : ""}" data-act="setpic:${p}" type="button">${p}</button>`).join("")}</div>` : "";
   return `<div class="panel">${head}
-      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}A save code or passkey lets you log in as this player anywhere. They work in the other 88x31 games too.</p>${pics}
+      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}Save codes, passkeys and logging in are in the carry window, the same one in every 88x31 game.</p>${pics}
       ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
     ${carryPanel()}
-    <div class="list">${ways || `<p class="small">No save codes or passkeys yet.</p>`}</div>
-    <div class="row keys"><button class="chip" data-act="newcode" type="button">🔑 New code</button>
-      ${pkSupported() ? `<button class="chip" data-act="addkey" type="button">👆 Add passkey</button>
-      <button class="chip" data-act="loadkey" type="button">👆 Use passkey</button>` : ""}</div>
-    <div class="panel"><div class="small">Log in as another player</div>
-      <div class="row" style="margin-top:8px"><input id="code" class="chip grow" placeholder="SAVE-CODE" autocomplete="off" spellcheck="false" style="color:var(--ink)">
-        <button class="chip" data-act="loadcode" type="button">Log in</button>
-</div></div>
-    ${ask ? `<div class="panel"><p class="small" style="text-align:center">${esc(ask.text)}</p>
-      <div class="row"><button class="chip" data-act="yes" type="button">Yes</button><button class="chip" data-act="no" type="button">No</button></div></div>` : ""}
-    ${a.player && hasWay ? `<button class="link" data-act="logout" type="button">log out of this browser</button>` : ""}
     <p class="small" style="text-align:center">${esc(note)}</p>
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
-async function openYou() { view = { you: true }; newCode = null; ask = null; picking = false; acct = await api("GET", "account"); }
+async function openYou() { view = { you: true }; picking = false; acct = await api("GET", "account"); }
 
 // (v0.108) CARRY: the copy you carry into every 88x31 game. Gold: the Moon blessed it. (v0.109) Choosing another one
 // happens in the registry's carry window (/api/carry), the same window every game opens.
@@ -333,63 +307,7 @@ function carryPanel() {
   const c = me?.carry;
   const now = c ? `Carrying <b style="${c.blessed ? "color:#e3b341" : ""}">${esc(c.name)} #${c.copy}</b>` : "Carrying nothing yet.";
   return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div>
-    <a class="link" href="/api/carry">open the carry window</a></div>`;
-}
-
-// the save code as a little text file, so it can be kept somewhere safe (from scoundrel.exe)
-function downloadCode() {
-  const text = ["AURA FARMING SIMULATOR save code", "", "  " + newCode, "",
-    `This code logs you in as ${me?.name || "your player"} on any browser or device, here and in the other 88x31 games.`,
-    `On that one: open ${location.origin}, tap "log in" at the top, and type it in.`,
-    "Keep it private: anyone with this code can log in as you.", `Made ${new Date().toISOString().slice(0, 10)}.`, ""].join("\r\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-  a.download = "aura-farm-save-code.txt";
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
-// The browser speaks WebAuthn in ArrayBuffers; the server speaks base64url. (From scoundrel.exe and the 88x31 cLuB.)
-const pkSupported = () => !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
-const fromB64 = (s) => { const t = s.replace(/-/g, "+").replace(/_/g, "/"); return Uint8Array.from(atob(t + "===".slice((t.length + 3) % 4)), (c) => c.charCodeAt(0)).buffer; };
-const toB64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-const deviceName = () => {
-  const u = navigator.userAgent;
-  return /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) ? "iPad" : /Android/.test(u) ? "Android" : /Mac/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows PC" : /Linux/.test(u) ? "Linux" : "this device";
-};
-const pkOops = (e) => new Error(e && e.name === "NotAllowedError" ? "Passkey cancelled (or it timed out)." : e && e.name === "InvalidStateError" ? "This device already has a passkey for you." : (e && e.message) || "The passkey didn't work.");
-
-async function addPasskey() {
-  try {
-    const o = await api("POST", "passkey", { action: "register_options" });
-    const cred = await navigator.credentials.create({ publicKey: {
-      ...o, challenge: fromB64(o.challenge), user: { ...o.user, id: fromB64(o.user.id) },
-      excludeCredentials: o.excludeCredentials.map((c) => ({ ...c, id: fromB64(c.id) })),
-    } });
-    await api("POST", "passkey", { action: "register", label: deviceName(), credential: {
-      id: cred.id, response: { clientDataJSON: toB64(cred.response.clientDataJSON), attestationObject: toB64(cred.response.attestationObject) },
-    } });
-  } catch (e) { throw pkOops(e); }
-  acct = await api("GET", "account");
-  // passkeys only work on this site's address: a save code is the backup if that ever changes
-  note = acct.codes.length ? "Passkey saved." : "Passkey saved. Make a save code too, as a backup.";
-}
-
-async function loadWithPasskey() {
-  let d;
-  try {
-    const o = await api("POST", "passkey", { action: "login_options" });
-    const cred = await navigator.credentials.get({ publicKey: { ...o, challenge: fromB64(o.challenge) } });
-    d = await api("POST", "passkey", { action: "login", credential: {
-      id: cred.id, response: { clientDataJSON: toB64(cred.response.clientDataJSON), authenticatorData: toB64(cred.response.authenticatorData), signature: toB64(cred.response.signature) },
-    } });
-  } catch (e) { throw pkOops(e); }
-  await loggedIn(d.name);
-}
-
-async function loggedIn(name) {
-  await loadToday(); acct = await api("GET", "account");
-  note = `Logged in as ${name || "your player"}. Welcome back.`;
+    <a class="link" href="/api/carry">save codes, passkeys and carry</a></div>`;
 }
 
 let extra = null;   // the board, leaderboard or ledger shown on its tab
@@ -478,27 +396,6 @@ document.addEventListener("click", (e) => {
   if (act === "setpic") return run(async () => { const { pic: p } = await api("POST", "pic", { pic: arg }); acct.pic = p; if (me) me.pic = p; picking = false; note = ""; });
   if (act === "rename") return run(async () => { note = "You're " + (await api("POST", "name", {})).name + " now."; await loadToday(); acct = await api("GET", "account"); });
 
-  if (act === "newcode") return run(async () => { newCode = (await api("POST", "codes", { action: "new" })).code; acct = await api("GET", "account"); await loadToday(); });
-  if (act === "copycode") return navigator.clipboard?.writeText(newCode).then(() => { note = "Copied."; draw(); }, () => {});
-  if (act === "savecode") return downloadCode();
-  if (act === "codedone") { newCode = null; note = "Save code made."; return draw(); }
-  if (act === "forgetcode" || act === "forgetkey") {
-    ask = { act, arg, text: act === "forgetcode" ? "Forget this save code? It stops working everywhere." : "Remove this passkey? It stops working everywhere." };
-    note = ""; return draw();
-  }
-  if (act === "no") { ask = null; return draw(); }
-  if (act === "yes" && ask?.act === "forgetcode") return run(async () => { const id = Number(ask.arg); ask = null; await api("POST", "codes", { action: "remove", id }); acct = await api("GET", "account"); note = "Save code forgotten."; });
-  if (act === "yes" && ask?.act === "forgetkey") return run(async () => { const id = Number(ask.arg); ask = null; await api("POST", "passkey", { action: "remove", id }); acct = await api("GET", "account"); note = "Passkey removed."; });
-  if (act === "addkey") return run(addPasskey);
-  if (act === "loadkey") return run(loadWithPasskey);
-  if (act === "loadcode") {
-    const code = document.getElementById("code")?.value || "";
-    return run(async () => { const d = await api("POST", "load", { code }); await loggedIn(d.name); });
-  }
-  if (act === "logout") {
-    ask = null;
-    return run(async () => { await api("POST", "logout", {}); await loadToday(); acct = await api("GET", "account"); note = "Logged out."; });
-  }
 });
 
 // aura.88x31.app/?farm=16 opens that farm (the shared registry links its Aura Farm entries here)

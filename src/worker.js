@@ -628,13 +628,16 @@ async function markCarry(env, playerId, value, key) {
 }
 
 // The carry window (account panel's link): the registry's own page of every copy your account holds in any game, in
-// Aura Farm's frame (dungeon-items carry-window.js). Its buttons pin through POST /api/pin.
+// Aura Farm's frame (dungeon-items carry-window.js). Its buttons pin through POST /api/pin. (v0.110) It also holds the
+// save codes and passkeys (the routes below), which the account panel no longer shows.
 //   GET  /api/carry               the window, as a page
 //   POST /api/pin {itemId, copy}  pin it: every game carries it from your next run
 async function carryPage(req, env) {
   const player = await findPlayer(req, env);
   if (!env.REGISTRY || !env.REGISTRY.carryWindow) throw new Oops("The registry is unavailable right now. Try again in a moment.", 503);
-  const html = await env.REGISTRY.carryWindow({ game: GAME, playerId: player ? player.id : 0, pinUrl: "/api/pin", back: "/",
+  const id = player ? await accountFor(env, player) : null;   // (v0.110) the window also shows save codes and passkeys
+  const ways = { player: !!player, ...(id ? ok(await ACC(env).info(id)) : { codes: [], passkeys: [] }) };
+  const html = await env.REGISTRY.carryWindow({ game: GAME, playerId: player ? player.id : 0, pinUrl: "/api/pin", back: "/", ways,
     frame: { title: "✨ CARRY ✨", paper: "#0b0a12", ink: "#f4f1ff", edge: "#3a2f5c", accent: "#ff6fcf", font: 'Impact, "Arial Black", sans-serif' } });
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
