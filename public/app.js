@@ -292,7 +292,7 @@ function youScreen() {
   const pics = a.player && picking ? `<div class="small" style="margin-top:12px">Pick your profile pic</div>
       <div class="pics">${A.PICS.map((p) => `<button class="${p === mine ? "on" : ""}" data-act="setpic:${p}" type="button">${p}</button>`).join("")}</div>` : "";
   return `<div class="panel">${head}
-      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}Save codes, passkeys and logging in are in the carry window, the same one in every 88x31 game.</p>${pics}
+      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}Save codes, passkeys and logging in are in the window below, the same one in every 88x31 game.</p>${pics}
       ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
     ${carryPanel()}
     <p class="small" style="text-align:center">${esc(note)}</p>
@@ -302,12 +302,13 @@ function youScreen() {
 async function openYou() { view = { you: true }; picking = false; acct = await api("GET", "account"); }
 
 // (v0.108) CARRY: the copy you carry into every 88x31 game. Gold: the Moon blessed it. (v0.109) Choosing another one
-// happens in the registry's carry window (/api/carry), the same window every game opens.
+// happens in the registry's carry window (/api/carry), the same window every game opens. (v0.111) It sits right in this
+// screen (an iframe), so there is no extra tap.
 function carryPanel() {
   const c = me?.carry;
   const now = c ? `Carrying <b style="${c.blessed ? "color:#e3b341" : ""}">${esc(c.name)} #${c.copy}</b>` : "Carrying nothing yet.";
-  return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div>
-    <a class="link" href="/api/carry">save codes, passkeys and carry</a></div>`;
+  return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div></div>
+    <iframe class="carry" src="/api/carry?embed=1" title="Save codes, passkeys and carry"></iframe>`;
 }
 
 let extra = null;   // the board, leaderboard or ledger shown on its tab
