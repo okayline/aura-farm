@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.112 (Oct 29 2026, HST)
+
+- The footer sits right under the last card instead of 16px below it. Removed: that space.
+
 ## v0.111 (Oct 29 2026, HST)
 
 - The footer ("© ~*~88x31~*~ cLuB, year · ≡ version") sits on the right of the app's column instead of in the middle. Removed: the centered footer.

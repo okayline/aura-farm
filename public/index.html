@@ -22,8 +22,8 @@
   }
   /* the shared footer (dungeon-items footer.js) sits under the app, in its column; the room for the tab bar is under both */
   body { padding-bottom: 102px; box-sizing: border-box; }
-  .ddfoot { max-width: 430px; margin: 0 auto !important; box-sizing: border-box; padding: 0 16px !important; }
-  .app { max-width: 430px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .ddfoot { max-width: 430px; margin: 4px auto 0 !important; box-sizing: border-box; padding: 0 16px !important; }
+  .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px; }
   .glow { text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }
   .big.glow { text-shadow: 0 0 8px rgba(176,132,255,.45); }
   .stakeline, .big.glow.stakeline { text-align: center; white-space: nowrap; font-size: min(26px, calc((min(100vw, 430px) - 32px) / (var(--n, 26) * 0.56))); font-weight: 400; margin: 22px 0; text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }   /* "+260,000 AURA on the line!" on the FLEX page: bold, with the full glow, never wraps (the text shrinks with the screen and the length of the words, --n = its characters, instead) */   /* large white headings: a softer glow */
@@ -120,7 +120,7 @@
 <body>
 <div class="app" id="app"><p class="small">Loading…</p></div>
 <!-- the footer every game shows (dungeon-items src/footer.js): "© ~*~88x31~*~ cLuB, year · ≡ version"; ≡ pops up the save codes / passkeys / carry window (/api/carry) -->
-<script src="https://dungeon-items.ddddungeon.workers.dev/footer.js" data-version="v0.111"></script>
+<script src="https://dungeon-items.ddddungeon.workers.dev/footer.js" data-version="v0.112"></script>
 <nav class="tabs" id="tabs"></nav>
 <script type="module" src="app.js"></script>
 </body>
