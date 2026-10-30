@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.110 (Oct 29 2026, HST)
+
+- The You screen no longer has the carry window, the "Carrying" line or the devices line, and the header says "you" instead of "log in" for a guest. Save codes, passkeys, logging in and out, and the copy you carry are all in the footer's ≡ window. The screen keeps your pic and your name.
+
 ## v0.109 (Oct 29 2026, HST)
 
 - The shared footer from dungeon-items ("© ~*~88x31~*~ cLuB, year · ≡ v0.109"), the same line every 88x31 game shows. Its ≡ pops up the carry window (save codes, passkeys, carry). Removed: the version line at the bottom of each screen.

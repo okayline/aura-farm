@@ -7,7 +7,7 @@ const $app = document.getElementById("app"), $tabs = document.getElementById("ta
 
 let tab = "farms", me = null, view = null, pick = null, err = "";
 let flexed = false;   // you just tapped FLEX: the finished farm plays its reveal (reveal.js) once, right after
-let acct = null, note = "";   // the "you" screen: account, a line of news
+let acct = null, note = "";   // the "you" screen: your pic and name, a line of news
 let picking = false;   // the you screen's profile pics are open to pick from
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -116,7 +116,7 @@ const halo = (emoji, glow = 18) => `<div class="halo" style="box-shadow: 0 0 ${g
 function header() {
   return `<header>
     <div class="title">AURA FARMING SIMULATOR<small data-fit>LOCKED IN BATTLE EDITION 2027</small></div>
-    <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "log in"}</button>
+    <div class="me"><button class="link" data-act="you" type="button">${me?.name ? esc(me.name) : "you"}</button>
       <span class="aura" data-fit>${me?.aura != null ? `<b>${num(me.aura)}</b> AURA today` : "stand there. look cool."}</span></div>
   </header>`;
 }
@@ -277,9 +277,7 @@ function farmScreen(v) {
       ${face(v.side >= 0 ? "you" : esc(v.names[side] || "?"), side, d > 0 ? 30 : 12)}</div>${pastDetails(v, playing)}${seal(v)}${back}`;
 }
 
-// ---------- you: name, save codes and passkeys (kept by the shared Accounts, like the other 88x31 games) ----------
-
-const md = (t) => (t ? new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
+// ---------- you: your pic and name (save codes, passkeys and logging in are the footer's ≡ window, /api/carry) ----------
 
 function youScreen() {
   const a = acct;
@@ -291,24 +289,13 @@ function youScreen() {
   const pics = a.player && picking ? `<div class="small" style="margin-top:12px">Pick your profile pic</div>
       <div class="pics">${A.PICS.map((p) => `<button class="${p === mine ? "on" : ""}" data-act="setpic:${p}" type="button">${p}</button>`).join("")}</div>` : "";
   return `<div class="panel">${head}
-      <p class="small">${a.player ? `On ${a.devices} browser${a.devices === 1 ? "" : "s"} or device${a.devices === 1 ? "" : "s"}. ` : ""}Save codes, passkeys and logging in are in the window below, the same one in every 88x31 game.</p>${pics}
+      ${pics}
       ${a.player ? `<button class="link" data-act="rename" type="button">🎲 reroll name</button>` : ""}</div>
-    ${carryPanel()}
     <p class="small" style="text-align:center">${esc(note)}</p>
     <button class="link" data-act="back" type="button">back</button>`;
 }
 
 async function openYou() { view = { you: true }; picking = false; acct = await api("GET", "account"); }
-
-// (v0.108) CARRY: the copy you carry into every 88x31 game. Gold: the Moon blessed it. (v0.109) Choosing another one
-// happens in the registry's carry window (/api/carry), the same window every game opens. (v0.111) It sits right in this
-// screen (an iframe), so there is no extra tap.
-function carryPanel() {
-  const c = me?.carry;
-  const now = c ? `Carrying <b style="${c.blessed ? "color:#e3b341" : ""}">${esc(c.name)} #${c.copy}</b>` : "Carrying nothing yet.";
-  return `<div class="panel"><div class="small">${now} A finished farm that stood 12 hours or more marks it when you take it down.</div></div>
-    <iframe class="carry" src="/api/carry?embed=1" title="Save codes, passkeys and carry" scrolling="no" onload="this.style.height=this.contentDocument.documentElement.scrollHeight+'px'"></iframe>`;
-}
 
 let extra = null;   // the board, leaderboard or ledger shown on its tab
 const cache = {};   // each tab's last data: a tab shows it the moment you tap, then fresh data replaces it
