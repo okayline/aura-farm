@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.111 (Oct 29 2026, HST)
+
+- The footer ("© ~*~88x31~*~ cLuB, year · ≡ version") sits on the right of the app's column instead of in the middle. Removed: the centered footer.
+
 ## v0.110 (Oct 29 2026, HST)
 
 - The You screen no longer has the carry window, the "Carrying" line or the devices line, and the header says "you" instead of "log in" for a guest. Save codes, passkeys, logging in and out, and the copy you carry are all in the footer's ≡ window. The screen keeps your pic and your name.
