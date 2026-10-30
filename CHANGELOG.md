@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.113 (Oct 29 2026, HST)
+
+- The footer is a bit smaller, a few pixels higher and a few pixels in from the card's edge. Removed: the larger footer text.
+
 ## v0.112 (Oct 29 2026, HST)
 
 - The footer sits right under the last card instead of 16px below it. Removed: that space.

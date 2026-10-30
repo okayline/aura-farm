@@ -22,7 +22,7 @@
   }
   /* the shared footer (dungeon-items footer.js) sits under the app, in its column; the room for the tab bar is under both */
   body { padding-bottom: 102px; box-sizing: border-box; }
-  .ddfoot { max-width: 430px; margin: 4px auto 0 !important; box-sizing: border-box; padding: 0 16px !important; }
+  .ddfoot { max-width: 430px; margin: 1px auto 0 !important; box-sizing: border-box; padding: 0 28px !important; }
   .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px; }
   .glow { text-shadow: 0 0 10px rgba(176,132,255,.75), 0 0 24px rgba(176,132,255,.35); }
   .big.glow { text-shadow: 0 0 8px rgba(176,132,255,.45); }
@@ -120,7 +120,7 @@
 <body>
 <div class="app" id="app"><p class="small">Loading…</p></div>
 <!-- the footer every game shows (dungeon-items src/footer.js): "© ~*~88x31~*~ cLuB, year · ≡ version"; ≡ pops up the save codes / passkeys / carry window (/api/carry) -->
-<script src="https://dungeon-items.ddddungeon.workers.dev/footer.js" data-version="v0.112"></script>
+<script src="https://dungeon-items.ddddungeon.workers.dev/footer.js" data-version="v0.113"></script>
 <nav class="tabs" id="tabs"></nav>
 <script type="module" src="app.js"></script>
 </body>
