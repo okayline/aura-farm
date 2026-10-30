@@ -1,6 +1,5 @@
 // The page: talks to /api/*, draws the aura-glow screens. The rules come from engine/aura.js (the Worker uses the same file).
 import * as A from "./engine/aura.js";
-import { VERSION } from "./engine/version.js";
 import { reveal, revealing } from "./reveal.js";
 
 const COLOR = { D: "var(--D)", R: "var(--H)", M: "var(--S)" };
@@ -353,7 +352,7 @@ function draw() {
   if (farmKey !== shownFarm) { shownFarm = farmKey; openBoxes.clear(); if (farmKey) scrollTop = true; }
   const body = view?.you ? youScreen() : view ? farmScreen(view)
     : tab === "farms" ? farmsTab() : !extra ? `<div class="panel"><p class="small">Loading…</p></div>` : tab === "board" ? boardTab(extra) : tab === "top" ? boardOfDay(extra) : ledgerTab(extra);
-  $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div><p class="small" style="text-align:center;color:var(--dim)">v${VERSION}</p>`;
+  $app.innerHTML = header() + body + `<div class="err">${esc(err)}</div>`;
   $tabs.innerHTML = [["farms", "🏠", "Home"], ["board", "🌾", "The Farm"], ["top", "🏆", "Board"], ["ledger", "📜", "About"]]
     .map(([k, i, w]) => `<button class="tab${!view && tab === k ? " on" : ""}" data-tab="${k}" type="button"><span class="ti">${i}</span>${w}</button>`).join("");
   fitLines();

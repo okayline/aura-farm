@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.109 (Oct 29 2026, HST)
+
+- The shared footer from dungeon-items ("© ~*~88x31~*~ cLuB, year · ≡ v0.109"), the same line every 88x31 game shows. Its ≡ pops up the carry window (save codes, passkeys, carry). Removed: the version line at the bottom of each screen.
+
 ## v0.108 (Oct 26 2026, HST)
 
 - The You screen shows the copy you carry (your account's pinned copy from any 88x31 game, or your newest copy), in gold if the Moon blessed it, and lists every copy your account holds with a pin button. Removed: no way to see or choose the copy you carry.

@@ -386,6 +386,8 @@ test("the version on the page matches the newest CHANGELOG heading", async () =>
   const { VERSION } = await import("../public/engine/version.js");
   const log = readFileSync(new URL("../CHANGELOG.md", import.meta.url), "utf8");
   assert.equal(/^## v(\S+)/m.exec(log)[1], VERSION);
+  const page = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.ok(page.includes("/footer.js") && page.includes(`data-version="v${VERSION}"`), "the shared footer shows the version");
 });
 
 test("names can't be typed: /api/name rerolls a new random two-word name", async () => {
