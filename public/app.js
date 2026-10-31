@@ -182,7 +182,7 @@ function ledgerTab(l) {
 // A finished farm's seal: its whole ledger entry (the record exactly as hashed, the previous entry's hash and its own),
 // and the shared registry that keeps a checkpoint of it.
 const seal = (v) => (v.ledger ? `<div class="small" style="text-align:center;margin-top:3em">📜 Ledger entry #${v.ledger.entry}<br>
-  <a class="link" href="https://88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
+  <a class="link" href="https://club.88x31.app/registry?head=${esc(v.ledger.hash)}" target="_blank" rel="noopener">On The Registry ›</a></div>
   <div class="small seal">record ${esc(v.ledger.record)}<br>prev ${esc(v.ledger.prev)}<br>hash ${esc(v.ledger.hash)}</div>` : "");
 
 // a time on a farm's page, in the viewer's own time zone: "14:46 on Oct 25th, 2026" (24-hour, with seconds)
