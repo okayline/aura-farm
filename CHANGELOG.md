@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.116 (Oct 31 2026, HST)
+
+- Behind the scenes only: nothing in the game changes. The repo's working notes (`CLAUDE.md`) now hold only notes for this game. Removed: the shared working-rules block that was copied into that file.
+
 ## v0.115 (Oct 31 2026, HST)
 
 - A tab icon: a pastel pixel-art favicon (88 over 31 on a big X, in this game's colours), so the browser tab and home-screen bookmark show the game instead of a blank default. Removed: nothing (the page had no icon before).
