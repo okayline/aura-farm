@@ -387,7 +387,7 @@ document.addEventListener("click", (e) => {
 
 // aura.88x31.app/?farm=16 opens that farm (the shared registry links its Aura Farm entries here)
 const linked = Number(new URLSearchParams(location.search).get("farm"));
-run(async () => { await loadToday(); if (linked > 0) await openFarm(linked, false); });
+run(async () => { try { await loadToday(); if (linked > 0) await openFarm(linked, false); } finally { document.getElementById("ddfoot").hidden = false; } });   // (v0.114) the footer shows only once the game has drawn, so it is never alone mid-screen
 const wanted = new URLSearchParams(location.search).get("tab");
 if (!(linked > 0) && ["board", "top", "ledger"].includes(wanted)) showTab(wanted);   // a reload comes back to the same tab
 // the browser's back and forward buttons: a ?farm=N step opens that farm, the bare address shows the tab you were on

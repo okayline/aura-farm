@@ -119,8 +119,9 @@
 </head>
 <body>
 <div class="app" id="app"><p class="small">Loading…</p></div>
-<!-- the footer every game shows (dungeon-items src/footer.js): "🄯 ~*~88x31~*~ · § ≡ version"; ≡ pops up the save codes / passkeys / carry window (/api/carry) -->
-<script src="https://dungeon-items.ddddungeon.workers.dev/footer.js" data-version="v0.113"></script>
+<!-- the footer every game shows (dungeon-items src/footer.js): "🄯 ~*~88x31~*~ · § ≡ version", drawn into this spot; shown once the game has drawn -->
+<div id="ddfoot" hidden></div>
+<script src="https://dungeon-items.ddddungeon.workers.dev/footer.js" data-version="v0.114"></script>
 <nav class="tabs" id="tabs"></nav>
 <script type="module" src="app.js"></script>
 </body>
