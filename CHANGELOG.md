@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.115 (Oct 31 2026, HST)
+
+- A tab icon: a pastel pixel-art favicon (88 over 31 on a big X, in this game's colours), so the browser tab and home-screen bookmark show the game instead of a blank default. Removed: nothing (the page had no icon before).
+
 ## v0.114 (Oct 31 2026, HST)
 
 - The footer is drawn into its own spot under the app and stays hidden until the game has drawn, so it no longer shows up alone in the middle of the screen. Removed: the footer's old wait-for-page-load.
