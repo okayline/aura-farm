@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.117 (Oct 31 2026, HST)
+
+- A calmer tab icon: just "88 x 31" in this game's accent colour, wider, inside a bold ASCII `+--+` border, on this page's own background colour. Removed: the busy pastel background with the big X, and the numbers' dark outline, white tops and shadow bar.
+
 ## v0.116 (Oct 31 2026, HST)
 
 - Behind the scenes only: nothing in the game changes. The repo's working notes (`CLAUDE.md`) now hold only notes for this game. Removed: the shared working-rules block that was copied into that file.
